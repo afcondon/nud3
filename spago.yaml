@@ -1,0 +1,14 @@
+package:
+  dependencies:
+    - console
+    - effect
+    - prelude
+    - web-dom
+  name: nud3
+  test:
+    dependencies: []
+    main: Test.Main
+workspace:
+  extra_packages: {}
+  package_set:
+    registry: 16.0.2

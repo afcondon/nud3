@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+
+<!-- Load d3.js -->
+<script src="https://d3js.org/d3.v7.js"></script>
+
+<body>
+    <h2>Table one - all spans</h2>
+    <table id="one">
+        <tr>
+            <td><span>a</span></td>
+            <td><span>b</span></td>
+            <td><span>c</span></td>
+            <td><span>d</span></td>
+        </tr>
+        <tr>
+            <td><span>e</span></td>
+            <td><span>f</span></td>
+            <td><span>g</span></td>
+            <td><span>h</span></td>
+        </tr>
+        <tr>
+            <td><span>i</span></td>
+            <td><span>j</span></td>
+            <td><span>k</span></td>
+            <td><span>l</span></td>
+        </tr>
+        <tr>
+            <td><span>m</span></td>
+            <td><span>n</span></td>
+            <td><span>o</span></td>
+            <td><span>p</span></td>
+        </tr>
+    </table>
+    <h2>Table two - missing spans</h2>
+    <table id="two">
+        <tr>
+            <td><span>a</span></td>
+            <td><span>b</span></td>
+            <td><span>c</span></td>
+            <td><span>d</span></td>
+        </tr>
+        <tr>
+            <td><span>e</span></td>
+            <td>f</td>
+            <td><span>g</span></td>
+            <td>h</td>
+        </tr>
+        <tr>
+            <td><span>i</span></td>
+            <td><span>j</span></td>
+            <td><span>k</span></td>
+            <td><span>l</span></td>
+        </tr>
+        <tr>
+            <td><span>m</span></td>
+            <td><span>n</span></td>
+            <td><span>o</span></td>
+            <td><span>p</span></td>
+        </tr>
+    </table>
+    <h2>Table three - extra spans</h2>
+    <table id="three">
+        <tr>
+            <td><span>a</span></td>
+            <td><span>a</span></td>
+            <td><span>b</span></td>
+            <td><span>b</span></td>
+            <td><span>c</span></td>
+            <td><span>c</span></td>
+            <td><span>d</span></td>
+            <td><span>d</span></td>
+        </tr>
+        <tr>
+            <td><span>e</span></td>
+            <td><span>e</span></td>
+            <td><span>f</span></td>
+            <td><span>f</span></td>
+            <td><span>g</span></td>
+            <td><span>g</span></td>
+            <td><span>h</span></td>
+            <td><span>h</span></td>
+        </tr>
+        <tr>
+            <td><span>i</span></td>
+            <td><span>i</span></td>
+            <td><span>j</span></td>
+            <td><span>j</span></td>
+            <td><span>k</span></td>
+            <td><span>k</span></td>
+            <td><span>l</span></td>
+            <td><span>l</span></td>
+        </tr>
+        <tr>
+            <td><span>m</span></td>
+            <td><span>m</span></td>
+            <td><span>n</span></td>
+            <td><span>n</span></td>
+            <td><span>o</span></td>
+            <td><span>o</span></td>
+            <td><span>p</span></td>
+            <td><span>p</span></td>
+        </tr>
+    </table>
+    <h2>Part 4: some sections have no asides</h2>
+    <section>foo</section>
+    <section>bar</section>
+    <section>baz<aside>aside1</aside></section>
+    <section>quux<aside>aside2</aside></section>
+    <section>erg</section>
+</body>

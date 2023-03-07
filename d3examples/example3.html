@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+
+<head>
+    <script src="https://d3js.org/d3.v7.js"></script>
+</head>
+
+<body>
+    
+</body>
+
+<script>
+    let matrix = [
+        ["a", "b", "c", "d"],
+        ["e", "f", "g", "h"],
+        ["i", "j", "k", "l"],
+        ["m", "n", "o", "p"]
+    ];
+    let matrix2 = [
+        ["a", "b", "c", "d"],
+        ["x", "f", "y", "h"],
+        ["i", "j", "k", "z"],
+        ["m", "n", "o", "p"]
+    ];
+    let a = d3.select("body");
+    let b = a.append("table");
+    let c = b.selectAll("tr");
+    let d = c.data(matrix);
+    let e = d.join("tr");
+    let f = e.selectAll("td");
+    let g = f.data(d => d);
+    let h = g.join("td")
+            .text(d => d);
+            
+    let b2 = a.select("table");
+    let c2 = b2.selectAll("tr");
+    let d2 = c2.data(matrix2);
+    let e2 = d2.join("tr");
+    let f2 = e2.selectAll("td");
+    let g2 = f2.data(d => d);
+    let h2 = g2.join("td")
+            .text(d => d);
+</script>
