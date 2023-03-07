@@ -1,48 +1,30 @@
 
-module Main
-  ( Action(..)
-  , AttrName
-  , ElementName
-  , KeyFunction
-  , NodeList
-  , Selection
-  , Selector(..)
-  , UpdateActions
-  , UpdateSelection
-  , assignDataToSelection
-  , identityKeyFunction
-  , main
-  , selectFirst
-  , selectFirstFrom
-  , selectGrouped
-  , selectMany
-  )
-  where
+module Main  where
 
+import Nud3.Types
 import Prelude
 
 import Effect (Effect)
 import Effect.Console (log)
+import Nud3.FFI as FFI
 import Unsafe.Coerce (unsafeCoerce)
-import Web.DOM (Node) as DOM
 
-type NodeList = Array DOM.Node
 
 -- corresponds to D3's d3.select
 selectFirst :: Selector -> Selection
-selectFirst selector = emptySelection -- TODO implement
+selectFirst = FFI.selectFirst
 
 -- corresponds to D3's d3.selectAll
 selectMany :: Selector -> Selection
-selectMany selector = emptySelection -- TODO implement
+selectMany = FFI.selectMany
 
 -- corresponds to D3's selection.selectAll
 selectGrouped :: Selection -> Selector -> Selection
-selectGrouped selection selector = emptySelection  -- TODO implement
+selectGrouped = FFI.selectGrouped
 
 -- corresponds to D3's selection.select
 selectFirstFrom :: Selection -> Selector -> Selection 
-selectFirstFrom selection selector = emptySelection  -- TODO implement
+selectFirstFrom = FFI.selectFirstFrom
 
 -- if the data is not simply ordered by index, then the key function is used to match the data to the nodes
 assignDataToSelection :: forall d. Selection -> Array d -> KeyFunction -> UpdateSelection
@@ -63,18 +45,6 @@ type UpdateActions = {
   , update :: Array Action
   }
 
-type UpdateSelection = { 
-    enter :: Array Unit -- unit is used as a placeholder for the enter nodes
-  , exit :: NodeList -- these nodes will most likely be removed
-  , update :: Array NodeList -- directly equivalent to the "groups" in a regular selection
-  , parents :: Array DOM.Node
-  }
-
-type Selection = { 
-    groups :: Array NodeList
-  , parents :: Array DOM.Node
-  }
-
 emptySelection :: Selection
 emptySelection = { groups: [], parents: [] } 
 
@@ -91,11 +61,6 @@ type KeyFunction = forall d i. (Ord i) => (Ord d) => d -> Int -> NodeList -> i
 identityKeyFunction :: KeyFunction
 identityKeyFunction d _ _ = unsafeCoerce d -- in the case of the identity function, the key is the datum itself
 
-data Selector = 
-      SelectorString String 
-    | SelectorFunction (forall d. d -> Int -> NodeList -> Boolean) -- in d3 "this" would be nodes[i] in this function
-
-
 -- appendToSelection :: Selection -> DOM.Element -> Selection
 appendToSelection :: Selection -> String -> Selection
 appendToSelection selection element = emptySelection -- TODO implement
@@ -107,7 +72,7 @@ insertBeforeSelection selection element = emptySelection -- TODO implement
 type AttrName = String -- TODO tighten this up with an ADT and smart constructors later
 type ElementName = String -- TODO tighten this up with an ADT and smart constructors later
 
-data Action = 
+data Action = -- TODO check out that these actions are legit for all Selections
     Attr AttrName String
   | AttrFunction AttrName (forall d. d -> Int -> NodeList -> d) -- no type checking of attr values at this time
   | Style

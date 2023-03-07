@@ -14,3 +14,4 @@
 /.purs-repl
 /.spago
 /node_modules
+/output
