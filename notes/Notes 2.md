@@ -13,7 +13,7 @@ d3.select("body")    -- { _groups: [[<body>]]
 
   .data(matrix)      -- { _enter: [[ EnterNode, EnterNode, EnterNode ]]
                      -- , _exit: [[]]
-                     -- , _groups: [[]]
+                     -- , _groups: [[]] -- is this the update selection, i believe it is!!!
                      -- , _parents: [<table>] }
 
   .join("tr")        -- { _groups: [[<tr>, <tr>, <tr>]]

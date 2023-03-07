@@ -101,6 +101,13 @@ var emptySelection = {
     parents: [  ]
 };
 
+// insertBeforeSelection :: Selection -> DOM.Element -> Selection
+var insertBeforeSelection = function (selection) {
+    return function (element) {
+        return emptySelection;
+    };
+};
+
 // corresponds to D3's d3.select
 var selectFirst = function (selector) {
     return emptySelection;
@@ -130,11 +137,16 @@ var emptyEnterSelection = {
     update: [  ],
     parents: [  ]
 };
+var subdivideData = function (selection) {
+    return function (keyFunction) {
+        return emptyEnterSelection;
+    };
+};
 
 // if the data is not simply ordered by index, then the key function is used to match the data to the nodes
-var assignDataToSelection = function (ds) {
-    return function (keyFunction) {
-        return function (selection) {
+var assignDataToSelection = function (selection) {
+    return function (ds) {
+        return function (keyFunction) {
             return emptyEnterSelection;
         };
     };
@@ -143,11 +155,47 @@ var assignDataToSelection = function (ds) {
 // now that the data has been assigned to the nodes, we can apply the actions to the nodes
 // the actions that are applied to the enter, exit, and update selections are different
 // we end up with a new selection which is the merge of the enter and update selections
-var applyDataToSelection = function (actions) {
-    return function (updateSelection) {
+var applyDataToSelection = function (updateSelection) {
+    return function (actions) {
         return emptySelection;
     };
 };
+
+// appendToSelection :: Selection -> DOM.Element -> Selection
+var appendToSelection = function (selection) {
+    return function (element) {
+        return emptySelection;
+    };
+};
+var matrix2Table = /* #__PURE__ */ (function () {
+    var three = selectMany(new SelectorString("tr"));
+    var one = selectFirst(new SelectorString("body"));
+    var two = appendToSelection(one)("table");
+    var four = assignDataToSelection(three)([ [ 1, 2, 3 ], [ 4, 5, 6 ], [ 7, 8, 9 ] ])(function (dictOrd) {
+        var identityKeyFunction1 = identityKeyFunction(dictOrd);
+        return function (dictOrd1) {
+            return identityKeyFunction1(dictOrd1);
+        };
+    });
+    var five = applyDataToSelection(four)({
+        enter: [ new Append("tr") ],
+        exit: [ Remove.value ],
+        update: [  ]
+    });
+    var six = selectGrouped(five)(new SelectorString("td"));
+    var seven = subdivideData(six)(function (dictOrd) {
+        var identityKeyFunction1 = identityKeyFunction(dictOrd);
+        return function (dictOrd1) {
+            return identityKeyFunction1(dictOrd1);
+        };
+    });
+    var eight = applyDataToSelection(seven)({
+        enter: [ new Append("td") ],
+        exit: [ Remove.value ],
+        update: [ new Attr("class", "cell") ]
+    });
+    return Effect_Console.log("\ud83c\udf5d");
+})();
 export {
     Attr,
     AttrFunction,
