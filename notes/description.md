@@ -1,5 +1,12 @@
 # Describe visualizations in plain English
 
+## Problems anticipated or found with new syntax
+
+  * check that attributes can be applied at the appropriate place in the DOM (should be fine)
+  * check how to add, for example a group with a label and a symbol  and a shape all at one "visualize" / data-join kind of place
+  * show example with non-Identity key formation
+  * use records for elements like Circles etc, so that cx, cy can all be unambiguous
+
 ## A simple matrix to HTML table example
 
 Start with the `<div>` called "chart".
@@ -149,10 +156,10 @@ threeLittleCircles = do
       what: [32, 57, 293]
     , where: circleGroup
     , key: Identity
-    , new: [ Fill \d i -> "green"
+    , new: [ Fill' "green"
            , CX \d i -> toFloat (i * 100)
-           , CY \d i -> 50.0
-           , Radius 20.0 ]
+           , CY' 50.0
+           , Radius' 20.0 ]
     , exiting: []
     , changing: []
   }
@@ -176,10 +183,11 @@ generalUpdatePattern = do
       what: letterdata
     , where: gupGroup
     , key: Identity
-    , new: [ Fill \d i -> "green"
+    , new: [ Append SVG.Text
+           , Text \d i -> singleton d
+           , Fill \d i -> "green"
            , X \d i -> toFloat (i * 48 + 50)
            , Y \d i -> 0.0
-           , Text \d i -> singleton d
            , FontSize \d i -> 96.0
            , TransitionTo [ Y \d i -> 200.0 ]
     ] 
@@ -196,3 +204,80 @@ generalUpdatePattern = do
   }
   revisualize letters letterdata2
 ```
+
+## Tree
+```
+computeX layoutStyle hasChildren x = 
+  case layoutStyle of
+    Radial -> if hasChildren == (x < Math.pi)
+              then 6.0
+              else (-6.0)
+    _      -> if hasChildren
+              then 6.0
+              else (-6.0)
+computeTextAnchor layoutStyle hasChildren x = 
+  case layoutStyle of
+    Radial -> if hasChildren == (x < Math.pi)
+              then "start"
+              else "end"
+    _      -> if hasChildren
+              then "start"
+              else "end"
+
+draw :: Config -> Tree -> Effect Unit
+draw config tree =
+  let layoutTreeData = layoutTreeVertical tree
+  
+  let root = select (SelectorString "div#tree")
+
+  svg <- root |+| 
+  container <- svg |+| SVG.svg  [ config.viewbox
+                                , Classed' "tree"
+                                , Width' config.svg.width
+                                , Height' config.svg.height ]
+  allLinks <- svg |+| SVG.g
+  allNodes <- svg |+| SVG.g
+
+  node <- visualize {
+      what: laidoutNodes layoutTreeData
+    , where: nodesGroup
+    , key: Identity
+    , newItems: [ Append SVG.g -- group for each circle and its label
+                , FontFamily' "sans-serif"
+                , FontSize' 10.0
+                ]
+    , exitingItems: []
+    , changedItems: []
+  }
+  circles <- node |+| SVG.circle 
+    [ Fill \d i -> if d.hasChildren then "#999" else "#555"
+    , Radius' 2.5
+    , StrokeColor' "white"
+    ]
+  
+  labels <- node |+| SVG.Text
+    [ DY' 0.31
+    , Fill' config.color
+    , X' \d i -> computeX config.layoutStyle d.hasChildren d.x
+    , Text \d i -> d.name
+    , TextAnchor \d i -> computeTextAnchor config.layoutStyle d.hasChildren d.x
+    ]
+
+  individualLink <- visualize {
+      what: laidoutLinks layoutTreeData
+    , where: linksGroup
+    , key: Identity
+    , newItems [ Append SVG.path -- path spec??
+               , StrokeWidth' 1.5
+               , StrokeColor' config.color
+               , StrokeOpacity' 0.4
+               , Fill' "none"
+              ]
+    , exitingItems: []
+    , changedItems: []
+  }
+
+
+
+
+  
