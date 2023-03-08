@@ -21,3 +21,14 @@ type Selection = {
     groups :: Array NodeList
   , parents :: Array DOM.Node
   }
+
+-- the key function is used to order which element of the data array is assigned to which node in the selection
+-- if the identity function is used, then the first element of the data array is assigned to the first node in the selection, etc.
+-- if the key function is used, then the node with the key value that matches the key function is assigned the data element
+-- note that the key function is therefore evaluated twice, once per datum and once per node
+type KeyFunction = forall d i. (Ord i) => (Ord d) => d -> Int -> NodeList -> i
+
+-- special case where the datum is used as the key and we just ignore the index and nodes
+identityKeyFunction :: KeyFunction
+identityKeyFunction d _ _ = unsafeCoerce d -- in the case of the identity function, the key is the datum itself
+

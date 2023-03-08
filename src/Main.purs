@@ -11,12 +11,12 @@ import Unsafe.Coerce (unsafeCoerce)
 
 
 -- corresponds to D3's d3.select
-selectFirst :: Selector -> Selection
-selectFirst = FFI.selectFirst
+selectOne :: Selector -> Selection
+selectOne = FFI.selectFirst
 
 -- corresponds to D3's d3.selectAll
-selectMany :: Selector -> Selection
-selectMany = FFI.selectMany
+selectMultiple :: Selector -> Selection
+selectMultiple = FFI.selectMany
 
 -- corresponds to D3's selection.selectAll
 selectGrouped :: Selection -> Selector -> Selection
@@ -27,8 +27,8 @@ selectFirstFrom :: Selection -> Selector -> Selection
 selectFirstFrom = FFI.selectFirstFrom
 
 -- if the data is not simply ordered by index, then the key function is used to match the data to the nodes
-assignDataToSelection :: forall d. Selection -> Array d -> KeyFunction -> UpdateSelection
-assignDataToSelection selection ds keyFunction = emptyEnterSelection  -- TODO implement
+assignDataArray :: forall d. Selection -> Array d -> KeyFunction -> UpdateSelection
+assignDataArray selection ds keyFunction = emptyEnterSelection  -- TODO implement
 
 subdivideData :: Selection -> KeyFunction -> UpdateSelection
 subdivideData selection keyFunction = emptyEnterSelection  -- TODO implement
@@ -61,9 +61,9 @@ type KeyFunction = forall d i. (Ord i) => (Ord d) => d -> Int -> NodeList -> i
 identityKeyFunction :: KeyFunction
 identityKeyFunction d _ _ = unsafeCoerce d -- in the case of the identity function, the key is the datum itself
 
--- appendToSelection :: Selection -> DOM.Element -> Selection
-appendToSelection :: Selection -> String -> Selection
-appendToSelection selection element = emptySelection -- TODO implement
+-- appendTo :: Selection -> DOM.Element -> Selection
+appendTo :: Selection -> String -> Selection
+appendTo selection element = emptySelection -- TODO implement
 
 -- insertBeforeSelection :: Selection -> DOM.Element -> Selection
 insertBeforeSelection :: Selection -> String -> Selection
@@ -81,12 +81,13 @@ data Action = -- TODO check out that these actions are legit for all Selections
   | Insert ElementName
   | Transition (Array Action) -- these are all function that chain on selections in the JavaScript universe
 
+
 matrix2Table :: Effect Unit
 matrix2Table = do
-  let one = selectFirst (SelectorString "body")
-      two = appendToSelection one "table"
-      three = selectMany (SelectorString "tr")
-      four = assignDataToSelection three [[1,2,3],[4,5,6],[7,8,9]] identityKeyFunction
+  let one = selectOne (SelectorString "body") -- this is a single group with a single node (the body), parent is <html>
+      two = appendTo one "table"  -- this is a single group with a single node (the table), parent is still <html>
+      three = selectGrouped two (SelectorString "tr") -- 
+      four = assignDataArray three [[1,2,3],[4,5,6],[7,8,9]] identityKeyFunction
       five = applyDataToSelection four
               { enter: [Append "tr"]
               , exit: [Remove]
