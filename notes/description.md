@@ -77,37 +77,6 @@ matrix2table = do
     class items "cell"
 ```
 
-## Matrix code ideal with GUP 
-```
-matrix2table :: Effect Unit
-matrix2table = do
-  let matrix = 
-      [[1,2,3]
-      ,[4,5,6]
-      ,[7,8,9]]
-
-  let root = select (SelectorString "body")
-  table <- root `appendTo` HTML.Table
-  rows  <- 
-    using (NewData matrix)
-          (Update { 
-              enter : [Append HTML.TableRow, Classed "new"]
-              exit  : [Classed "exit", Remove]
-              update: [Classed "updated"]
-          })
-          table
-
-  let oddrows = filter "nth-child(odd)"
-  style oddrows [background "light-gray", color "white"]
-
-  items <- 
-    using (InheritedData rows) 
-          (Enter [ Append HTML.TableData
-                 , Classed "cell" ])
-          rows
-    
-```
-
 ## iterating ... 
 ```
 matrix2table :: Effect Unit
@@ -118,14 +87,14 @@ matrix2table = do
       ,[7,8,9]]
 
   let root = select (SelectorString "body")
-  table <- root `appendTo` HTML.table
+  table <- root |+| HTML.table
   rows  <- visualize {
       what:   NewData matrix
     , where:  table
     , key:    Identity
-    , enter:  [Append HTML.tr, Classed "new"]
-    , exit:   [Classed "exit", Remove]
-    , update: [Classed "updated"]
+    , enter:  [Append HTML.tr, Classed' "new"]
+    , exit:   [Classed' "exit", Remove]
+    , update: [Classed' "updated"]
     } 
 
   let oddrows = filter "nth-child(odd)"
@@ -135,7 +104,7 @@ matrix2table = do
       what:  DataFromParent
     , where: rows
     , key: Identity
-    , enter:  [Append HTML.td, Classed "cell" ]
+    , enter:  [Append HTML.td, Classed' "cell" ]
     , exit: []
     , update: []
   }    
@@ -185,24 +154,24 @@ generalUpdatePattern = do
     , key: Identity
     , new: [ Append SVG.Text
            , Text \d i -> singleton d
-           , Fill \d i -> "green"
+           , Fill' "green"
            , X \d i -> toFloat (i * 48 + 50)
-           , Y \d i -> 0.0
-           , FontSize \d i -> 96.0
-           , TransitionTo [ Y \d i -> 200.0 ]
+           , Y' 0.0
+           , FontSize' 96.0
+           , TransitionTo [ Y' 200.0 ]
     ] 
-    , exiting: [ Classed \d i -> "exit"
-               , Fill \d i -> "brown"
-               , TransitionTo [ Y \d i -> 400.0
+    , exiting: [ Classed' "exit"
+               , Fill' "brown"
+               , TransitionTo [ Y' 400.0
                               , Remove 
                               ]
     ]
-    , changing: [ Classed \d i -> "update"
-                , Fill \d i -> "gray"
-                , Y \d i -> 200.0
+    , changing: [ Classed' "update"
+                , Fill' "gray"
+                , Y' 200.0
                 ]
   }
-  revisualize letters letterdata2
+  revisualize letters letterdata2 -- definitely a TODO here as to how this would work
 ```
 
 ## Tree
@@ -242,12 +211,12 @@ draw config tree =
       what: laidoutNodes layoutTreeData
     , where: nodesGroup
     , key: Identity
-    , newItems: [ Append SVG.g -- group for each circle and its label
-                , FontFamily' "sans-serif"
-                , FontSize' 10.0
-                ]
-    , exitingItems: []
-    , changedItems: []
+    , newElements: [ Append SVG.g -- group for each circle and its label
+                  , FontFamily' "sans-serif"
+                  , FontSize' 10.0
+                  ]
+    , exitingElements: [Remove]
+    , changedElements: []
   }
   circles <- node |+| SVG.circle 
     [ Fill \d i -> if d.hasChildren then "#999" else "#555"
@@ -257,8 +226,8 @@ draw config tree =
   
   labels <- node |+| SVG.Text
     [ DY' 0.31
-    , Fill' config.color
     , X' \d i -> computeX config.layoutStyle d.hasChildren d.x
+    , Fill' config.color
     , Text \d i -> d.name
     , TextAnchor \d i -> computeTextAnchor config.layoutStyle d.hasChildren d.x
     ]
@@ -267,17 +236,66 @@ draw config tree =
       what: laidoutLinks layoutTreeData
     , where: linksGroup
     , key: Identity
-    , newItems [ Append SVG.path -- path spec??
-               , StrokeWidth' 1.5
-               , StrokeColor' config.color
-               , StrokeOpacity' 0.4
-               , Fill' "none"
-              ]
-    , exitingItems: []
-    , changedItems: []
+    , newElements [ Append SVG.path -- path spec??
+                  , StrokeWidth' 1.5
+                  , StrokeColor' config.color
+                  , StrokeOpacity' 0.4
+                  , Fill' "none"
+                  ]
+    , exitingElements: [Remove]
+    , changedElements: []
   }
 
+## ForceLayout example
+```
+draw config model simulator = do
+  svg <- root |+| 
+  container <- svg |+| SVG.svg  [ config.viewbox
+                                , Classed' "force-layout"
+                                , Width' config.svg.width
+                                , Height' config.svg.height ]
+  linksGroup <- svg |+| SVG.g [ Classed' "link", StrokeColor' "#999", StrokeOpacity' 0.6]
+  nodesGroup <- svg |+| SVG.g [ Classed' "node", StrokeColor' "#fff", StrokeOpacity' 1.5]
 
+  -- side-effects ahoy, the data in these selections will change as the simulator runs
+  simNodes <- addNodes {
+      simulator
+    , nodes: model.nodes
+    , key: \d i -> d.id
+    , tick: [CX \d i -> d.x, CY  \d i -> d.y]
+    , drag: 
+  }
+                
+  simLinks <- addLinks {
+      simulator
+    , nodes: model.nodes
+    , links: model.links
+    , key: \d i -> d.id
+    , tick: [ X1 \l i -> l.source.x
+            , Y1 \l i -> l.source.y
+            , X2 \l i -> l.target.x
+            , Y2 \l i -> l.target.y
+            ]
+    , drag: NoDrag
+  }                
 
+  nodes <- visualize {
+      what: simNodes
+    , where: nodesGroup
+    , key: Identity
+    , newElements [ Append SVG.circle
+                  , Radius' 5.0
+                  , Fill \d i -> d.colorByGroup
+                  ]
+    , exitingElements: [ Remove ]
+    , changedElements: []
+  }
 
+  links <- visualize {
+      what: simLinks
+    , key: Identity
+    , 
+  }
+
+```
   

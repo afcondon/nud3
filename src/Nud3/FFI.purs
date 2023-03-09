@@ -1,8 +1,9 @@
-module Nud3.FFI  where
+module Nud3.FFI where
 
+import Nud3.Types
 import Prelude
 
-import Nud3.Types (Selection, Selector(..))
+import Control.Plus (empty)
 import Unsafe.Coerce (unsafeCoerce)
 
 foreign import data D3Selection :: Type
@@ -13,12 +14,10 @@ foreign import selectManyWithStringSelector :: String -> D3Selection
 foreign import selectGroupedWithStringSelector :: Selection -> String -> D3Selection
 foreign import selectFirstFromWithStringSelector :: Selection -> String -> D3Selection
 
-
 foreign import selectFirstWithFunctionSelector :: D3SelectorFunction -> D3Selection
 foreign import selectManyWithFunctionSelector :: D3SelectorFunction -> D3Selection
 foreign import selectGroupedWithFunctionSelector :: Selection -> D3SelectorFunction -> D3Selection
 foreign import selectFirstFromWithFunctionSelector :: Selection -> D3SelectorFunction -> D3Selection
-
 
 -- | hiding all the coercion stuff from the user here
 -- | to be replaced with code that doesn't need coercion later when the D3 api is replaced one native to this library
@@ -46,3 +45,12 @@ selectGrouped selection =
   case _ of
     SelectorString selectorString -> unsafeCoerce $ selectGroupedWithStringSelector selection selectorString
     SelectorFunction selectorFunction -> unsafeCoerce $ selectGroupedWithFunctionSelector selection (unsafeCoerce selectorFunction)
+
+dataBind :: forall d. Selection -> Array d -> KeyFunction -> UpdateSelection
+dataBind selection data' keyFunction = emptyUpdateSelection
+
+emptyUpdateSelection :: UpdateSelection
+emptyUpdateSelection = { enter: [], exit: emptyNodeList, update: [], parents: [] }
+
+emptyNodeList :: NodeList
+emptyNodeList = []

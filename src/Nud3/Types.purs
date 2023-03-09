@@ -2,6 +2,7 @@ module Nud3.Types where
 
 import Prelude
 
+import Unsafe.Coerce (unsafeCoerce)
 import Web.DOM (Node) as DOM
 
 data Selector = 
@@ -27,6 +28,7 @@ type Selection = {
 -- if the key function is used, then the node with the key value that matches the key function is assigned the data element
 -- note that the key function is therefore evaluated twice, once per datum and once per node
 type KeyFunction = forall d i. (Ord i) => (Ord d) => d -> Int -> NodeList -> i
+-- NB this key function is curried whereas, used on the JS side it needs to be uncurried, can optimise this later or maybe compiler optimisation will be enough
 
 -- special case where the datum is used as the key and we just ignore the index and nodes
 identityKeyFunction :: KeyFunction
