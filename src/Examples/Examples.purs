@@ -1,10 +1,13 @@
 module Examples where
 
-import Prelude
 import Effect
-import Nud4 
-import Examples.HTML as HTML
-import Examples.SVG as SVG
+import Nud3.Attributes
+import Nud4
+import Prelude
+
+import Data.Array (singleton)
+import Data.Int (toNumber)
+import Data.String.CodeUnits (toCharArray)
 
 -- | Matrix code ideal
 matrix2table :: Effect Unit
@@ -12,103 +15,105 @@ matrix2table = do
   let matrix = [ [ 1, 2, 3 ], [ 4, 5, 6 ], [ 7, 8, 9 ] ]
 
   let root = select (SelectorString "body")
-  table <- root |+| HTML.table
+  table <- root |+| (HTML "table")
   rows <- visualize
-    { what: NewData matrix
+    { what: Append (HTML "tr")
     , where: table
-    , key: Identity
-    , enter: [ Append HTML.tr, Classed' "new" ]
-    , exit: [ Classed' "exit", Remove ]
-    , update: [ Classed' "updated" ]
+    , using: NewData matrix
+    , key: identityKeyFunction
+    , attributes:
+        { enter: [ Classed_ "new" ]
+        , exit: [ Classed_ "exit", Remove ]
+        , update: [ Classed_ "updated" ]
+        }
     }
 
   let oddrows = filter "nth-child(odd)"
-  style oddrows [ background "light-gray", color "white" ]
+  style oddrows [ Background_ "light-gray", Color_ "white" ]
 
-  items <- vizualize
-    { what: DataFromParent
+  items <- visualize
+    { what: Append (HTML "td")
+    , using: NewData InheritData
     , where: rows
-    , key: Identity
-    , enter: [ Append HTML.td, Classed' "cell" ]
-    , exit: []
-    , update: []
+    , key: identityKeyFunction
+    , attributes:
+        { enter: [ Classed_ "cell" ]
+        , exit: []
+        , update: []
+        }
     }
   pure unit
 
 -- | three little circles
 threeLittleCircles :: Effect Unit
 threeLittleCircles = do
-  let
-    svgDef =
-      ( SVG.svg
-          [ viewBox (-100.0) (-100.0) 650.0 650.0
-          , Classed "d3svg circles"
-          ]
-      )
-
   let root = select (SelectorString "div#circles")
 
-  svg <- root |+| svgDef
-  circleGroup <- svg |+| SVG.g'
+  svg <- root |+| (SVG "svg")
+  style svg [ ViewBox_ (-100.0) (-100.0) 650.0 650.0
+            , Classed_ "d3svg circles"]
+
+  circleGroup <- svg |+| (SVG "g")
   circles <- visualize
-    { what: [ 32, 57, 293 ]
+    { what: Append (SVG "circle")
+    , using: NewData [ 32, 57, 293 ]
     , where: circleGroup
-    , key: Identity
-    , new:
-        [ Fill' "green"
-        , CX \d i -> toFloat (i * 100)
-        , CY' 50.0
-        , Radius' 20.0
-        ]
-    , exiting: []
-    , changing: []
+    , key: identityKeyFunction
+    , attributes:
+        { enter:
+            [ Fill_ "green"
+            , CX \d i -> toNumber (i * 100)
+            , CY_ 50.0
+            , Radius_ 20.0
+            ]
+        , exit: []
+        , update: []
+        }
     }
   pure unit
 
 -- | General Update Pattern
 generalUpdatePattern :: Effect Unit
 generalUpdatePattern = do
-  let
-    svgDef =
-      ( SVG.svg
-          [ viewBox 0 0 650.0 650.0
-          , Classed "d3svg gup"
-          ]
-      )
-
   let letterdata = toCharArray "abcdefghijklmnopqrstuvwxyz"
   let letterdata2 = toCharArray "acdefglmnostxz"
 
   let root = select (SelectorString "div#gup")
 
-  svg <- root |+| svgDef
-  gupGroup <- svg |+| SVG.g'
-  letters <- visualize
-    { what: letterdata
-    , where: gupGroup
-    , key: Identity
-    , new:
-        [ Append SVG.Text
-        , Text \d i -> singleton d
-        , Fill' "green"
-        , X \d i -> toFloat (i * 48 + 50)
-        , Y' 0.0
-        , FontSize' 96.0
-        , TransitionTo [ Y' 200.0 ]
-        ]
-    , exiting:
-        [ Classed' "exit"
-        , Fill' "brown"
-        , TransitionTo
-            [ Y' 400.0
-            , Remove
+  svg <- root |+| (SVG "svg")
+  style svg [ ViewBox_ 0 0 650.0 650.0
+            , Classed_ "d3svg gup"
             ]
-        ]
-    , changing:
-        [ Classed' "update"
-        , Fill' "gray"
-        , Y' 200.0
-        ]
+
+  gupGroup <- svg |+| (SVG "g")
+  letters <- visualize
+    { what: Append (SVG "text")
+    , using: NewData letterdata
+    , where: gupGroup
+    , key: identityKeyFunction
+    , attributes:
+        { enter:
+            [ Text \d i -> singleton d
+            , Fill_ "green"
+            , X \d i -> toNumber (i * 48 + 50)
+            , Y_ 0.0
+            , FontSize_ 96.0
+            , TransitionTo [ Y_ 200.0 ]
+            ]
+        , exit:
+            [ Classed_ "exit"
+            , Fill_ "brown"
+            , TransitionTo
+                [ Y_ 400.0
+                , Remove
+                ]
+            ]
+        , update:
+            [ Classed_ "update"
+            , Fill_ "gray"
+            , Y_ 200.0
+            ]
+        }
     }
   revisualize letters letterdata2 -- definitely a TODO here as to how this would work
 
@@ -139,7 +144,7 @@ drawTree config tree = do
 
   svg <- root |+| SVG.svg
     [ config.viewbox
-    , Classed' "tree"
+    , Classed_ "tree"
     , Width' config.svg.width
     , Height' config.svg.height
     ]
@@ -148,16 +153,19 @@ drawTree config tree = do
   allNodes <- svg |+| SVG.g
 
   node <- visualize
-    { what: laidoutNodes layoutTreeData
+    { what: Append (SVG "g")
+    , using: NewData laidoutNodes layoutTreeData
     , where: nodesGroup
-    , key: Identity
-    , newElements: [ Append SVG.g ] -- group for each circle and its label 
-    , exitingElements: [ Remove ]
-    , changedElements: []
+    , key: identityKeyFunction
+    , attributes:
+        { enter: [] -- group for each circle and its label 
+        , exit: [ Remove ]
+        , update: []
+        }
     }
   circles <- node |+| SVG.circle
     [ Fill \d i -> if d.hasChildren then "#999" else "#555"
-    , Radius' 2.5
+    , Radius_ 2.5
     , StrokeColor' "white"
     ]
 
@@ -170,18 +178,20 @@ drawTree config tree = do
     ]
 
   individualLink <- visualize
-    { what: laidoutLinks layoutTreeData
+    { what: Append (SVG "path")
+    , using: NewData laidoutLinks layoutTreeData
     , where: linksGroup
-    , key: Identity
-    , newElements:
-        [ Append SVG.path -- path spec??
-        , StrokeWidth' 1.5
-        , StrokeColor' config.color
-        , StrokeOpacity' 0.4
-        , Fill' "none"
-        ]
-    , exitingElements: [ Remove ]
-    , changedElements: []
+    , key: identityKeyFunction
+    , attributes:
+        { enter:
+            [ StrokeWidth' 1.5
+            , StrokeColor' config.color
+            , StrokeOpacity' 0.4
+            , Fill' "none"
+            ]
+        , exit: [ Remove ]
+        , update: []
+        }
     }
   pure unit
 
@@ -189,12 +199,12 @@ drawTree config tree = do
 drawForceLayout config model simulator = do
   svg <- root |+| SVG.svg
     [ config.viewbox
-    , Classed' "force-layout"
+    , Classed_ "force-layout"
     , Width' config.svg.width
     , Height' config.svg.height
     ]
-  linksGroup <- svg |+| SVG.g [ Classed' "link", StrokeColor' "#999", StrokeOpacity' 0.6 ]
-  nodesGroup <- svg |+| SVG.g [ Classed' "node", StrokeColor' "#fff", StrokeOpacity' 1.5 ]
+  linksGroup <- svg |+| SVG.g [ Classed_ "link", StrokeColor' "#999", StrokeOpacity' 0.6 ]
+  nodesGroup <- svg |+| SVG.g [ Classed_ "node", StrokeColor' "#fff", StrokeOpacity' 1.5 ]
 
   -- side-effects ahoy, the data in these selections will change as the simulator runs
   simNodes <- addNodes
@@ -220,30 +230,34 @@ drawForceLayout config model simulator = do
     }
 
   nodes <- visualize
-    { what: simNodes
+    { what: Append (SVG "circle")
+    , using: NewData simNodes
     , where: nodesGroup
-    , key: Identity
-    , newElements:
-        [ Append SVG.circle
-        , Radius' 5.0
-        , Fill \d i -> d.colorByGroup
-        ]
-    , exitingElements: [ Remove ]
-    , changedElements: []
+    , key: identityKeyFunction
+    , attributes:
+        { enter:
+            [ Radius_ 5.0
+            , Fill \d i -> d.colorByGroup
+            ]
+        , exit: [ Remove ]
+        , update: []
+        }
     }
 
   links <- visualize
-    { what: simLinks
-    , key: Identity
-    , newElements:
-        [ Append SVG.line
-        , StrokeWidth' 1.5
-        , StrokeColor' config.color
-        , StrokeOpacity' 0.4
-        , Fill' "none"
-        ]
-    , exitingElements: [ Remove ]
-    , changedElements: []
+    { what: Append (SVG "line")
+    , using: NewData simLinks
+    , key: identityKeyFunction
+    , attributes:
+        { enter:
+            [ StrokeWidth_ 1.5
+            , StrokeColor_ config.color
+            , StrokeOpacity_ 0.4
+            , Fill_ "none"
+            ]
+        , exit: [ Remove ]
+        , update: []
+        }
     }
 
   pure unit

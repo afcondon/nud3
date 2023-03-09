@@ -1,10 +1,10 @@
 module Nud4 where
 
+import Nud3.Attributes
 import Prelude
 
 import Effect (Effect)
-import Nud3 (Action(..))
-import Prim.Symbol (class Append)
+import Unsafe.Coerce (unsafeCoerce)
 import Web.DOM (Node) as DOM
 
 data Selector = 
@@ -25,28 +25,30 @@ type Selection = {
   , parents :: Array DOM.Node
   }
 
+type KeyFunction = forall d i. (Ord i) => (Ord d) => d -> Int -> NodeList -> i
+-- NB this key function is curried whereas, used on the JS side it needs to be uncurried
+-- optimise this later or maybe compiler optimisation will be enough
+
+identityKeyFunction :: KeyFunction
+identityKeyFunction = \d _ _ -> unsafeCoerce d -- TODO something nicer here
+
 type Element = String -- this is a placeholder for HTML and SVG elements
 type JoinConfig d = { 
-    what:: Array d
-  , where:: Selection
-  , key :: forall i. Ord i => d -> i
-  , enter :: Element 
-  , newElements :: ElementConfig
-  , exitingElements :: ElementConfig
-  , changedElements :: ElementConfig
+    what :: EnterElement
+  , where :: Selection
+  , using :: DataSource d
+  , key :: KeyFunction
+  , attributes :: {
+      enter :: ElementConfig
+    , update :: ElementConfig
+    , exit :: ElementConfig
   }
+  }
+
+data DataSource d = InheritData | NewData (Array d)
 
 type ElementConfig = Array Attribute
 
-type Lambda t = forall d. d -> Int -> t
-
-data Attribute = 
-    Append
-  | Remove
-  | Fill (Lambda String)
-  | StrokeWidth (Lambda Number)
-  | Fill' String
-  | StrokeWidth' Number
 
 -- | DSL functions below this line
 
@@ -57,13 +59,20 @@ select :: Selector -> Selection
 select (SelectorString s) = emptySelection
 select (SelectorFunction f) = emptySelection
 
-appendSelection :: Selection -> Selector -> Selection
-appendSelection s (SelectorString selector) = s
-appendSelection s (SelectorFunction f) = s
+appendElement :: Selection -> Element -> Selection
+appendElement s element = s -- TODO
 
-infixr 5 appendSelection as |+|
+insertElement :: Selection -> Element -> Selection
+insertElement s element = s -- TODO
+
+infixr 5 appendElement as |+|
+infixr 5 insertElement as |^|
 
 visualize :: forall d. JoinConfig d -> Effect Selection
 visualize config = pure emptySelection
 
+filter :: Selection -> String -> Selection
+filter s _ = s -- TODO  
 
+style :: Selection -> Array Attribute -> Effect Selection
+style s _ = pure s -- TODO
