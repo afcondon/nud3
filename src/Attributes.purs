@@ -14,6 +14,10 @@ data Attribute =
   | CX (AttributeSetter Number)
   | CY_ Number
   | CY (AttributeSetter Number)
+  | DX_ Number
+  | DX (AttributeSetter Number)
+  | DY_ Number
+  | DY (AttributeSetter Number)
   | Fill_ String
   | Fill (AttributeSetter String)
   | FontFamily_ String
@@ -30,10 +34,13 @@ data Attribute =
   | StrokeOpacity (AttributeSetter Number)
   | StrokeWidth_ Number
   | StrokeWidth (AttributeSetter Number)
+  | Style_ String
+  | Style (AttributeSetter String)
   | Text_ String
   | Text (AttributeSetter String)
   | TextAnchor String
   | TextAncho (AttributeSetter String)
+  | TransitionTo (Array TransitionAttribute)
   | Width_ Number
   | Width (AttributeSetter Number)
   | ViewBox_ Number Number Number Number
@@ -41,9 +48,19 @@ data Attribute =
   | X (AttributeSetter Number)
   | Y_ Number
   | Y (AttributeSetter Number)
+  | X1_ Number
+  | X1 (AttributeSetter Number)
+  | X2_ Number
+  | X2 (AttributeSetter Number)
+  | Y1_ Number
+  | Y1 (AttributeSetter Number)
+  | Y2_ Number
+  | Y2 (AttributeSetter Number)
 
-data EnterElement = 
-    Append Element 
-  | Insert Element
-
-data Element = SVG String | HTML String
+data TransitionAttribute = -- TODO - add more transition attributes
+    TransitionDuration_ Number
+  | TransitionDuration (AttributeSetter Number)
+  | TransitionDelay_ Number
+  | TransitionDelay (AttributeSetter Number)
+  | Attr Attribute
+  

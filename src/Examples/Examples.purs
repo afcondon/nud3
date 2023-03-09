@@ -5,9 +5,13 @@ import Nud3.Attributes
 import Nud4
 import Prelude
 
-import Data.Array (singleton)
 import Data.Int (toNumber)
-import Data.String.CodeUnits (toCharArray)
+import Data.Number (pi)
+import Data.String.CodeUnits (singleton, toCharArray)
+import Data.Tree (Tree)
+import Nud3.Tree as VizTree
+import Simulation as Simulation
+import Unsafe.Coerce (unsafeCoerce)
 
 -- | Matrix code ideal
 matrix2table :: Effect Unit
@@ -28,12 +32,12 @@ matrix2table = do
         }
     }
 
-  let oddrows = filter "nth-child(odd)"
-  style oddrows [ Background_ "light-gray", Color_ "white" ]
+  let oddrows = rows `filter` "nth-child(odd)"
+  _ <- style oddrows [ Background_ "light-gray", Color_ "white" ]
 
   items <- visualize
     { what: Append (HTML "td")
-    , using: NewData InheritData
+    , using: InheritData
     , where: rows
     , key: identityKeyFunction
     , attributes:
@@ -50,8 +54,10 @@ threeLittleCircles = do
   let root = select (SelectorString "div#circles")
 
   svg <- root |+| (SVG "svg")
-  style svg [ ViewBox_ (-100.0) (-100.0) 650.0 650.0
-            , Classed_ "d3svg circles"]
+  _ <- style svg
+    [ ViewBox_ (-100.0) (-100.0) 650.0 650.0
+    , Classed_ "d3svg circles"
+    ]
 
   circleGroup <- svg |+| (SVG "g")
   circles <- visualize
@@ -81,9 +87,10 @@ generalUpdatePattern = do
   let root = select (SelectorString "div#gup")
 
   svg <- root |+| (SVG "svg")
-  style svg [ ViewBox_ 0 0 650.0 650.0
-            , Classed_ "d3svg gup"
-            ]
+  _ <- style svg
+    [ ViewBox_ 0.0 0.0 650.0 650.0
+    , Classed_ "d3svg gup"
+    ]
 
   gupGroup <- svg |+| (SVG "g")
   letters <- visualize
@@ -93,19 +100,19 @@ generalUpdatePattern = do
     , key: identityKeyFunction
     , attributes:
         { enter:
-            [ Text \d i -> singleton d
+            [ Text \d i -> singleton $ unsafeCoerce d -- TODO: this is a hack
             , Fill_ "green"
             , X \d i -> toNumber (i * 48 + 50)
             , Y_ 0.0
             , FontSize_ 96.0
-            , TransitionTo [ Y_ 200.0 ]
+            , TransitionTo [ Attr (Y_ 200.0) ]
             ]
         , exit:
             [ Classed_ "exit"
             , Fill_ "brown"
             , TransitionTo
-                [ Y_ 400.0
-                , Remove
+                [ Attr (Y_ 400.0) -- we have to wrap TransitionAttributes for the time being
+                , Attr Remove
                 ]
             ]
         , update:
@@ -115,13 +122,14 @@ generalUpdatePattern = do
             ]
         }
     }
-  revisualize letters letterdata2 -- definitely a TODO here as to how this would work
+  _ <- revisualize letters letterdata2 -- definitely a TODO here as to how this would work
+  pure unit
 
 -- | Tree
 computeX layoutStyle hasChildren x =
   case layoutStyle of
-    Radial ->
-      if hasChildren == (x < Math.pi) then 6.0
+    VizTree.Radial ->
+      if hasChildren == (x < pi) then 6.0
       else (-6.0)
     _ ->
       if hasChildren then 6.0
@@ -129,32 +137,32 @@ computeX layoutStyle hasChildren x =
 
 computeTextAnchor layoutStyle hasChildren x =
   case layoutStyle of
-    Radial ->
-      if hasChildren == (x < Math.pi) then "start"
+    VizTree.Radial ->
+      if hasChildren == (x < pi) then "start"
       else "end"
     _ ->
       if hasChildren then "start"
       else "end"
 
-drawTree :: Config -> Tree -> Effect Unit
+drawTree :: VizTree.Config -> Tree -> Effect Unit
 drawTree config tree = do
-  let layoutTreeData = layoutTreeVertical tree
 
   let root = select (SelectorString "div#tree")
 
-  svg <- root |+| SVG.svg
+  layoutTreeData <- VizTree.verticalLayout tree
+  svg <- root |+|  (SVG "svg")
     [ config.viewbox
     , Classed_ "tree"
-    , Width' config.svg.width
-    , Height' config.svg.height
+    , Width_ config.viewbox.width
+    , Height_ config.viewbox.height
     ]
-  container <- svg |+| SVG.g [ FontFamily' "sans-serif", FontSize' 10.0 ]
-  allLinks <- svg |+| SVG.g
-  allNodes <- svg |+| SVG.g
+  container <- svg |+| (SVG "g") [ FontFamily_ "sans-serif", FontSize_ 10.0 ]
+  linksGroup <- svg |+| (SVG "g")
+  nodesGroup <- svg |+| (SVG "g")
 
   node <- visualize
     { what: Append (SVG "g")
-    , using: NewData laidoutNodes layoutTreeData
+    , using: NewData $ _.nodes layoutTreeData
     , where: nodesGroup
     , key: identityKeyFunction
     , attributes:
@@ -163,31 +171,31 @@ drawTree config tree = do
         , update: []
         }
     }
-  circles <- node |+| SVG.circle
+  circles <- node |+| (SVG "circle")
     [ Fill \d i -> if d.hasChildren then "#999" else "#555"
     , Radius_ 2.5
-    , StrokeColor' "white"
+    , StrokeColor_ "white"
     ]
 
-  labels <- node |+| SVG.Text
-    [ DY' 0.31
-    , X' \d i -> computeX config.layoutStyle d.hasChildren d.x
-    , Fill' config.color
+  labels <- node |+| (SVG "text")
+    [ DY_ 0.31
+    , X_ \d i -> computeX config.layoutStyle d.hasChildren d.x
+    , Fill_ config.color
     , Text \d i -> d.name
     , TextAnchor \d i -> computeTextAnchor config.layoutStyle d.hasChildren d.x
     ]
 
   individualLink <- visualize
     { what: Append (SVG "path")
-    , using: NewData laidoutLinks layoutTreeData
+    , using: NewData $ _.nodes layoutTreeData
     , where: linksGroup
     , key: identityKeyFunction
     , attributes:
         { enter:
-            [ StrokeWidth' 1.5
-            , StrokeColor' config.color
-            , StrokeOpacity' 0.4
-            , Fill' "none"
+            [ StrokeWidth_ 1.5
+            , StrokeColor_ config.color
+            , StrokeOpacity_ 0.4
+            , Fill_ "none"
             ]
         , exit: [ Remove ]
         , update: []
@@ -197,25 +205,27 @@ drawTree config tree = do
 
 -- | ForceLayout example
 drawForceLayout config model simulator = do
-  svg <- root |+| SVG.svg
-    [ config.viewbox
+  let root = select (SelectorString "div#miserables")
+  svg <- root |+|  (SVG "svg")
+  _ <- style svg
+    [ ViewBox_ 0.0 0.0 650.0 650.0
     , Classed_ "force-layout"
-    , Width' config.svg.width
-    , Height' config.svg.height
+    , Width_ config.svg.width
+    , Height_ config.svg.height
     ]
-  linksGroup <- svg |+| SVG.g [ Classed_ "link", StrokeColor' "#999", StrokeOpacity' 0.6 ]
-  nodesGroup <- svg |+| SVG.g [ Classed_ "node", StrokeColor' "#fff", StrokeOpacity' 1.5 ]
+  linksGroup <- svg |+|  (SVG "g") [ Classed_ "link", StrokeColor_ "#999", StrokeOpacity_ 0.6 ]
+  nodesGroup <- svg |+|  (SVG "g") [ Classed_ "node", StrokeColor_ "#fff", StrokeOpacity_ 1.5 ]
 
   -- side-effects ahoy, the data in these selections will change as the simulator runs
-  simNodes <- addNodes
+  simNodes <- Simulation.addNodes
     { simulator
     , nodes: model.nodes
     , key: \d i -> d.id
     , tick: [ CX \d i -> d.x, CY \d i -> d.y ]
-    , drag: DefaultDragBehavior
+    , drag: Simulation.DefaultDragBehavior
     }
 
-  simLinks <- addLinks
+  simLinks <- Simulation.addLinks
     { simulator
     , nodes: model.nodes
     , links: model.links
@@ -226,7 +236,7 @@ drawForceLayout config model simulator = do
         , X2 \l i -> l.target.x
         , Y2 \l i -> l.target.y
         ]
-    , drag: NoDrag
+    , drag: Simulation.NoDrag
     }
 
   nodes <- visualize

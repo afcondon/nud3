@@ -32,7 +32,6 @@ type KeyFunction = forall d i. (Ord i) => (Ord d) => d -> Int -> NodeList -> i
 identityKeyFunction :: KeyFunction
 identityKeyFunction = \d _ _ -> unsafeCoerce d -- TODO something nicer here
 
-type Element = String -- this is a placeholder for HTML and SVG elements
 type JoinConfig d = { 
     what :: EnterElement
   , where :: Selection
@@ -49,6 +48,11 @@ data DataSource d = InheritData | NewData (Array d)
 
 type ElementConfig = Array Attribute
 
+data EnterElement = 
+    Append Element 
+  | Insert Element
+
+data Element = SVG String | HTML String
 
 -- | DSL functions below this line
 
@@ -59,11 +63,11 @@ select :: Selector -> Selection
 select (SelectorString s) = emptySelection
 select (SelectorFunction f) = emptySelection
 
-appendElement :: Selection -> Element -> Selection
-appendElement s element = s -- TODO
+appendElement :: Selection -> Element -> Effect Selection
+appendElement s element = pure s -- TODO
 
-insertElement :: Selection -> Element -> Selection
-insertElement s element = s -- TODO
+insertElement :: Selection -> Element -> Effect Selection
+insertElement s element = pure s -- TODO
 
 infixr 5 appendElement as |+|
 infixr 5 insertElement as |^|
@@ -71,8 +75,13 @@ infixr 5 insertElement as |^|
 visualize :: forall d. JoinConfig d -> Effect Selection
 visualize config = pure emptySelection
 
+revisualize :: forall d. Selection -> Array d -> Effect Selection
+revisualize s ds = pure s -- TODO
+
 filter :: Selection -> String -> Selection
 filter s _ = s -- TODO  
 
 style :: Selection -> Array Attribute -> Effect Selection
 style s _ = pure s -- TODO
+
+
