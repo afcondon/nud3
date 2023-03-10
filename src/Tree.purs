@@ -8,7 +8,7 @@ import Effect (Effect)
 -- temporary definition, revisit taglessD3 for the correct solution later
 -- the Tree will necessarily be a mutable structure, should be hidden behind the FFI
 type LaidOutTree a = {
-    nodes :: Array { id :: Int, nodedata :: a, x :: Number, y :: Number }
+    nodes :: Array { id :: Int, nodedata :: a, x :: Number, y :: Number, hasChildren :: Boolean  }
   , links :: Array { source :: Int, target :: Int } -- later probably actual mutable object references FFI
   , layout :: TreeLayout
 }

@@ -38,15 +38,15 @@ type JoinConfig d = {
   , using :: DataSource d
   , key :: KeyFunction
   , attributes :: {
-      enter :: ElementConfig
-    , update :: ElementConfig
-    , exit :: ElementConfig
+      enter :: ElementConfig d
+    , update :: ElementConfig d
+    , exit :: ElementConfig d
   }
   }
 
 data DataSource d = InheritData | NewData (Array d)
 
-type ElementConfig = Array Attribute
+type ElementConfig d = Array (Attribute d)
 
 data EnterElement = 
     Append Element 
@@ -71,10 +71,10 @@ insertElement s element = pure s -- TODO
 infixr 5 appendElement as |+|
 infixr 5 insertElement as |^|
 
-appendStyledElement :: Selection -> Element -> Array Attribute -> Effect Selection
+appendStyledElement :: forall d. Selection -> Element -> Array (Attribute d) -> Effect Selection
 appendStyledElement s element attrs = pure s -- TODO
 
-insertStyledElement :: Selection -> Element -> Array Attribute -> Effect Selection
+insertStyledElement :: forall d. Selection -> Element -> Array (Attribute d) -> Effect Selection
 insertStyledElement s element attrs = pure s -- TODO
 
 visualize :: forall d. JoinConfig d -> Effect Selection
@@ -86,7 +86,7 @@ revisualize s ds = pure s -- TODO
 filter :: Selection -> String -> Selection
 filter s _ = s -- TODO  
 
-style :: Selection -> Array Attribute -> Effect Selection
+style :: forall d. Selection -> Array (Attribute d) -> Effect Selection
 style s _ = pure s -- TODO
 
 
