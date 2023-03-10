@@ -1,8 +1,8 @@
-module Nud4 where
+module Nud3 where
 
-import Nud3.Attributes
 import Prelude
 
+import Nud3.Attributes (Attribute)
 import Effect (Effect)
 import Unsafe.Coerce (unsafeCoerce)
 import Web.DOM (Node) as DOM

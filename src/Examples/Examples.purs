@@ -1,8 +1,8 @@
 module Examples where
 
+import Nud3
 import Effect (Effect)
 import Nud3.Attributes (Attribute(..), TransitionAttribute(..))
-import Nud4 (DataSource(..), Element(..), EnterElement(..), Selector(..), appendStyledElement, filter, identityKeyFunction, revisualize, select, style, visualize, (|+|))
 import Prelude
 
 import Data.Int (toNumber)
@@ -126,7 +126,7 @@ generalUpdatePattern = do
   pure unit
 
 -- | Tree
-computeX :: TreeLayout -> Boolean -> Number -> Number
+computeX :: VizTree.TreeLayout -> Boolean -> Number -> Number
 computeX layoutStyle hasChildren x =
   case layoutStyle of
     VizTree.Radial ->
@@ -136,7 +136,7 @@ computeX layoutStyle hasChildren x =
       if hasChildren then 6.0
       else (-6.0)
 
-computeTextAnchor :: TreeLayout -> Boolean -> Number -> String
+computeTextAnchor :: VizTree.TreeLayout -> Boolean -> Number -> String
 computeTextAnchor layoutStyle hasChildren x =
   case layoutStyle of
     VizTree.Radial ->
