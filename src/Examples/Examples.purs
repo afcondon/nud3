@@ -9,6 +9,7 @@ import Data.Int (toNumber)
 import Data.Number (pi)
 import Data.String.CodeUnits (singleton, toCharArray)
 import Data.Tree (Tree)
+import Nud3.Tree as Tree
 import Nud3.Tree as VizTree
 import Simulation as Simulation
 import Unsafe.Coerce (unsafeCoerce)
@@ -144,19 +145,19 @@ computeTextAnchor layoutStyle hasChildren x =
       if hasChildren then "start"
       else "end"
 
-drawTree :: VizTree.Config -> Tree -> Effect Unit
-drawTree config tree = do
+drawTree :: forall d. Tree d -> Effect Unit
+drawTree tree = do
 
   let root = select (SelectorString "div#tree")
 
   layoutTreeData <- VizTree.verticalLayout tree
-  svg <- root |+|  (SVG "svg")
-    [ config.viewbox
+  svg <- appendStyledElement root (SVG "svg")
+    [ ViewBox_ 0.0 0.0 650.0 650.0
     , Classed_ "tree"
-    , Width_ config.viewbox.width
-    , Height_ config.viewbox.height
+    , Width_ 650.0
+    , Height_ 650.0
     ]
-  container <- svg |+| (SVG "g") [ FontFamily_ "sans-serif", FontSize_ 10.0 ]
+  container <- appendStyledElement svg (SVG "g") [ FontFamily_ "sans-serif", FontSize_ 10.0 ]
   linksGroup <- svg |+| (SVG "g")
   nodesGroup <- svg |+| (SVG "g")
 
@@ -179,10 +180,10 @@ drawTree config tree = do
 
   labels <- node |+| (SVG "text")
     [ DY_ 0.31
-    , X_ \d i -> computeX config.layoutStyle d.hasChildren d.x
-    , Fill_ config.color
+    , X_ \d i -> computeX Tree.Vertical d.hasChildren d.x
+    , Fill_ "red"
     , Text \d i -> d.name
-    , TextAnchor \d i -> computeTextAnchor config.layoutStyle d.hasChildren d.x
+    , TextAnchor \d i -> computeTextAnchor Tree.Vertical d.hasChildren d.x
     ]
 
   individualLink <- visualize
@@ -193,7 +194,7 @@ drawTree config tree = do
     , attributes:
         { enter:
             [ StrokeWidth_ 1.5
-            , StrokeColor_ config.color
+            , StrokeColor_ "orange"
             , StrokeOpacity_ 0.4
             , Fill_ "none"
             ]
@@ -204,40 +205,50 @@ drawTree config tree = do
   pure unit
 
 -- | ForceLayout example
-drawForceLayout config model simulator = do
+drawForceLayout :: Number -> Number -> Simulation.Model -> Effect Unit
+drawForceLayout width height model = do
   let root = select (SelectorString "div#miserables")
-  svg <- root |+|  (SVG "svg")
+  svg <- root |+| (SVG "svg")
   _ <- style svg
     [ ViewBox_ 0.0 0.0 650.0 650.0
     , Classed_ "force-layout"
-    , Width_ config.svg.width
-    , Height_ config.svg.height
+    , Width_ width
+    , Height_ height
     ]
-  linksGroup <- svg |+|  (SVG "g") [ Classed_ "link", StrokeColor_ "#999", StrokeOpacity_ 0.6 ]
-  nodesGroup <- svg |+|  (SVG "g") [ Classed_ "node", StrokeColor_ "#fff", StrokeOpacity_ 1.5 ]
+  linksGroup <- appendStyledElement svg (SVG "g") [ Classed_ "link", StrokeColor_ "#999", StrokeOpacity_ 0.6 ]
+  nodesGroup <- appendStyledElement svg (SVG "g") [ Classed_ "node", StrokeColor_ "#fff", StrokeOpacity_ 1.5 ]
 
+  simulator <- Simulation.newEngine
+    { width: width
+    , height: height
+    , alpha: 0.1
+    , alphaMin: 0.001
+    , alphaDecay: 0.0228
+    , velocityDecay: 0.4
+    }
   -- side-effects ahoy, the data in these selections will change as the simulator runs
   simNodes <- Simulation.addNodes
     { simulator
     , nodes: model.nodes
-    , key: \d i -> d.id
-    , tick: [ CX \d i -> d.x, CY \d i -> d.y ]
-    , drag: Simulation.DefaultDragBehavior
+    , key: \d -> d.id
     }
+
+  _ <- Simulation.onTickNode simulator simNodes [ CX \d i -> d.x, CY \d i -> d.y ]
+  _ <- Simulation.onDrag simulator simNodes Simulation.DefaultDragBehavior
 
   simLinks <- Simulation.addLinks
     { simulator
     , nodes: model.nodes
     , links: model.links
-    , key: \d i -> d.id
-    , tick:
+    , key: \d -> d.id
+    }
+
+  _ <- Simulation.onTickLink simulator simLinks 
         [ X1 \l i -> l.source.x
         , Y1 \l i -> l.source.y
         , X2 \l i -> l.target.x
         , Y2 \l i -> l.target.y
         ]
-    , drag: Simulation.NoDrag
-    }
 
   nodes <- visualize
     { what: Append (SVG "circle")
@@ -257,11 +268,12 @@ drawForceLayout config model simulator = do
   links <- visualize
     { what: Append (SVG "line")
     , using: NewData simLinks
+    , where: linksGroup
     , key: identityKeyFunction
     , attributes:
         { enter:
             [ StrokeWidth_ 1.5
-            , StrokeColor_ config.color
+            , StrokeColor_ "#555"
             , StrokeOpacity_ 0.4
             , Fill_ "none"
             ]

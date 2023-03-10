@@ -68,9 +68,14 @@ appendElement s element = pure s -- TODO
 
 insertElement :: Selection -> Element -> Effect Selection
 insertElement s element = pure s -- TODO
-
 infixr 5 appendElement as |+|
 infixr 5 insertElement as |^|
+
+appendStyledElement :: Selection -> Element -> Array Attribute -> Effect Selection
+appendStyledElement s element attrs = pure s -- TODO
+
+insertStyledElement :: Selection -> Element -> Array Attribute -> Effect Selection
+insertStyledElement s element attrs = pure s -- TODO
 
 visualize :: forall d. JoinConfig d -> Effect Selection
 visualize config = pure emptySelection

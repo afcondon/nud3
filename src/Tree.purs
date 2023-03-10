@@ -5,11 +5,6 @@ import Data.Tree as Tree
 
 import Effect (Effect)
   
-type Config = {
-    viewbox :: { x :: Number, y :: Number, width :: Number, height :: Number }
-  , color :: String
-}
-
 -- temporary definition, revisit taglessD3 for the correct solution later
 -- the Tree will necessarily be a mutable structure, should be hidden behind the FFI
 type LaidOutTree a = {
@@ -20,22 +15,22 @@ type LaidOutTree a = {
 
 data TreeLayout = Vertical | Horizontal | Radial
 
-verticalLayout :: forall a. Config -> Tree.Tree a -> Effect (LaidOutTree a)
-verticalLayout config tree = 
+verticalLayout :: forall a. Tree.Tree a -> Effect (LaidOutTree a)
+verticalLayout tree = 
   pure {
     nodes: []
   , links: []
   , layout: Vertical
   }
-horizontalLayout :: forall a. Config -> Tree.Tree a -> Effect (LaidOutTree a)
-horizontalLayout config tree = 
+horizontalLayout :: forall a. Tree.Tree a -> Effect (LaidOutTree a)
+horizontalLayout tree = 
   pure {
     nodes: []
   , links: []
   , layout: Horizontal
   }
-radialLayout :: forall a. Config -> Tree.Tree a -> Effect (LaidOutTree a)
-radialLayout config tree = 
+radialLayout :: forall a. Tree.Tree a -> Effect (LaidOutTree a)
+radialLayout tree = 
   pure {
     nodes: []
   , links: []
