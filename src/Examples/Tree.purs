@@ -1,14 +1,13 @@
 module Examples.Tree where
 
 import Nud3
-import Effect (Effect)
-import Nud3.Attributes (Attribute(..))
-import Prelude (Unit, bind, negate, pure, unit, ($), (<), (==))
 
 import Data.Number (pi)
 import Data.Tree (Tree)
-import Nud3.Tree as Tree
+import Effect (Effect)
+import Nud3.Attributes (Attribute(..))
 import Nud3.Tree as VizTree
+import Prelude (class Show, Unit, bind, negate, pure, unit, ($), (<), (==))
 
 
 -- | Tree
@@ -32,10 +31,10 @@ computeTextAnchor layoutStyle hasChildren x =
       if hasChildren then "start"
       else "end"
 
-drawTree :: forall d. Tree d -> Effect Unit
+drawTree :: forall d. (Show d) => Tree d -> Effect Unit
 drawTree tree = do
 
-  let root = select (SelectorString "div#tree")
+  let root = select "root" (SelectorString "div#tree")
 
   layoutTreeData <- VizTree.verticalLayout tree
   svg <- appendStyledElement root (SVG "svg")
@@ -50,7 +49,7 @@ drawTree tree = do
 
   node <- visualize
     { what: Append (SVG "g")
-    , using: NewData $ _.nodes layoutTreeData
+    , using: NewData $ VizTree.getNodes layoutTreeData -- could use newtype and unwrap here perhaps
     , where: nodesGroup
     , key: identityKeyFunction
     , attributes:
@@ -67,15 +66,15 @@ drawTree tree = do
 
   labels <- appendStyledElement node (SVG "text")
     [ DY_ 0.31
-    , X \d i -> computeX Tree.Vertical d.hasChildren d.x
+    , X \d i -> computeX VizTree.Vertical d.hasChildren d.x
     , Fill_ "red"
     , Text \d i -> d.name
-    , TextAnchor \d i -> computeTextAnchor Tree.Vertical d.hasChildren d.x
+    , TextAnchor \d i -> computeTextAnchor VizTree.Vertical d.hasChildren d.x
     ]
 
   individualLink <- visualize
     { what: Append (SVG "path")
-    , using: NewData $ _.nodes layoutTreeData
+    , using: NewData $ VizTree.getNodes layoutTreeData
     , where: linksGroup
     , key: identityKeyFunction
     , attributes:

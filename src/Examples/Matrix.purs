@@ -11,7 +11,7 @@ matrix2table :: Effect Unit
 matrix2table = do
   let matrix = [ [ 1, 2, 3 ], [ 4, 5, 6 ], [ 7, 8, 9 ] ]
 
-  let root = select (SelectorString "body")
+  let root = select "root" (SelectorString "body")
   table <- root |+| (HTML "table")
   rows <- visualize
     { what: Append (HTML "tr")
@@ -30,7 +30,7 @@ matrix2table = do
 
   items <- visualize
     { what: Append (HTML "td")
-    , using: InheritData
+    , using: InheritData :: DataSource (Array Int) -- need to give the type to ensure Show instance for debugging, no other reason
     , where: rows
     , key: identityKeyFunction
     , attributes:

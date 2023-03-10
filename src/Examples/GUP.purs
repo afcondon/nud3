@@ -14,7 +14,7 @@ generalUpdatePattern = do
   let letterdata = toCharArray "abcdefghijklmnopqrstuvwxyz"
   let letterdata2 = toCharArray "acdefglmnostxz"
 
-  let root = select (SelectorString "div#gup")
+  let root = select "root" (SelectorString "div#gup")
 
   svg <- root |+| (SVG "svg")
   _ <- style svg
