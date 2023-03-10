@@ -56,7 +56,7 @@ showJoin :: forall d. (Show d) => JoinConfig d -> String
 showJoin join = "Join details: { \n" <>
   "what: " <> show join.what <>
   "where: " <> showSelection join.where <>
-  "using: " <> -- show join.using <>
+  "using: " <> show join.using <>
   "key: (function)" <>
   "enter attrs: " <> show join.attributes.enter <>
   "update attrs:" <> show join.attributes.update <>
