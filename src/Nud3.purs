@@ -2,8 +2,11 @@ module Nud3 where
 
 import Prelude
 
-import Nud3.Attributes (Attribute)
+import Data.Generic.Rep (class Generic)
+import Data.Show.Generic (genericShow)
+import Debug as Debug
 import Effect (Effect)
+import Nud3.Attributes (Attribute)
 import Unsafe.Coerce (unsafeCoerce)
 import Web.DOM (Node) as DOM
 
@@ -54,17 +57,23 @@ data EnterElement =
 
 data Element = SVG String | HTML String
 
+derive instance genericElement :: Generic Element _
+
+instance showElement :: Show Element where
+  show = genericShow
+
+
 -- | DSL functions below this line
 
 emptySelection :: Selection
 emptySelection = { groups: [], parents: [] }
 
 select :: Selector -> Selection
-select (SelectorString s) = emptySelection
-select (SelectorFunction f) = emptySelection
+select (SelectorString s) = Debug.trace ("select with string: " <> s) \_ -> emptySelection
+select (SelectorFunction f) = Debug.trace "select with function" \_ -> emptySelection
 
 appendElement :: Selection -> Element -> Effect Selection
-appendElement s element = pure s -- TODO
+appendElement s element = Debug.trace ("appending " <> show element) \_ -> pure s -- TODO
 
 insertElement :: Selection -> Element -> Effect Selection
 insertElement s element = pure s -- TODO

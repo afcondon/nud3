@@ -8,7 +8,7 @@
     "initps": "spago init",
     "build": "spago build",
     "run": "spago run",
-    "install": "spago install web-dom",
+    "install": "spago install web-dom debug",
     "tidy": "purs-tidy format-in-place src/**/*.purs"
   },
   "keywords": [

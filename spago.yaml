@@ -1,6 +1,7 @@
 package:
   dependencies:
     - console
+    - debug
     - effect
     - prelude
     - web-dom
