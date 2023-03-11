@@ -25,14 +25,15 @@ type UpdateSelection = {
   , parents :: Array DOM.Node
   }
 
-type Selection = { 
-    groups :: Array NodeList
-  , name :: String -- all selections will have a name in this implementation
-  , parents :: Array DOM.Node
-  }
+-- | morally equivalent to a d3 selection, use Selection_ instead
+-- type Selection = { 
+--     groups :: Array NodeList
+--   , name :: String -- all selections will have a name in this implementation
+--   , parents :: Array DOM.Node
+--   }
 
-showSelection :: Selection -> String
-showSelection s = "Selection named: s.name"
+showSelection :: FFI.Selection_ -> String
+showSelection s = "Selection named: " <> FFI.getName_ s
 
 type KeyFunction = forall d i. (Ord i) => (Ord d) => d -> Int -> NodeList -> i
 -- NB this key function is curried whereas, used on the JS side it needs to be uncurried
@@ -43,7 +44,7 @@ identityKeyFunction = \d _ _ -> unsafeCoerce d -- TODO something nicer here
 
 type JoinConfig d = { 
     what :: EnterElement
-  , where :: Selection
+  , where :: FFI.Selection_
   , using :: DataSource d
   , key :: KeyFunction
   , attributes :: {
@@ -93,40 +94,48 @@ instance showElement :: Show Element where
 
 -- | DSL functions below this line
 
-select :: String -> Selector -> Selection
+select :: String -> Selector -> FFI.Selection_
 select name (SelectorString s) = Debug.trace ("select with string: " <> s) \_ -> unsafeCoerce $ FFI.selectManyWithString_ name s
 select name (SelectorFunction f) = Debug.trace "select with function" \_ -> unsafeCoerce $ FFI.selectManyWithFunction_ name (unsafeCoerce f)
 
-appendElement :: Selection -> Element -> Effect Selection
-appendElement s element = Debug.trace ("appending " <> show element) \_ -> pure s -- TODO
+appendElement :: FFI.Selection_ -> Element -> Effect FFI.Selection_
+appendElement s element = do
+  Console.log ("appending " <> show element)
+  pure $ case element of
+    SVG tag -> FFI.appendElement_ tag s
+    HTML tag -> FFI.appendElement_ tag s
 
-insertElement :: Selection -> Element -> Effect Selection
-insertElement s element = Debug.trace ("inserting " <> show element) \_ -> pure s -- TODO
+insertElement :: FFI.Selection_ -> Element -> Effect FFI.Selection_
+insertElement s element = do
+  Console.log $ "inserting " <> show element
+  pure $ case element of
+    SVG tag -> FFI.insertElement_ tag ":first-child" s -- TODO handle other selectors and function instead of string too
+    HTML tag -> FFI.insertElement_ tag ":first-child" s
 
 
 infixr 5 appendElement as |+|
 infixr 5 insertElement as |^|
 
-appendStyledElement :: forall d. Selection -> Element -> Array (Attribute d) -> Effect Selection
+appendStyledElement :: forall d. FFI.Selection_ -> Element -> Array (Attribute d) -> Effect FFI.Selection_
 appendStyledElement s element attrs = Debug.trace ("appending styled eleemnt: " <> show element <> show attrs) \_ -> pure s -- TODO
 
-insertStyledElement :: forall d. Selection -> Element -> Array (Attribute d) -> Effect Selection
+insertStyledElement :: forall d. FFI.Selection_ -> Element -> Array (Attribute d) -> Effect FFI.Selection_
 insertStyledElement s element attrs = Debug.trace ("inserting styled element " <> show element <> show attrs) \_ -> pure s -- TODO
 
 -- | visualize replaces the .enter().data().append() chain in d3 with a single function
-visualize :: forall d. (Show d) => JoinConfig d -> Effect Selection
+visualize :: forall d. (Show d) => JoinConfig d -> Effect FFI.Selection_
 visualize config = do
   Console.log (showJoin config)
   pure config.where -- TODO implement this
 
 --| here the data is already in the DOM, we just need to update the visualisation with some new data
-revisualize :: forall d. Selection -> Array d -> Effect Selection
+revisualize :: forall d. FFI.Selection_ -> Array d -> Effect FFI.Selection_
 revisualize s ds = Debug.trace "joining new data to the DOM and updating visualiztion with it" \_ -> pure s -- TODO
 
-filter :: Selection -> String -> Selection
+filter :: FFI.Selection_ -> String -> FFI.Selection_
 filter s _ = s -- TODO  
 
-style :: forall d. Selection -> Array (Attribute d) -> Effect Selection
+style :: forall d. FFI.Selection_ -> Array (Attribute d) -> Effect FFI.Selection_
 style s _ = pure s -- TODO
 
 

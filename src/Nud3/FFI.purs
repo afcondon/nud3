@@ -1,10 +1,6 @@
 module Nud3.FFI where
 
-import Nud3.Types
-import Prelude
 
-import Control.Plus (empty)
-import Unsafe.Coerce (unsafeCoerce)
 import Web.DOM as DOM
 
 foreign import data Selection_ :: Type -- opaque and mutable data 
@@ -23,3 +19,6 @@ foreign import selectManyWithString_ :: String -> String -> Selection_
 foreign import selectManyWithFunction_ :: String -> D3SelectorFunction -> Selection_
 -- foreign import selectGroupedWithFunction_ :: Selection -> D3SelectorFunction -> Selection_
 -- foreign import selectFirstFromWithFunction_ :: Selection -> D3SelectorFunction -> Selection_
+
+foreign import appendElement_ :: String -> Selection_ -> Selection_
+foreign import insertElement_ :: String -> String -> Selection_ -> Selection_

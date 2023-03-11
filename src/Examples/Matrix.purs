@@ -13,6 +13,7 @@ matrix2table = do
 
   let root = select "root" (SelectorString "body")
   table <- root |+| (HTML "table")
+  beforeTable <- root |^| (HTML "p")
   rows <- visualize
     { what: Append (HTML "tr")
     , where: table
