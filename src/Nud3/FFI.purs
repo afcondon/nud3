@@ -5,52 +5,21 @@ import Prelude
 
 import Control.Plus (empty)
 import Unsafe.Coerce (unsafeCoerce)
+import Web.DOM as DOM
 
-foreign import data D3Selection :: Type
+foreign import data Selection_ :: Type -- opaque and mutable data 
 foreign import data D3SelectorFunction :: Type
 
-foreign import selectFirstWithStringSelector :: String -> D3Selection
-foreign import selectManyWithStringSelector :: String -> D3Selection
-foreign import selectGroupedWithStringSelector :: Selection -> String -> D3Selection
-foreign import selectFirstFromWithStringSelector :: Selection -> String -> D3Selection
+foreign import getGroups_ :: Selection_ -> Array DOM.NodeList
+foreign import getParents_ :: Selection_ -> Array DOM.Node
+foreign import getName_ :: Selection_ -> String
 
-foreign import selectFirstWithFunctionSelector :: D3SelectorFunction -> D3Selection
-foreign import selectManyWithFunctionSelector :: D3SelectorFunction -> D3Selection
-foreign import selectGroupedWithFunctionSelector :: Selection -> D3SelectorFunction -> D3Selection
-foreign import selectFirstFromWithFunctionSelector :: Selection -> D3SelectorFunction -> D3Selection
+-- foreign import selectFirstWithString_ :: String -> Selection_
+foreign import selectManyWithString_ :: String -> String -> Selection_
+-- foreign import selectGroupedWithString_ :: Selection -> String -> Selection_
+-- foreign import selectFirstFromWithString_ :: Selection -> String -> Selection_
 
--- | hiding all the coercion stuff from the user here
--- | to be replaced with code that doesn't need coercion later when the D3 api is replaced one native to this library
-
-selectFirst :: Selector -> Selection
-selectFirst =
-  case _ of
-    SelectorString selectorString -> unsafeCoerce $ selectFirstWithStringSelector selectorString
-    SelectorFunction selectorFunction -> unsafeCoerce $ selectFirstWithFunctionSelector (unsafeCoerce selectorFunction)
-
-selectMany :: Selector -> Selection
-selectMany =
-  case _ of
-    SelectorString selectorString -> unsafeCoerce $ selectManyWithStringSelector selectorString
-    SelectorFunction selectorFunction -> unsafeCoerce $ selectManyWithFunctionSelector (unsafeCoerce selectorFunction)
-
-selectFirstFrom :: Selection -> Selector -> Selection
-selectFirstFrom selection =
-  case _ of
-    SelectorString selectorString -> unsafeCoerce $ selectFirstFromWithStringSelector selection selectorString
-    SelectorFunction selectorFunction -> unsafeCoerce $ selectFirstFromWithFunctionSelector selection (unsafeCoerce selectorFunction)
-
-selectGrouped :: Selection -> Selector -> Selection
-selectGrouped selection =
-  case _ of
-    SelectorString selectorString -> unsafeCoerce $ selectGroupedWithStringSelector selection selectorString
-    SelectorFunction selectorFunction -> unsafeCoerce $ selectGroupedWithFunctionSelector selection (unsafeCoerce selectorFunction)
-
-dataBind :: forall d. Selection -> Array d -> KeyFunction -> UpdateSelection
-dataBind selection data' keyFunction = emptyUpdateSelection
-
-emptyUpdateSelection :: UpdateSelection
-emptyUpdateSelection = { enter: [], exit: emptyNodeList, update: [], parents: [] }
-
-emptyNodeList :: NodeList
-emptyNodeList = []
+-- foreign import selectFirstWithFunction_ :: D3SelectorFunction -> Selection_
+foreign import selectManyWithFunction_ :: String -> D3SelectorFunction -> Selection_
+-- foreign import selectGroupedWithFunction_ :: Selection -> D3SelectorFunction -> Selection_
+-- foreign import selectFirstFromWithFunction_ :: Selection -> D3SelectorFunction -> Selection_

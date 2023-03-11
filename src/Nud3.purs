@@ -8,6 +8,7 @@ import Debug as Debug
 import Effect (Effect)
 import Effect.Class.Console as Console
 import Nud3.Attributes (Attribute)
+import Nud3.FFI as FFI
 import Unsafe.Coerce (unsafeCoerce)
 import Web.DOM (Node) as DOM
 
@@ -92,15 +93,9 @@ instance showElement :: Show Element where
 
 -- | DSL functions below this line
 
-emptySelection :: Selection
-emptySelection = { groups: [], parents: [], name: "empty" }
-
-namedSelection :: String -> Selection
-namedSelection name = { groups: [], parents: [], name: name }
-
 select :: String -> Selector -> Selection
-select name (SelectorString s) = Debug.trace ("select with string: " <> s) \_ -> namedSelection name
-select name (SelectorFunction f) = Debug.trace "select with function" \_ -> namedSelection name
+select name (SelectorString s) = Debug.trace ("select with string: " <> s) \_ -> unsafeCoerce $ FFI.selectManyWithString_ name s
+select name (SelectorFunction f) = Debug.trace "select with function" \_ -> unsafeCoerce $ FFI.selectManyWithFunction_ name (unsafeCoerce f)
 
 appendElement :: Selection -> Element -> Effect Selection
 appendElement s element = Debug.trace ("appending " <> show element) \_ -> pure s -- TODO
@@ -122,7 +117,7 @@ insertStyledElement s element attrs = Debug.trace ("inserting styled element " <
 visualize :: forall d. (Show d) => JoinConfig d -> Effect Selection
 visualize config = do
   Console.log (showJoin config)
-  pure emptySelection
+  pure config.where -- TODO implement this
 
 --| here the data is already in the DOM, we just need to update the visualisation with some new data
 revisualize :: forall d. Selection -> Array d -> Effect Selection
