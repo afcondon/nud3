@@ -54,13 +54,13 @@ type JoinConfig d = {
 
 showJoin :: forall d. (Show d) => JoinConfig d -> String
 showJoin join = "Join details: { \n" <>
-  "what: " <> show join.what <>
-  "where: " <> showSelection join.where <>
-  "using: " <> show join.using <>
-  "key: (function)" <>
-  "enter attrs: " <> show join.attributes.enter <>
-  "update attrs:" <> show join.attributes.update <>
-  "exit attrs: " <> show join.attributes.exit
+  "\twhat: " <> show join.what <>
+  "\n\twhere: " <> showSelection join.where <>
+  "\n\tusing: " <> show join.using <>
+  "\n\tkey: (function)" <>
+  "\n\tenter attrs: " <> show join.attributes.enter <>
+  "\n\tupdate attrs:" <> show join.attributes.update <>
+  "\n\texit attrs: " <> show join.attributes.exit
 
 data DataSource d = InheritData | NewData (Array d)
 
