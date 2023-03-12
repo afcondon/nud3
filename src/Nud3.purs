@@ -2,7 +2,10 @@ module Nud3 where
 
 import Prelude
 
+import Data.Array (head)
 import Data.Generic.Rep (class Generic)
+import Data.Maybe (Maybe(..))
+import Data.Newtype (traverse)
 import Data.Show.Generic (genericShow)
 import Debug as Debug
 import Effect (Effect)
@@ -115,6 +118,13 @@ insertElement s element = do
 
 infixr 5 appendElement as |+|
 infixr 5 insertElement as |^|
+
+addAttributes :: forall d. FFI.Selection_ -> Array (Attribute d) -> Effect FFI.Selection_
+addAttributes s attrs = 
+  case head attrs of
+    Nothing -> pure s
+    Just attr -> do
+       pure $ FFI.addAttribute_ s "width" 1000.0
 
 appendStyledElement :: forall d. FFI.Selection_ -> Element -> Array (Attribute d) -> Effect FFI.Selection_
 appendStyledElement s element attrs = Debug.trace ("appending styled eleemnt: " <> show element <> show attrs) \_ -> pure s -- TODO

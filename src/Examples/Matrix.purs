@@ -1,6 +1,7 @@
 module Examples.Matrix where
 
 import Nud3
+
 import Effect (Effect)
 import Nud3.Attributes (Attribute(..))
 import Prelude (Unit, bind, pure, unit)
@@ -12,7 +13,8 @@ matrix2table = do
   let matrix = [ [ 1, 2, 3 ], [ 4, 5, 6 ], [ 7, 8, 9 ] ]
 
   let root = select "root" (SelectorString "body")
-  table <- root |+| (HTML "table")
+  table <- root |+| (HTML "table") -- name is not passed thru, should it be? 
+  _ <- addAttributes table [ Classed_ "matrix" ] -- just to test the addAttributes function
   beforeTable <- root |^| (HTML "p")
   rows <- visualize
     { what: Append (HTML "tr")

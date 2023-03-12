@@ -21,7 +21,103 @@ export function insertElement_ (name) {
     selection.insert(name, selector)
 }
 
-// Code below this comment is from D3.js
+export function addAttribute_ (selection) {
+  return (name) => (value) =>
+    selection.attr(name, value)
+}
+
+// Code below this comment is from D3.js, introduced in the order that the dependencies played out
+
+// ---------------------------------------------------------------------
+// - from D3/selection/each.js
+function selection_each(callback) {
+
+  for (var groups = this._groups, j = 0, m = groups.length; j < m; ++j) {
+    for (var group = groups[j], i = 0, n = group.length, node; i < n; ++i) {
+      if (node = group[i]) callback.call(node, node.__data__, i, group);
+    }
+  }
+
+  return this;
+}
+
+
+// ---------------------------------------------------------------------
+// - from D3/selection/node.j
+
+function selection_node() {
+
+  for (var groups = this._groups, j = 0, m = groups.length; j < m; ++j) {
+    for (var group = groups[j], i = 0, n = group.length; i < n; ++i) {
+      var node = group[i];
+      if (node) return node;
+    }
+  }
+
+  return null;
+}
+
+// ---------------------------------------------------------------------
+// - from D3/selection/attr.js
+
+// all this stuff from D3.js is just Cmd-C Cmd-V at the moment, 
+// looks over-complicated too, should simplify and de-multiplex the polymorphic parameters
+
+function attrRemove(name) {
+  return function() {
+    this.removeAttribute(name);
+  };
+}
+
+function attrRemoveNS(fullname) {
+  return function() {
+    this.removeAttributeNS(fullname.space, fullname.local);
+  };
+}
+
+function attrConstant(name, value) {
+  return function() {
+    this.setAttribute(name, value);
+  };
+}
+
+function attrConstantNS(fullname, value) {
+  return function() {
+    this.setAttributeNS(fullname.space, fullname.local, value);
+  };
+}
+
+function attrFunction(name, value) {
+  return function() {
+    var v = value.apply(this, arguments);
+    if (v == null) this.removeAttribute(name);
+    else this.setAttribute(name, v);
+  };
+}
+
+function attrFunctionNS(fullname, value) {
+  return function() {
+    var v = value.apply(this, arguments);
+    if (v == null) this.removeAttributeNS(fullname.space, fullname.local);
+    else this.setAttributeNS(fullname.space, fullname.local, v);
+  };
+}
+
+function selection_attr(name, value) {
+  var fullname = namespace(name);
+
+  if (arguments.length < 2) {
+    var node = this.node();  // this introduces a dependency on D3/selection/node.js
+    return fullname.local
+        ? node.getAttributeNS(fullname.space, fullname.local)
+        : node.getAttribute(fullname);
+  }
+
+  return this.each((value == null // this introduces a dependency on D3/selection/each.js
+      ? (fullname.local ? attrRemoveNS : attrRemove) : (typeof value === "function"
+      ? (fullname.local ? attrFunctionNS : attrFunction)
+      : (fullname.local ? attrConstantNS : attrConstant)))(fullname, value));
+}
 
 // ---------------------------------------------------------------------
 // - from D3.selectAll.js
@@ -185,39 +281,39 @@ function selector (selector) {
 // there are many many functions on this prototype, uncomment as needed
 Selection.prototype = selection.prototype = {
   constructor: Selection,
-  select: selection_select,
+  // [Symbol.iterator]: selection_iterator
+  // call: selection_call,
+  // classed: selection_classed,
+  // clone: selection_clone,
+  // data: selection_data,
+  // datum: selection_datum,
+  // dispatch: selection_dispatch,
+  // empty: selection_empty,
+  // enter: selection_enter,
+  // exit: selection_exit,
+  // filter: selection_filter,
+  // html: selection_html,
+  // join: selection_join,
+  // lower: selection_lower,
+  // merge: selection_merge,
+  // nodes: selection_nodes,
+  // on: selection_on,
+  // order: selection_order,
+  // property: selection_property,
+  // raise: selection_raise,
+  // remove: selection_remove,
   // selectAll: selection_selectAll,
   // selectChild: selection_selectChild,
   // selectChildren: selection_selectChildren,
-  // filter: selection_filter,
-  // data: selection_data,
-  // enter: selection_enter,
-  // exit: selection_exit,
-  // join: selection_join,
-  // merge: selection_merge,
-  selection: selection_selection,
-  // order: selection_order,
-  // sort: selection_sort,
-  // call: selection_call,
-  // nodes: selection_nodes,
-  // node: selection_node,
   // size: selection_size,
-  // empty: selection_empty,
-  // each: selection_each,
-  // attr: selection_attr,
+  // sort: selection_sort,
   // style: selection_style,
-  // property: selection_property,
-  // classed: selection_classed,
   // text: selection_text,
-  // html: selection_html,
-  // raise: selection_raise,
-  // lower: selection_lower,
   append: selection_append,
+  attr: selection_attr,
+  each: selection_each,
   insert: selection_insert,
-  // remove: selection_remove,
-  // clone: selection_clone,
-  // datum: selection_datum,
-  // on: selection_on,
-  // dispatch: selection_dispatch,
-  // [Symbol.iterator]: selection_iterator
+  node: selection_node,
+  select: selection_select,
+  selection: selection_selection,
 };
