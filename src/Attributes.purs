@@ -2,6 +2,13 @@ module Nud3.Attributes where
 
 import Prelude
 
+import Unsafe.Coerce (unsafeCoerce)
+
+foreign import data AttributeSetter_ :: Type 
+
+exportAttributeSetter_ :: forall d. d -> AttributeSetter_
+exportAttributeSetter_ = unsafeCoerce -- probably the only efficient way to do this, at least the unsafeCoerce is in one place and on one type
+
 type AttributeSetter d t = d -> Int -> t
 
 data Attribute d = 
@@ -58,6 +65,118 @@ data Attribute d =
   | Y1 (AttributeSetter d Number)
   | Y2_ Number
   | Y2 (AttributeSetter d Number)
+
+getValueFromAttribute :: forall d v. Attribute d -> AttributeSetter_
+getValueFromAttribute = case _ of 
+  Remove -> exportAttributeSetter_ unit -- TODO this one is a special case
+  Background_ v -> exportAttributeSetter_ v
+  Background f -> exportAttributeSetter_ f
+  Color_ v -> exportAttributeSetter_ v
+  Color f -> exportAttributeSetter_ f
+  Classed_ v -> exportAttributeSetter_ v
+  Classed f -> exportAttributeSetter_ f
+  CX_ v -> exportAttributeSetter_ v
+  CX f -> exportAttributeSetter_ f
+  CY_ v -> exportAttributeSetter_ v
+  CY f -> exportAttributeSetter_ f
+  DX_ v -> exportAttributeSetter_ v
+  DX f -> exportAttributeSetter_ f
+  DY_ v -> exportAttributeSetter_ v
+  DY f -> exportAttributeSetter_ f
+  Fill_ v -> exportAttributeSetter_ v
+  Fill f -> exportAttributeSetter_ f
+  FontFamily_ v -> exportAttributeSetter_ v
+  FontFamily f -> exportAttributeSetter_ f
+  FontSize_ v -> exportAttributeSetter_ v
+  FontSize f -> exportAttributeSetter_ f
+  Height_ v -> exportAttributeSetter_ v
+  Height f -> exportAttributeSetter_ f
+  Radius_ v -> exportAttributeSetter_ v
+  Radius f -> exportAttributeSetter_ f
+  StrokeColor_ v -> exportAttributeSetter_ v
+  StrokeColor f -> exportAttributeSetter_ f
+  StrokeOpacity_ v -> exportAttributeSetter_ v
+  StrokeOpacity f -> exportAttributeSetter_ f
+  StrokeWidth_ v -> exportAttributeSetter_ v
+  StrokeWidth f -> exportAttributeSetter_ f
+  Style_ v -> exportAttributeSetter_ v
+  Style f -> exportAttributeSetter_ f
+  Text_ v -> exportAttributeSetter_ v
+  Text f -> exportAttributeSetter_ f
+  TextAnchor_ v -> exportAttributeSetter_ v
+  TextAnchor f -> exportAttributeSetter_ f
+  TransitionTo vs -> exportAttributeSetter_ vs
+  Width_ v -> exportAttributeSetter_ v
+  Width f -> exportAttributeSetter_ f
+  ViewBox_ x y w h -> exportAttributeSetter_ [x, y, w, h] -- TODO this one is a special case, impressive that CoPilot guessed it
+  X_ v -> exportAttributeSetter_ v
+  X f -> exportAttributeSetter_ f
+  Y_ v -> exportAttributeSetter_ v
+  Y f -> exportAttributeSetter_ f
+  X1_ v -> exportAttributeSetter_ v
+  X1 f -> exportAttributeSetter_ f
+  X2_ v -> exportAttributeSetter_ v
+  X2 f -> exportAttributeSetter_ f
+  Y1_ v -> exportAttributeSetter_ v
+  Y1 f -> exportAttributeSetter_ f
+  Y2_ v -> exportAttributeSetter_ v
+  Y2 f -> exportAttributeSetter_ f
+
+getKeyFromAttribute :: forall d. Attribute d -> String
+getKeyFromAttribute = case _ of 
+  Remove -> "remove" -- TODO this one is a special case
+  Background_ _ -> "background"
+  Background _ -> "background"
+  Color_ _ -> "color"
+  Color _ -> "color"
+  Classed_ _ -> "classed"
+  Classed _ -> "classed"
+  CX_ _ -> "cx"
+  CX _ -> "cx"
+  CY_ _ -> "cy"
+  CY _ -> "cy"
+  DX_ _ -> "dx"
+  DX _ -> "dx"
+  DY_ _ -> "dy"
+  DY _ -> "dy"
+  Fill_ _ -> "fill"
+  Fill _ -> "fill"
+  FontFamily_ _ -> "font-family"
+  FontFamily _ -> "font-family"
+  FontSize_ _ -> "font-size"
+  FontSize _ -> "font-size"
+  Height_ _ -> "height"
+  Height _ -> "height"
+  Radius_ _ -> "radius"
+  Radius _ -> "radius"
+  StrokeColor_ _ -> "stroke"
+  StrokeColor _ -> "stroke"
+  StrokeOpacity_ _ -> "stroke-opacity"
+  StrokeOpacity _ -> "stroke-opacity"
+  StrokeWidth_ _ -> "stroke-width"
+  StrokeWidth _ -> "stroke-width"
+  Style_ _ -> "style"
+  Style _ -> "style"
+  Text_ _ -> "text"
+  Text _ -> "text"
+  TextAnchor_ _ -> "text-anchor"
+  TextAnchor _ -> "text-anchor"
+  TransitionTo _ -> "transition"
+  Width_ _ -> "width"
+  Width _ -> "width"
+  ViewBox_ _ _ _ _ -> "viewBox"
+  X_ _ -> "x"
+  X _ -> "x"
+  Y_ _ -> "y"
+  Y _ -> "y"
+  X1_ _ -> "x1"
+  X1 _ -> "x1"
+  X2_ _ -> "x2"
+  X2 _ -> "x2"
+  Y1_ _ -> "y1"
+  Y1 _ -> "y1"
+  Y2_ _ -> "y2"
+  Y2 _ -> "y2"
 
 instance showAttribute :: Show (Attribute d) where
   show (Remove) = "\n\t\tRemove"

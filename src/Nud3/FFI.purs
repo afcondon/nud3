@@ -6,6 +6,7 @@ import Nud3.Attributes (Attribute)
 import Web.DOM as DOM
 
 foreign import data Selection_ :: Type -- opaque and mutable data 
+
 foreign import data D3SelectorFunction :: Type
 
 foreign import getGroups_ :: Selection_ -> Array DOM.NodeList

@@ -10,7 +10,7 @@ import Data.Show.Generic (genericShow)
 import Debug as Debug
 import Effect (Effect)
 import Effect.Class.Console as Console
-import Nud3.Attributes (Attribute)
+import Nud3.Attributes (Attribute, getKeyFromAttribute, getValueFromAttribute)
 import Nud3.FFI as FFI
 import Unsafe.Coerce (unsafeCoerce)
 import Web.DOM (Node) as DOM
@@ -124,7 +124,7 @@ addAttributes s attrs =
   case head attrs of
     Nothing -> pure s
     Just attr -> do
-       pure $ FFI.addAttribute_ s "width" 1000.0
+       pure $ FFI.addAttribute_ s (getKeyFromAttribute attr) (getValueFromAttribute attr)
 
 appendStyledElement :: forall d. FFI.Selection_ -> Element -> Array (Attribute d) -> Effect FFI.Selection_
 appendStyledElement s element attrs = Debug.trace ("appending styled eleemnt: " <> show element <> show attrs) \_ -> pure s -- TODO
