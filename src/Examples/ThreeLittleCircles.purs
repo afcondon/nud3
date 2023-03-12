@@ -21,7 +21,7 @@ threeLittleCircles = do
 
   circleGroup <- svg |+| (SVG "g")
   circles <- visualize
-    { what: Append (SVG "circle")
+    { what: SVG "circle"
     , using: NewData [ 32, 57, 293 ]
     , where: circleGroup
     , key: identityKeyFunction

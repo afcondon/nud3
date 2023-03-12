@@ -28,3 +28,8 @@ foreign import appendElement_ :: String -> Selection_ -> Selection_
 foreign import insertElement_ :: String -> String -> Selection_ -> Selection_
 
 foreign import addAttribute_ :: forall d. Selection_ -> String -> d -> Unit
+
+foreign import beginJoin_ :: Selection_ -> String -> Selection_
+foreign import useInheritedData_ :: Selection_ -> Selection_
+foreign import addData_ :: forall d. Selection_ -> Array d -> Selection_
+foreign import finishJoin_ :: Selection_ -> String -> Selection_

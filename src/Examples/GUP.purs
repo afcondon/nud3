@@ -24,7 +24,7 @@ generalUpdatePattern = do
 
   gupGroup <- svg |+| (SVG "g")
   letters <- visualize
-    { what: Append (SVG "text")
+    { what: SVG "text"
     , using: NewData letterdata
     , where: gupGroup
     , key: identityKeyFunction

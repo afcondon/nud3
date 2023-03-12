@@ -48,7 +48,7 @@ drawTree tree = do
   nodesGroup <- svg |+| (SVG "g")
 
   node <- visualize
-    { what: Append (SVG "g")
+    { what: SVG "g"
     , using: NewData $ VizTree.getNodes layoutTreeData -- could use newtype and unwrap here perhaps
     , where: nodesGroup
     , key: identityKeyFunction
@@ -73,7 +73,7 @@ drawTree tree = do
     ]
 
   individualLink <- visualize
-    { what: Append (SVG "path")
+    { what: SVG "path"
     , using: NewData $ VizTree.getNodes layoutTreeData
     , where: linksGroup
     , key: identityKeyFunction

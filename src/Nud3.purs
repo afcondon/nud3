@@ -46,7 +46,7 @@ identityKeyFunction :: KeyFunction
 identityKeyFunction = \d _ _ -> unsafeCoerce d -- TODO something nicer here
 
 type JoinConfig d = { 
-    what :: EnterElement
+    what :: Element
   , where :: FFI.Selection_
   , using :: DataSource d
   , key :: KeyFunction
@@ -79,14 +79,9 @@ instance showDataSourceSimple :: Show (DataSource Unit) where
 
 type ElementConfig d = Array (Attribute d)
 
-data EnterElement = 
-    Append Element 
-  | Insert Element
-
-derive instance genericEnterElement :: Generic EnterElement _
-
-instance showEnterElement :: Show EnterElement where
-  show = genericShow
+getElementName :: Element -> String
+getElementName (SVG tag) = tag
+getElementName (HTML tag) = tag
 
 data Element = SVG String | HTML String
 
@@ -138,12 +133,17 @@ appendStyledElement s element attrs = Debug.trace ("appending styled eleemnt: " 
 insertStyledElement :: forall d. FFI.Selection_ -> Element -> Array (Attribute d) -> Effect FFI.Selection_
 insertStyledElement s element attrs = Debug.trace ("inserting styled element " <> show element <> show attrs) \_ -> pure s -- TODO
 
--- | visualize replaces the .enter().data().append() chain in d3 with a single function
+-- | visualize replaces the (config.where).selectAll(config.what).data(config.using).append(config.what) 
+-- | chain in d3 with a single function
 visualize :: forall d. (Show d) => JoinConfig d -> Effect FFI.Selection_
 visualize config = do
-  Console.log (showJoin config)
-  pure config.where -- TODO implement this
-
+  let element = getElementName config.what
+  let s' = FFI.beginJoin_ config.where element
+  let s'' = case config.using of
+              InheritData -> FFI.useInheritedData_ s' -- uses d => d
+              NewData ds -> FFI.addData_ s' ds
+  pure $ FFI.finishJoin_ s'' element -- TODO need to add enter, update, exit attributes here later
+  
 --| here the data is already in the DOM, we just need to update the visualisation with some new data
 revisualize :: forall d. FFI.Selection_ -> Array d -> Effect FFI.Selection_
 revisualize s ds = Debug.trace "joining new data to the DOM and updating visualiztion with it" \_ -> pure s -- TODO

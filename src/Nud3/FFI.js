@@ -26,6 +26,23 @@ export function addAttribute_ (selection) {
     selection.attr(name, value)
 }
 
+// beginJoin_ :: Selection_ -> String -> Selection_
+export function beginJoin_ (selection) {
+  return (element) => selection.selectAll(element)
+}
+// useInheritedData_ :: Selection_ -> Selection_
+export function useInheritedData_ (selection) {
+  return selection.data(d => d);
+}
+// addData_ :: Selection_ -> Array d -> Selection_
+export function addData_ (selection) {
+  return (data) => selection.data(data)
+}
+// finishJoin_ :: Selection_ -> String -> Selection_
+export function finishJoin_ () {
+  return (element) => selection.join(element)
+}
+
 // Code below this comment is from D3.js, introduced in the order that the dependencies played out
 
 // ---------------------------------------------------------------------
@@ -285,7 +302,6 @@ Selection.prototype = selection.prototype = {
   // call: selection_call,
   // classed: selection_classed,
   // clone: selection_clone,
-  // data: selection_data,
   // datum: selection_datum,
   // dispatch: selection_dispatch,
   // empty: selection_empty,
@@ -293,7 +309,6 @@ Selection.prototype = selection.prototype = {
   // exit: selection_exit,
   // filter: selection_filter,
   // html: selection_html,
-  // join: selection_join,
   // lower: selection_lower,
   // merge: selection_merge,
   // nodes: selection_nodes,
@@ -302,7 +317,6 @@ Selection.prototype = selection.prototype = {
   // property: selection_property,
   // raise: selection_raise,
   // remove: selection_remove,
-  // selectAll: selection_selectAll,
   // selectChild: selection_selectChild,
   // selectChildren: selection_selectChildren,
   // size: selection_size,
@@ -311,9 +325,12 @@ Selection.prototype = selection.prototype = {
   // text: selection_text,
   append: selection_append,
   attr: selection_attr,
+  data: selection_data, // TODO
   each: selection_each,
   insert: selection_insert,
+  join: selection_join, // TODO
   node: selection_node,
   select: selection_select,
+  selectAll: selection_selectAll, // TODO
   selection: selection_selection,
 };
