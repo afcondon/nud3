@@ -15,3 +15,4 @@
 /.spago
 /node_modules
 /output
+/dist/bundle.js
