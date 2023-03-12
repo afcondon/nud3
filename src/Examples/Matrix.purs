@@ -14,7 +14,7 @@ matrix2table = do
 
   let root = select "root" (SelectorString "body")
   table <- root |+| (HTML "table") -- name is not passed thru, should it be? 
-  _ <- addAttributes table [ Classed_ "matrix" ] -- just to test the addAttributes function
+  _ <- addAttributes table [ Classed_ "matrix", Width_ 1000.0, Height_ 1000.0 ] -- just to test the addAttributes function
   beforeTable <- root |^| (HTML "p")
   rows <- visualize
     { what: Append (HTML "tr")

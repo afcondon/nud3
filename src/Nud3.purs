@@ -2,11 +2,11 @@ module Nud3 where
 
 import Prelude
 
-import Data.Array (head)
+import Data.Array (head, last, tail)
 import Data.Generic.Rep (class Generic)
-import Data.Maybe (Maybe(..))
-import Data.Newtype (traverse)
+import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Show.Generic (genericShow)
+import Data.Traversable (traverse)
 import Debug as Debug
 import Effect (Effect)
 import Effect.Class.Console as Console
@@ -112,19 +112,25 @@ insertElement :: FFI.Selection_ -> Element -> Effect FFI.Selection_
 insertElement s element = do
   Console.log $ "inserting " <> show element
   pure $ case element of
-    SVG tag -> FFI.insertElement_ tag ":first-child" s -- TODO handle other selectors and function instead of string too
+    SVG tag -> FFI.insertElement_ tag ":first-child" s -- TODO handle other "before selectors" (and function) instead of fixing it to ":first-child"
     HTML tag -> FFI.insertElement_ tag ":first-child" s
 
 
 infixr 5 appendElement as |+|
 infixr 5 insertElement as |^|
 
+-- NB the semantics of D3 are not spelt out and a selection is returned from every attr 
+-- to facilitate function chaining. In PureScript we're going to say that the Attribute Setter
+-- effects the DOM and returns only Unit.
 addAttributes :: forall d. FFI.Selection_ -> Array (Attribute d) -> Effect FFI.Selection_
-addAttributes s attrs = 
-  case head attrs of
-    Nothing -> pure s
-    Just attr -> do
-       pure $ FFI.addAttribute_ s (getKeyFromAttribute attr) (getValueFromAttribute attr)
+addAttributes s attrs = do
+  let _ = (addAttribute s) <$> attrs -- relies on the fact that addAttribute returns the same selection each time
+  pure s
+
+-- | TODO modulo compile cycles and other issues, this should be in the Attributes module
+addAttribute :: forall d. FFI.Selection_ -> Attribute d -> Unit
+addAttribute s attr = FFI.addAttribute_ s (getKeyFromAttribute attr) (getValueFromAttribute attr)
+
 
 appendStyledElement :: forall d. FFI.Selection_ -> Element -> Array (Attribute d) -> Effect FFI.Selection_
 appendStyledElement s element attrs = Debug.trace ("appending styled eleemnt: " <> show element <> show attrs) \_ -> pure s -- TODO

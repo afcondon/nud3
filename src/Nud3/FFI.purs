@@ -3,6 +3,7 @@ module Nud3.FFI where
 
 import Effect (Effect)
 import Nud3.Attributes (Attribute)
+import Prelude (Unit)
 import Web.DOM as DOM
 
 foreign import data Selection_ :: Type -- opaque and mutable data 
@@ -26,4 +27,4 @@ foreign import selectManyWithFunction_ :: String -> D3SelectorFunction -> Select
 foreign import appendElement_ :: String -> Selection_ -> Selection_
 foreign import insertElement_ :: String -> String -> Selection_ -> Selection_
 
-foreign import addAttribute_ :: forall d. Selection_ -> String -> d -> Selection_
+foreign import addAttribute_ :: forall d. Selection_ -> String -> d -> Unit
