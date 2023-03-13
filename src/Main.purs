@@ -14,7 +14,7 @@ import Examples.Tree (drawTree)
 main :: Effect Unit
 main = do
   matrix2table
-  -- threeLittleCircles
+  threeLittleCircles
   -- generalUpdatePattern
   -- drawTree 
   -- drawForceLayout

@@ -105,7 +105,7 @@ appendElement s element = do
 
 insertElement :: FFI.Selection_ -> Element -> Effect FFI.Selection_
 insertElement s element = do
-  Console.log $ "inserting " <> show element
+  -- Console.log $ "inserting " <> show element
   pure $ case element of
     SVG tag -> FFI.insertElement_ tag ":first-child" s -- TODO handle other "before selectors" (and function) instead of fixing it to ":first-child"
     HTML tag -> FFI.insertElement_ tag ":first-child" s
@@ -128,10 +128,14 @@ addAttribute s attr = FFI.addAttribute_ s (getKeyFromAttribute attr) (getValueFr
 
 
 appendStyledElement :: forall d. FFI.Selection_ -> Element -> Array (Attribute d) -> Effect FFI.Selection_
-appendStyledElement s element attrs = Debug.trace ("appending styled eleemnt: " <> show element <> show attrs) \_ -> pure s -- TODO
+appendStyledElement s element attrs = 
+  Debug.trace ("appending styled eleemnt: " <> show element <> show attrs) \_ -> 
+  pure s -- TODO
 
 insertStyledElement :: forall d. FFI.Selection_ -> Element -> Array (Attribute d) -> Effect FFI.Selection_
-insertStyledElement s element attrs = Debug.trace ("inserting styled element " <> show element <> show attrs) \_ -> pure s -- TODO
+insertStyledElement s element attrs = 
+  Debug.trace ("inserting styled element " <> show element <> show attrs) \_ -> 
+  pure s -- TODO
 
 -- | visualize replaces the (config.where).selectAll(config.what).data(config.using).append(config.what) 
 -- | chain in d3 with a single function
@@ -142,11 +146,14 @@ visualize config = do
   let s'' = case config.using of
               InheritData -> FFI.useInheritedData_ s' -- uses d => d
               NewData ds -> FFI.addData_ s' ds
-  pure $ FFI.finishJoin_ s'' element -- TODO need to add enter, update, exit attributes here later
+  pure $ FFI.finishJoin_ s'' element 
+  -- TODO need to add enter, update, exit attributes here later
   
 --| here the data is already in the DOM, we just need to update the visualisation with some new data
 revisualize :: forall d. FFI.Selection_ -> Array d -> Effect FFI.Selection_
-revisualize s ds = Debug.trace "joining new data to the DOM and updating visualiztion with it" \_ -> pure s -- TODO
+revisualize s ds = 
+  Debug.trace "joining new data to the DOM and updating visualiztion with it" \_ -> 
+  pure s -- TODO
 
 filter :: FFI.Selection_ -> String -> FFI.Selection_
 filter s _ = s -- TODO  

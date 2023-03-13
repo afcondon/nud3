@@ -12,11 +12,11 @@ matrix2table :: Effect Unit
 matrix2table = do
   let matrix = [ [ 1, 2, 3 ], [ 4, 5, 6 ], [ 7, 8, 9 ] ]
 
-  let root = select "root" (SelectorString "body")
+  let root = select "root" (SelectorString "div#matrix")
   -- | TODO selection name is not passed thru when appending, should it be? 
   table <- root |+| (HTML "table") 
   _ <- addAttributes table [ Classed_ "matrix", Width_ 1000.0, Height_ 1000.0 ] -- just to test the addAttributes function
-  beforeTable <- root |^| (HTML "p")
+  -- beforeTable <- root |^| (HTML "p")
   rows <- visualize
     { what: HTML "tr"
     , where: table
