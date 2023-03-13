@@ -71,7 +71,7 @@ drawForceLayout width height model = do
         ]
 
   nodes <- visualize
-    { what: SVG "circle"
+    { what: Append (SVG "circle")
     , using: NewData simNodes
     , where: nodesGroup
     , key: identityKeyFunction
@@ -86,7 +86,7 @@ drawForceLayout width height model = do
     }
 
   links <- visualize
-    { what: SVG "line"
+    { what: Append (SVG "line")
     , using: NewData simLinks
     , where: linksGroup
     , key: identityKeyFunction

@@ -18,7 +18,7 @@ matrix2table = do
   _ <- addAttributes table [ Classed_ "matrix", Width_ 1000.0, Height_ 1000.0 ] -- just to test the addAttributes function
   -- beforeTable <- root |^| (HTML "p")
   rows <- visualize
-    { what: HTML "tr"
+    { what: Append (HTML "tr")
     , where: table
     , using: NewData matrix
     , key: identityKeyFunction
@@ -33,7 +33,7 @@ matrix2table = do
   _ <- style oddrows [ Background_ "light-gray", Color_ "white" ]
 
   items <- visualize
-    { what: HTML "td"
+    { what: Append (HTML "td")
     , using: InheritData :: DataSource (Array Int) -- need to give the type to ensure Show instance for debugging, no other reason
     , where: rows
     , key: identityKeyFunction

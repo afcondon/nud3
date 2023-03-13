@@ -38,27 +38,42 @@ export function useInheritedData_ (selection) {
 export function addData_ (selection) {
   return (data) => selection.data(data)
 }
-// finishJoin_ :: Selection_ -> String -> Selection_
-export function finishJoin_ (selection) {
-  return (element) => selection.join(element)
+
+export function getEnterUpdateExitSelections_ (selection) {
+  return { enter: selection.enter(), update: selection, exit: selection.exit() }
 }
 
-// Code below this comment is from D3.js, introduced in the order that the dependencies played out
+// mergeSelections_ :: Selection_ -> Selection_ -> Selection_
+export function mergeSelections_ (first) {
+  return (second) => first.merge(second)
+}
+
+// orderSelection_ :: Selection_ -> Selection_
+export function orderSelection_ (selection) {
+  return selection.order()
+}
+  // Code below this comment is from D3.js, introduced in the order that the dependencies played out
 // ---------------------------------------------------------------------
 // -- from D3/selection/join.js
+// join.js is a key module as it manages the General Update Patter by running the enter and exit functions on those selections.
+// the enter and update selections are merged and returned, but can be treated differently, ie wrt attributes and transitions
 function selection_join(onenter, onupdate, onexit) {
   var enter = this.enter(), update = this, exit = this.exit();
-  if (typeof onenter === "function") {
-    enter = onenter(enter);
-    if (enter) enter = enter.selection();
+  if (typeof onenter === "function") { // onenter simple (element name) or complex (function)
+    enter = onenter(enter); // if it's a function then call that function with the enter selection
+    if (enter) enter = enter.selection(); // if that didn't return a null, update enter selection with the result of the function
   } else {
-    enter = enter.append(onenter + "");
+    enter = enter.append(onenter + ""); // if it's simply a string, append the element named by that string
   }
-  if (onupdate != null) {
-    update = onupdate(update);
-    if (update) update = update.selection();
+  if (onupdate != null) { // on update can be null or a function
+    update = onupdate(update); // if it's a function, call it with the update selection
+    if (update) update = update.selection(); // if that didn't return a null, update the update selection with the result of the function
   }
-  if (onexit == null) exit.remove(); else onexit(exit);
+  //onexit can be null or a function
+  // if it's null we go ahead an remove the exit selection, otherwise we call the function with the exit selection
+  // this could lead to a transition running and then the exit selection being removed at the end of the transition
+  if (onexit == null) exit.remove(); else onexit(exit); 
+  // if the enter and update selections are both defined, merge them and return them, otherwise just return the update selection
   return enter && update ? enter.merge(update).order() : update;
 }
 

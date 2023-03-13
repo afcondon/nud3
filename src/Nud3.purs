@@ -46,7 +46,7 @@ identityKeyFunction :: KeyFunction
 identityKeyFunction = \d _ _ -> unsafeCoerce d -- TODO something nicer here
 
 type JoinConfig d = { 
-    what :: Element
+    what :: AddElement
   , where :: FFI.Selection_
   , using :: DataSource d
   , key :: KeyFunction
@@ -79,9 +79,11 @@ instance showDataSourceSimple :: Show (DataSource Unit) where
 
 type ElementConfig d = Array (Attribute d)
 
-getElementName :: Element -> String
-getElementName (SVG tag) = tag
-getElementName (HTML tag) = tag
+getElementName :: AddElement -> String
+getElementName (Append (SVG tag)) = tag
+getElementName (Insert (SVG tag) _) = tag
+getElementName (Append (HTML tag)) = tag
+getElementName (Insert (HTML tag) _) = tag
 
 data Element = SVG String | HTML String
 
@@ -90,11 +92,22 @@ derive instance genericElement :: Generic Element _
 instance showElement :: Show Element where
   show = genericShow
 
+data AddElement = Append Element | Insert Element String -- TODO this String should be a "BeforeSelector"
+derive instance genericAddElement :: Generic AddElement _
+instance showAddElement :: Show AddElement where
+  show = genericShow
+
 -- | DSL functions below this line
 
 select :: String -> Selector -> FFI.Selection_
 select name (SelectorString s) = Debug.trace ("select with string: " <> s) \_ -> unsafeCoerce $ FFI.selectManyWithString_ name s
 select name (SelectorFunction f) = Debug.trace "select with function" \_ -> unsafeCoerce $ FFI.selectManyWithFunction_ name (unsafeCoerce f)
+
+-- | TODO once tested remove the individual functions and just use this one
+addElement :: FFI.Selection_ -> AddElement -> Effect FFI.Selection_
+addElement s (Append element) = appendElement s element
+-- TODO handle other "before selectors" (and function) instead of fixing it to ":first-child"
+addElement s (Insert element selector) = insertElement s element ":first-child"
 
 appendElement :: FFI.Selection_ -> Element -> Effect FFI.Selection_
 appendElement s element = do
@@ -103,12 +116,12 @@ appendElement s element = do
     SVG tag -> FFI.appendElement_ tag s
     HTML tag -> FFI.appendElement_ tag s
 
-insertElement :: FFI.Selection_ -> Element -> Effect FFI.Selection_
-insertElement s element = do
-  -- Console.log $ "inserting " <> show element
+insertElement :: FFI.Selection_ -> Element -> String -> Effect FFI.Selection_
+insertElement s element selector = do
+  Console.log $ "inserting " <> show element
   pure $ case element of
-    SVG tag -> FFI.insertElement_ tag ":first-child" s -- TODO handle other "before selectors" (and function) instead of fixing it to ":first-child"
-    HTML tag -> FFI.insertElement_ tag ":first-child" s
+    SVG tag -> FFI.insertElement_ tag selector s 
+    HTML tag -> FFI.insertElement_ tag selector s
 
 
 infixr 5 appendElement as |+|
@@ -139,6 +152,12 @@ insertStyledElement s element attrs =
 
 -- | visualize replaces the (config.where).selectAll(config.what).data(config.using).append(config.what) 
 -- | chain in d3 with a single function
+-- | there are some major simplifications here vis-a-vis the D3 selection.join
+-- | we are only supporting simple lists of attributes not an update function
+-- | for the enter, exit and update selections. Not clear yet how much of an impact this
+-- | actually will have, but we'll see when we try to add transitions and other things
+-- | that are not simple attributes. It may be that there's a wholly different API approach
+-- | available for those things anyway. 
 visualize :: forall d. (Show d) => JoinConfig d -> Effect FFI.Selection_
 visualize config = do
   let element = getElementName config.what
@@ -146,9 +165,17 @@ visualize config = do
   let s'' = case config.using of
               InheritData -> FFI.useInheritedData_ s' -- uses d => d
               NewData ds -> FFI.addData_ s' ds
-  pure $ FFI.finishJoin_ s'' element 
-  -- TODO need to add enter, update, exit attributes here later
+  let { enter, update, exit } = FFI.getEnterUpdateExitSelections_ s''
+
+  entered <- addElement enter config.what
   
+  enterNodes <- addAttributes entered config.attributes.enter
+  exitNodes <- addAttributes exit config.attributes.exit
+  updateNodes <- addAttributes update config.attributes.update
+  -- | TODO this should only do the merge if the enter selection is not null cf D3 implementation
+  let merged = FFI.mergeSelections_ enterNodes updateNodes
+  pure $ FFI.orderSelection_ merged
+    
 --| here the data is already in the DOM, we just need to update the visualisation with some new data
 revisualize :: forall d. FFI.Selection_ -> Array d -> Effect FFI.Selection_
 revisualize s ds = 
@@ -159,6 +186,6 @@ filter :: FFI.Selection_ -> String -> FFI.Selection_
 filter s _ = s -- TODO  
 
 style :: forall d. FFI.Selection_ -> Array (Attribute d) -> Effect FFI.Selection_
-style s _ = pure s -- TODO
+style = addAttributes
 
 
