@@ -24,7 +24,7 @@ matrix2table = do
     , key: identityKeyFunction
     , attributes:
         { enter: [ Classed_ "new" ]
-        , exit: [ Classed_ "exit", Remove ]
+        , exit: [ Classed_ "exit" ] -- removed the "Remove" attribute here in case that was source of parse error
         , update: [ Classed_ "updated" ]
         }
     }

@@ -39,11 +39,28 @@ export function addData_ (selection) {
   return (data) => selection.data(data)
 }
 // finishJoin_ :: Selection_ -> String -> Selection_
-export function finishJoin_ () {
+export function finishJoin_ (selection) {
   return (element) => selection.join(element)
 }
 
 // Code below this comment is from D3.js, introduced in the order that the dependencies played out
+// ---------------------------------------------------------------------
+// -- from D3/selection/join.js
+function selection_join(onenter, onupdate, onexit) {
+  var enter = this.enter(), update = this, exit = this.exit();
+  if (typeof onenter === "function") {
+    enter = onenter(enter);
+    if (enter) enter = enter.selection();
+  } else {
+    enter = enter.append(onenter + "");
+  }
+  if (onupdate != null) {
+    update = onupdate(update);
+    if (update) update = update.selection();
+  }
+  if (onexit == null) exit.remove(); else onexit(exit);
+  return enter && update ? enter.merge(update).order() : update;
+}
 
 // ---------------------------------------------------------------------
 // - from D3/selection/each.js
@@ -138,6 +155,9 @@ function selection_attr(name, value) {
 
 // ---------------------------------------------------------------------
 // - from D3.selectAll.js
+// the relevant line is included in the implementation of selectManyWithString_ above
+// the alternate path will be used for selectManyWithFunction_ when implemented
+
 // import array from "./array.js";
 // import {Selection, root} from "./selection/index.js";
 
@@ -155,6 +175,44 @@ export function Selection(groups, parents, name) {
   this._groups = groups;
   this._parents = parents;
   this._name = name;
+}
+
+// ---------------------------------------------------------------------
+// from D3/selectorAll.js
+
+function empty() { // TODO check that this doesn't clash with the empty function in D3/selection/empty.js now that it's all in one file
+  return [];
+}
+
+function selectorAll(selector) {
+  return selector == null ? empty : function() {
+    return this.querySelectorAll(selector);
+  };
+}
+
+// ---------------------------------------------------------------------
+// - from D3/selection/selectAll.js (not to be confused with D3/selectAll.js)
+
+function arrayAll(select) {
+  return function() {
+    return array(select.apply(this, arguments));
+  };
+}
+
+function selection_selectAll (select) {
+  if (typeof select === "function") select = arrayAll(select);
+  else select = selectorAll(select);
+
+  for (var groups = this._groups, m = groups.length, subgroups = [], parents = [], j = 0; j < m; ++j) {
+    for (var group = groups[j], n = group.length, node, i = 0; i < n; ++i) {
+      if (node = group[i]) {
+        subgroups.push(select.call(node, node.__data__, i, group));
+        parents.push(node);
+      }
+    }
+  }
+
+  return new Selection(subgroups, parents);
 }
 
 // ---------------------------------------------------------------------
@@ -269,7 +327,6 @@ function selection_selection() {
 
 // ---------------------------------------------------------------------
 // - from selection/select.js
-// import selector from "../selector.js";
 
 function selection_select (select) {
   if (typeof select !== "function") select = selector(select);
@@ -295,7 +352,231 @@ function selector (selector) {
     return this.querySelector(selector);
   };
 }
-// there are many many functions on this prototype, uncomment as needed
+
+// ---------------------------------------------------------------------
+// - from selection/sparse.js
+function sparse(update) {
+  return new Array(update.length);
+}
+
+// ---------------------------------------------------------------------
+// - from d3/selection/exit.js
+
+function selection_exit() {
+  return new Selection(this._exit || this._groups.map(sparse), this._parents);
+}
+// ---------------------------------------------------------------------
+// - from d3/selection/enter.js
+
+function selection_enter() {
+  return new Selection(this._enter || this._groups.map(sparse), this._parents);
+}
+
+function EnterNode(parent, datum) {
+  this.ownerDocument = parent.ownerDocument;
+  this.namespaceURI = parent.namespaceURI;
+  this._next = null;
+  this._parent = parent;
+  this.__data__ = datum;
+}
+
+EnterNode.prototype = {
+  constructor: EnterNode,
+  appendChild: function(child) { return this._parent.insertBefore(child, this._next); },
+  insertBefore: function(child, next) { return this._parent.insertBefore(child, next); },
+  querySelector: function(selector) { return this._parent.querySelector(selector); },
+  querySelectorAll: function(selector) { return this._parent.querySelectorAll(selector); }
+};
+
+// ---------------------------------------------------------------------
+// - from d3/src/constant.js
+
+function constant (x) {
+  return function() {
+    return x;
+  };
+}
+
+// ---------------------------------------------------------------------
+// - from selection/data.js
+
+function bindIndex(parent, group, enter, update, exit, data) {
+  var i = 0,
+      node,
+      groupLength = group.length,
+      dataLength = data.length;
+
+  // Put any non-null nodes that fit into update.
+  // Put any null nodes into enter.
+  // Put any remaining data into enter.
+  for (; i < dataLength; ++i) {
+    if (node = group[i]) {
+      node.__data__ = data[i];
+      update[i] = node;
+    } else {
+      enter[i] = new EnterNode(parent, data[i]);
+    }
+  }
+
+  // Put any non-null nodes that don’t fit into exit.
+  for (; i < groupLength; ++i) {
+    if (node = group[i]) {
+      exit[i] = node;
+    }
+  }
+}
+
+function bindKey(parent, group, enter, update, exit, data, key) {
+  var i,
+      node,
+      nodeByKeyValue = new Map,
+      groupLength = group.length,
+      dataLength = data.length,
+      keyValues = new Array(groupLength),
+      keyValue;
+
+  // Compute the key for each node.
+  // If multiple nodes have the same key, the duplicates are added to exit.
+  for (i = 0; i < groupLength; ++i) {
+    if (node = group[i]) {
+      keyValues[i] = keyValue = key.call(node, node.__data__, i, group) + "";
+      if (nodeByKeyValue.has(keyValue)) {
+        exit[i] = node;
+      } else {
+        nodeByKeyValue.set(keyValue, node);
+      }
+    }
+  }
+
+  // Compute the key for each datum.
+  // If there a node associated with this key, join and add it to update.
+  // If there is not (or the key is a duplicate), add it to enter.
+  for (i = 0; i < dataLength; ++i) {
+    keyValue = key.call(parent, data[i], i, data) + "";
+    if (node = nodeByKeyValue.get(keyValue)) {
+      update[i] = node;
+      node.__data__ = data[i];
+      nodeByKeyValue.delete(keyValue);
+    } else {
+      enter[i] = new EnterNode(parent, data[i]);
+    }
+  }
+
+  // Add any remaining nodes that were not bound to data to exit.
+  for (i = 0; i < groupLength; ++i) {
+    if ((node = group[i]) && (nodeByKeyValue.get(keyValues[i]) === node)) {
+      exit[i] = node;
+    }
+  }
+}
+
+function datum(node) {
+  return node.__data__;
+}
+
+function selection_data(value, key) {
+  if (!arguments.length) return Array.from(this, datum);
+
+  var bind = key ? bindKey : bindIndex,
+      parents = this._parents,
+      groups = this._groups;
+
+  if (typeof value !== "function") value = constant(value);
+
+  for (var m = groups.length, update = new Array(m), enter = new Array(m), exit = new Array(m), j = 0; j < m; ++j) {
+    var parent = parents[j],
+        group = groups[j],
+        groupLength = group.length,
+        data = arraylike(value.call(parent, parent && parent.__data__, j, parents)),
+        dataLength = data.length,
+        enterGroup = enter[j] = new Array(dataLength),
+        updateGroup = update[j] = new Array(dataLength),
+        exitGroup = exit[j] = new Array(groupLength);
+
+    bind(parent, group, enterGroup, updateGroup, exitGroup, data, key);
+
+    // Now connect the enter nodes to their following update node, such that
+    // appendChild can insert the materialized enter node before this node,
+    // rather than at the end of the parent node.
+    for (var i0 = 0, i1 = 0, previous, next; i0 < dataLength; ++i0) {
+      if (previous = enterGroup[i0]) {
+        if (i0 >= i1) i1 = i0 + 1;
+        while (!(next = updateGroup[i1]) && ++i1 < dataLength);
+        previous._next = next || null;
+      }
+    }
+  }
+
+  update = new Selection(update, parents);
+  update._enter = enter;
+  update._exit = exit;
+  return update;
+}
+
+// Given some data, this returns an array-like view of it: an object that
+// exposes a length property and allows numeric indexing. Note that unlike
+// selectAll, this isn’t worried about “live” collections because the resulting
+// array will only be used briefly while data is being bound. (It is possible to
+// cause the data to change while iterating by using a key function, but please
+// don’t; we’d rather avoid a gratuitous copy.)
+function arraylike(data) {
+  return typeof data === "object" && "length" in data
+    ? data // Array, TypedArray, NodeList, array-like
+    : Array.from(data); // Map, Set, iterable, string, or anything else
+}
+
+// ---------------------------------------------------------------------
+// - from d3/src/selection/merge.js
+
+function selection_merge (context) {
+  var selection = context.selection ? context.selection() : context;
+
+  for (var groups0 = this._groups, groups1 = selection._groups, m0 = groups0.length, m1 = groups1.length, m = Math.min(m0, m1), merges = new Array(m0), j = 0; j < m; ++j) {
+    for (var group0 = groups0[j], group1 = groups1[j], n = group0.length, merge = merges[j] = new Array(n), node, i = 0; i < n; ++i) {
+      if (node = group0[i] || group1[i]) {
+        merge[i] = node;
+      }
+    }
+  }
+
+  for (; j < m0; ++j) {
+    merges[j] = groups0[j];
+  }
+
+  return new Selection(merges, this._parents);
+}
+
+// ---------------------------------------------------------------------
+// - from d3/src/selection/remove.js
+
+function remove() {
+  var parent = this.parentNode;
+  if (parent) parent.removeChild(this);
+}
+
+function selection_remove() {
+  return this.each(remove);
+}
+
+//----------------------------------------------------------------------
+// - from d3/src/selection/order.js
+function selection_order () {
+
+  for (var groups = this._groups, j = -1, m = groups.length; ++j < m;) {
+    for (var group = groups[j], i = group.length - 1, next = group[i], node; --i >= 0;) {
+      if (node = group[i]) {
+        if (next && node.compareDocumentPosition(next) ^ 4) next.parentNode.insertBefore(node, next);
+        next = node;
+      }
+    }
+  }
+
+  return this;
+}
+
+// ---------------------------------------------------------------------
+// - add the functions to the constructor / prototype. 
+// we'll be adding these as needed in order to fully understand the dependencies
 Selection.prototype = selection.prototype = {
   constructor: Selection,
   // [Symbol.iterator]: selection_iterator
@@ -305,18 +586,13 @@ Selection.prototype = selection.prototype = {
   // datum: selection_datum,
   // dispatch: selection_dispatch,
   // empty: selection_empty,
-  // enter: selection_enter,
-  // exit: selection_exit,
   // filter: selection_filter,
   // html: selection_html,
   // lower: selection_lower,
-  // merge: selection_merge,
   // nodes: selection_nodes,
   // on: selection_on,
-  // order: selection_order,
   // property: selection_property,
   // raise: selection_raise,
-  // remove: selection_remove,
   // selectChild: selection_selectChild,
   // selectChildren: selection_selectChildren,
   // size: selection_size,
@@ -325,12 +601,17 @@ Selection.prototype = selection.prototype = {
   // text: selection_text,
   append: selection_append,
   attr: selection_attr,
-  data: selection_data, // TODO
+  data: selection_data,
   each: selection_each,
+  enter: selection_enter,
+  exit: selection_exit,
   insert: selection_insert,
-  join: selection_join, // TODO
+  join: selection_join,
   node: selection_node,
+  merge: selection_merge,
+  order: selection_order,
+  remove: selection_remove,
   select: selection_select,
-  selectAll: selection_selectAll, // TODO
+  selectAll: selection_selectAll,
   selection: selection_selection,
 };
