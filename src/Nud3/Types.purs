@@ -6,6 +6,7 @@ import Unsafe.Coerce (unsafeCoerce)
 import Web.DOM (Node) as DOM
 
 foreign import data Selection_ :: Type -- opaque and mutable data 
+foreign import data Transition_ :: Type -- opaque and mutable data 
 
 foreign import data D3SelectorFunction :: Type
 

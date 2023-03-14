@@ -80,7 +80,7 @@ drawForceLayout width height model = do
             [ Radius_ 5.0
             , Fill \d i -> colorByGroup d.group
             ]
-        , exit: [ Remove ]
+        , exit: [] -- Remove is the default, no need for other attrs here
         , update: []
         }
     }
@@ -97,7 +97,7 @@ drawForceLayout width height model = do
             , StrokeOpacity_ 0.4
             , Fill_ "none"
             ]
-        , exit: [ Remove ]
+        , exit: [] -- Remove is the default, no need for other attrs here
         , update: []
         }
     }

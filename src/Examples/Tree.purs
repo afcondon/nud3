@@ -54,7 +54,7 @@ drawTree tree = do
     , key: identityKeyFunction
     , attributes:
         { enter: [] -- group for each circle and its label 
-        , exit: [ Remove ]
+        , exit: [] -- remove is the default
         , update: []
         }
     }
@@ -84,7 +84,7 @@ drawTree tree = do
             , StrokeOpacity_ 0.4
             , Fill_ "none"
             ]
-        , exit: [ Remove ]
+        , exit: [] -- remove is the default
         , update: []
         }
     }

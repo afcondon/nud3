@@ -1,12 +1,12 @@
 module Examples.GUP where
 
 import Nud3
-import Effect (Effect)
-import Nud3.Attributes (Attribute(..), TransitionAttribute(..))
-import Prelude (Unit, bind, pure, unit, (*), (+))
 
 import Data.Int (toNumber)
 import Data.String.CodeUnits (singleton, toCharArray)
+import Effect (Effect)
+import Nud3.Attributes (Attribute(..), createTransition, easeCubic)
+import Prelude (Unit, bind, pure, unit, (*), (+))
 
 -- | General Update Pattern
 generalUpdatePattern :: Effect Unit
@@ -23,6 +23,7 @@ generalUpdatePattern = do
     ]
 
   gupGroup <- svg |+| (SVG "g")
+  let t = createTransition { duration: 2.0, delay: 0.0, easing: easeCubic }
   letters <- visualize
     { what: Append (SVG "text")
     , using: NewData letterdata
@@ -35,15 +36,12 @@ generalUpdatePattern = do
             , X \d i -> toNumber (i * 48 + 50)
             , Y_ 0.0
             , FontSize_ 96.0
-            , TransitionTo [ Attr (Y_ 200.0) ]
+            , Transition t [ Y_ 200.0 ]
             ]
         , exit:
             [ Classed_ "exit"
             , Fill_ "brown"
-            , TransitionTo
-                [ Attr (Y_ 400.0) -- we have to wrap TransitionAttributes for the time being
-                , Attr Remove
-                ]
+            , TransitionThenRemove t [ Y_ 400.0 ]
             ]
         , update:
             [ Classed_ "update"
