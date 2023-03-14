@@ -4,10 +4,13 @@ import Prelude
 
 import Unsafe.Coerce (unsafeCoerce)
 
+-- | the foreign AttributeSetter_ is not really typeable in PureScript while still being efficient
+-- | certainly could be an option to remove all this and do something complicated with Variants or 
+-- | Options or heterogeneous lists or whatever
 foreign import data AttributeSetter_ :: Type 
 
 exportAttributeSetter_ :: forall d. d -> AttributeSetter_
-exportAttributeSetter_ = unsafeCoerce -- probably the only efficient way to do this, at least the unsafeCoerce is in one place and on one type
+exportAttributeSetter_ = unsafeCoerce 
 
 type AttributeSetter d t = d -> Int -> t
 
@@ -35,6 +38,8 @@ data Attribute d =
   | FontSize (AttributeSetter d Number)
   | Height_ Number
   | Height (AttributeSetter d Number)
+  | InnerHTML_ String
+  | InnerHTML (AttributeSetter d String)
   | Radius_ Number
   | Radius (AttributeSetter d Number)
   | StrokeColor_ String
@@ -72,55 +77,60 @@ getValueFromAttribute = case _ of
   Background_ v -> exportAttributeSetter_ v
   Background f -> exportAttributeSetter_ f
   Color_ v -> exportAttributeSetter_ v
-  Color f -> exportAttributeSetter_ f
   Classed_ v -> exportAttributeSetter_ v
-  Classed f -> exportAttributeSetter_ f
   CX_ v -> exportAttributeSetter_ v
-  CX f -> exportAttributeSetter_ f
   CY_ v -> exportAttributeSetter_ v
-  CY f -> exportAttributeSetter_ f
   DX_ v -> exportAttributeSetter_ v
-  DX f -> exportAttributeSetter_ f
   DY_ v -> exportAttributeSetter_ v
-  DY f -> exportAttributeSetter_ f
   Fill_ v -> exportAttributeSetter_ v
-  Fill f -> exportAttributeSetter_ f
   FontFamily_ v -> exportAttributeSetter_ v
-  FontFamily f -> exportAttributeSetter_ f
   FontSize_ v -> exportAttributeSetter_ v
-  FontSize f -> exportAttributeSetter_ f
   Height_ v -> exportAttributeSetter_ v
-  Height f -> exportAttributeSetter_ f
+  InnerHTML_ v -> exportAttributeSetter_ v
   Radius_ v -> exportAttributeSetter_ v
-  Radius f -> exportAttributeSetter_ f
   StrokeColor_ v -> exportAttributeSetter_ v
-  StrokeColor f -> exportAttributeSetter_ f
   StrokeOpacity_ v -> exportAttributeSetter_ v
-  StrokeOpacity f -> exportAttributeSetter_ f
   StrokeWidth_ v -> exportAttributeSetter_ v
-  StrokeWidth f -> exportAttributeSetter_ f
   Style_ v -> exportAttributeSetter_ v
-  Style f -> exportAttributeSetter_ f
   Text_ v -> exportAttributeSetter_ v
-  Text f -> exportAttributeSetter_ f
   TextAnchor_ v -> exportAttributeSetter_ v
-  TextAnchor f -> exportAttributeSetter_ f
   TransitionTo vs -> exportAttributeSetter_ vs
   Width_ v -> exportAttributeSetter_ v
-  Width f -> exportAttributeSetter_ f
   ViewBox_ x y w h -> exportAttributeSetter_ [x, y, w, h] -- TODO this one is a special case, impressive that CoPilot guessed it
   X_ v -> exportAttributeSetter_ v
-  X f -> exportAttributeSetter_ f
   Y_ v -> exportAttributeSetter_ v
-  Y f -> exportAttributeSetter_ f
   X1_ v -> exportAttributeSetter_ v
-  X1 f -> exportAttributeSetter_ f
   X2_ v -> exportAttributeSetter_ v
-  X2 f -> exportAttributeSetter_ f
   Y1_ v -> exportAttributeSetter_ v
-  Y1 f -> exportAttributeSetter_ f
   Y2_ v -> exportAttributeSetter_ v
-  Y2 f -> exportAttributeSetter_ f
+  -- setter functions are different because they should be uncurried
+  Color f -> exportAttributeSetter_ (uncurry_ f)
+  Classed f -> exportAttributeSetter_ (uncurry_ f)
+  CX f -> exportAttributeSetter_ (uncurry_ f)
+  CY f -> exportAttributeSetter_ (uncurry_ f)
+  DX f -> exportAttributeSetter_ (uncurry_ f)
+  DY f -> exportAttributeSetter_ (uncurry_ f)
+  Fill f -> exportAttributeSetter_ (uncurry_ f)
+  FontFamily f -> exportAttributeSetter_ (uncurry_ f)
+  FontSize f -> exportAttributeSetter_ (uncurry_ f)
+  Height f -> exportAttributeSetter_ (uncurry_ f)
+  InnerHTML f -> exportAttributeSetter_ (uncurry_ f)
+  Radius f -> exportAttributeSetter_ (uncurry_ f)
+  StrokeColor f -> exportAttributeSetter_ (uncurry_ f)
+  StrokeOpacity f -> exportAttributeSetter_ (uncurry_ f)
+  StrokeWidth f -> exportAttributeSetter_ (uncurry_ f)
+  Style f -> exportAttributeSetter_ (uncurry_ f)
+  Text f -> exportAttributeSetter_ (uncurry_ f)
+  TextAnchor f -> exportAttributeSetter_ (uncurry_ f)
+  Width f -> exportAttributeSetter_ (uncurry_ f)
+  X f -> exportAttributeSetter_ (uncurry_ f)
+  Y f -> exportAttributeSetter_ (uncurry_ f)
+  X1 f -> exportAttributeSetter_ (uncurry_ f)
+  X2 f -> exportAttributeSetter_ (uncurry_ f)
+  Y1 f -> exportAttributeSetter_ (uncurry_ f)
+  Y2 f -> exportAttributeSetter_ (uncurry_ f)
+
+foreign import uncurry_ :: forall d t. AttributeSetter d t -> AttributeSetter_
 
 getKeyFromAttribute :: forall d. Attribute d -> String
 getKeyFromAttribute = case _ of 
@@ -129,8 +139,8 @@ getKeyFromAttribute = case _ of
   Background _ -> "background"
   Color_ _ -> "color"
   Color _ -> "color"
-  Classed_ _ -> "classed"
-  Classed _ -> "classed"
+  Classed_ _ -> "class"
+  Classed _ -> "class"
   CX_ _ -> "cx"
   CX _ -> "cx"
   CY_ _ -> "cy"
@@ -147,8 +157,10 @@ getKeyFromAttribute = case _ of
   FontSize _ -> "font-size"
   Height_ _ -> "height"
   Height _ -> "height"
-  Radius_ _ -> "radius"
-  Radius _ -> "radius"
+  InnerHTML_ _ -> "html"
+  InnerHTML _ -> "html"
+  Radius_ _ -> "r"
+  Radius _ -> "r"
   StrokeColor_ _ -> "stroke"
   StrokeColor _ -> "stroke"
   StrokeOpacity_ _ -> "stroke-opacity"
@@ -191,6 +203,7 @@ instance showAttribute :: Show (Attribute d) where
   show (FontFamily_ v) = "\n\t\tFontFamily_" <> " set directly to " <> v
   show (FontSize_ v) = "\n\t\tFontSize_" <> " set directly to " <> show v
   show (Height_ v) = "\n\t\tHeight_" <> " set directly to " <> show v
+  show (InnerHTML_ v) = "\n\t\tInnerHTML_" <> " set directly to " <> v
   show (Radius_ v) = "\n\t\tRadius_" <> " set directly to " <> show v
   show (StrokeColor_ v) = "\n\t\tStrokeColor_" <> " set directly to " <> v
   show (StrokeOpacity_ v) = "\n\t\tStrokeOpacity_" <> " set directly to " <> show v
@@ -218,6 +231,7 @@ instance showAttribute :: Show (Attribute d) where
   show (FontFamily f) = "\n\t\tFontFamily set by function"
   show (FontSize f) = "\n\t\tFontSize set by function"
   show (Height f) = "\n\t\tHeight set by function"
+  show (InnerHTML f) = "\n\t\tInnerHTML set by function"
   show (Radius f) = "\n\t\tRadius set by function"
   show (StrokeColor f) = "\n\t\tStrokeColor set by function"
   show (StrokeOpacity f) = "\n\t\tStrokeOpacity set by function"

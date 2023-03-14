@@ -15,7 +15,9 @@ threeLittleCircles = do
 
   svg <- root |+| (SVG "svg")
   _ <- style svg
-    [ ViewBox_ (-100.0) (-100.0) 650.0 650.0
+    [ Width_ 650.0
+    , Height_ 650.0
+    , ViewBox_ (-100.0) (-100.0) 650.0 650.0
     , Classed_ "d3svg circles"
     ]
 
@@ -30,10 +32,11 @@ threeLittleCircles = do
             [ Fill_ "green"
             , CX \_ i -> toNumber (i * 100)
             , CY_ 50.0
-            , Radius_ 20.0
+            , Radius_ 50.0
+            , Classed_ "enter"
             ]
-        , exit: []
-        , update: []
+        , exit: [Classed_ "exit"]
+        , update: [Classed_ "update"]
         }
     }
   pure unit
