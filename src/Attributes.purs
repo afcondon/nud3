@@ -16,10 +16,6 @@ foreign import addAttribute_ :: forall d. Selection_ -> String -> d -> Unit
 foreign import addTransitionToSelection_ :: Selection_ -> Transition_ -> Selection_
 -- | no attempt will be made to manage named transitions in contrast to D3
 foreign import addRemoveAttribute_ :: forall d. Selection_ -> Unit
-foreign import transitionDelayFixed_ :: Transition_ -> Number -> Transition_
-foreign import transitionDelayLambda_ :: forall d t. Transition_ -> (d -> Int -> t) -> Transition_
-foreign import transitionDurationFixed_ :: Transition_ -> Number -> Transition_
-foreign import transitionDurationLambda_ :: forall d t. Transition_ -> (d -> Int -> t) -> Transition_
 
 exportAttributeSetter_ :: forall d. d -> AttributeSetter_
 exportAttributeSetter_ = unsafeCoerce 
@@ -71,8 +67,8 @@ easeCubic = identity -- TODO this is a placeholder
 createTransition :: TransitionConfig -> Transition_
 createTransition config = do
   let t = FFI.createNewTransition_ unit
-      _ = transitionDurationFixed_ t config.duration
-      _ = transitionDelayFixed_ t config.delay
+      _ = FFI.transitionDurationFixed_ t config.duration
+      _ = FFI.transitionDelayFixed_ t config.delay
   t
 
 

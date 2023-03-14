@@ -19,18 +19,3 @@ export function addRemoveAttribute_ (transition) {
   return transition.remove()
 }
 
-export function transitionDelayFixed_ (transition) { 
-  return (amount) => transition.delay(amount)
-}
-export function transitionDelayLambda_ (transition) {
-  return (f) => transition.delay(f)
-}
-export function transitionDurationFixed_ (transition) { 
-  return (amount) => transition.duration(amount)
-}
-export function transitionDurationLambda_ (transition) {
-  return (f) => transition.duration(f)
-}
-export function transitionEaseFunction (transition) {
-  return (f) => transition.ease(f)
-}

@@ -57,7 +57,9 @@ export function orderSelection_ (selection) {
   return selection.order()
 }
 
+// ---------------------------------------------------------------------
 // Stuff from Transition modules - need to bite the bullet and figure out the modules for this later, but for now don't want to just import the whole thing
+// ---------------------------------------------------------------------
 
 // in D3 this is d3.transition() which delegates to d3.selection/selection.js 
 // we'll spell out exactly what gets done here to make it easier to replace later
@@ -67,7 +69,21 @@ export function createNewTransition_ () { // WIP
   // TODO setup all the transition stuff here if necessary - may not be
   return s;
 }
-
+export function transitionDelayFixed_ (transition) { 
+  return (amount) => transition.delay(amount)
+}
+export function transitionDelayLambda_ (transition) {
+  return (f) => transition.delay(f)
+}
+export function transitionDurationFixed_ (transition) { 
+  return (amount) => transition.duration(amount)
+}
+export function transitionDurationLambda_ (transition) {
+  return (f) => transition.duration(f)
+}
+export function transitionEaseFunction (transition) {
+  return (f) => transition.ease(f)
+}
 
 
 // ---------------------------------------------------------------------
