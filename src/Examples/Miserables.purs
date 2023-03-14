@@ -27,7 +27,7 @@ colorByGroup group =
 
 drawForceLayout :: Number -> Number -> Simulation.Model -> Effect Unit
 drawForceLayout width height model = do
-  let root = select "root" (SelectorString "div#miserables")
+  let root = select (SelectorString "div#miserables")
   svg <- root |+| (SVG "svg")
   _ <- style svg
     [ ViewBox_ 0.0 0.0 650.0 650.0

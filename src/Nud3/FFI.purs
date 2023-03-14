@@ -22,7 +22,7 @@ foreign import getParents_ :: Selection_ -> Array DOM.Node
 foreign import getName_ :: Selection_ -> String
 
 -- foreign import selectFirstWithString_ :: String -> Selection_
-foreign import selectManyWithString_ :: String -> String -> Selection_
+foreign import selectManyWithString_ :: String -> Selection_
 -- foreign import selectGroupedWithString_ :: Selection -> String -> Selection_
 -- foreign import selectFirstFromWithString_ :: Selection -> String -> Selection_
 

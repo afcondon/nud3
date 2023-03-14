@@ -100,9 +100,9 @@ instance showAddElement :: Show AddElement where
 
 -- | DSL functions below this line
 
-select :: String -> Selector -> Selection_
-select name (SelectorString s) = Debug.trace ("select with string: " <> s) \_ -> unsafeCoerce $ FFI.selectManyWithString_ name s
-select name (SelectorFunction f) = Debug.trace "select with function" \_ -> unsafeCoerce $ FFI.selectManyWithFunction_ name (unsafeCoerce f)
+select :: Selector -> Selection_
+select (SelectorString s) = Debug.trace ("select with string: " <> s) \_ -> FFI.selectManyWithString_ s
+select (SelectorFunction f) = Debug.trace "select with function" \_ -> unsafeCoerce $ FFI.selectManyWithFunction_ (unsafeCoerce f)
 
 -- | TODO once tested remove the individual functions and just use this one
 addElement :: Selection_ -> AddElement -> Effect Selection_

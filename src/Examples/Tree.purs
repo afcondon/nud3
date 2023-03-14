@@ -34,7 +34,7 @@ computeTextAnchor layoutStyle hasChildren x =
 drawTree :: forall d. (Show d) => Tree d -> Effect Unit
 drawTree tree = do
 
-  let root = select "root" (SelectorString "div#tree")
+  let root = select (SelectorString "div#tree")
 
   layoutTreeData <- VizTree.verticalLayout tree
   svg <- appendStyledElement root (SVG "svg")

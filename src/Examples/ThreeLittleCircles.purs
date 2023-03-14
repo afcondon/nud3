@@ -11,7 +11,7 @@ import Data.Int (toNumber)
 -- | three little circles
 threeLittleCircles :: Effect Unit
 threeLittleCircles = do
-  let root = select "root" (SelectorString "div#circles")
+  let root = select (SelectorString "div#circles")
 
   svg <- root |+| (SVG "svg")
   _ <- style svg

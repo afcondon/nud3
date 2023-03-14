@@ -1,10 +1,17 @@
-export function selectManyWithString_ (name)  
-{ return (selector) =>
-    new Selection([document.querySelectorAll(selector)], [document.documentElement], name)
+// The following two functions break out two of the many ways that d3.selectAll can be called
+// with a string 
+
+// export default function(selector) {
+//   return typeof selector === "string"
+//       ? new Selection([document.querySelectorAll(selector)], [document.documentElement])
+//       : new Selection([array(selector)], root);
+// }
+
+export function selectManyWithString_ (selector)  
+{ return new Selection([document.querySelectorAll(selector)], [document.documentElement])
 }
-export function selectManyWithFunction_ (name) {
-  return (selectorFn) =>
-    new Selection([array(selectorFn)], root)
+export function selectManyWithFunction_ (selectorFn) {
+  return new Selection([array(selectorFn)], root) // root = [null]
 }
 
 export function getGroups_ (selection) { return selection._groups }
