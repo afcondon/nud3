@@ -21,11 +21,6 @@ export function insertElement_ (name) {
     selection.insert(name, selector)
 }
 
-export function addAttribute_ (selection) {
-  return (name) => (value) =>
-    selection.attr(name, value)
-}
-
 // beginJoin_ :: Selection_ -> String -> Selection_
 export function beginJoin_ (selection) {
   return (element) => selection.selectAll(element)

@@ -5,6 +5,11 @@ import Prelude
 import Unsafe.Coerce (unsafeCoerce)
 import Web.DOM (Node) as DOM
 
+foreign import data Selection_ :: Type -- opaque and mutable data 
+
+foreign import data D3SelectorFunction :: Type
+
+
 data Selector
   = SelectorString String
   | SelectorFunction (forall d. d -> Int -> NodeList -> Boolean) -- in d3 "this" would be nodes[i] in this function
@@ -18,10 +23,10 @@ type UpdateSelection =
   , parents :: Array DOM.Node
   }
 
-type Selection =
-  { groups :: Array NodeList
-  , parents :: Array DOM.Node
-  }
+-- type Selection =
+--   { groups :: Array NodeList
+--   , parents :: Array DOM.Node
+--   }
 
 -- the key function is used to order which element of the data array is assigned to which node in the selection
 -- if the identity function is used, then the first element of the data array is assigned to the first node in the selection, etc.

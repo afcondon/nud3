@@ -10,8 +10,9 @@ import Data.Traversable (traverse)
 import Debug as Debug
 import Effect (Effect)
 import Effect.Class.Console as Console
-import Nud3.Attributes (Attribute, getKeyFromAttribute, getValueFromAttribute)
+import Nud3.Attributes (Attribute, addAttribute, getKeyFromAttribute, getValueFromAttribute)
 import Nud3.FFI as FFI
+import Nud3.Types
 import Unsafe.Coerce (unsafeCoerce)
 import Web.DOM (Node) as DOM
 
@@ -35,7 +36,7 @@ type UpdateSelection = {
 --   , parents :: Array DOM.Node
 --   }
 
-showSelection :: FFI.Selection_ -> String
+showSelection :: Selection_ -> String
 showSelection s = "Selection named: " <> FFI.getName_ s
 
 type KeyFunction = forall d i. (Ord i) => (Ord d) => d -> Int -> NodeList -> i
@@ -47,7 +48,7 @@ identityKeyFunction = \d _ _ -> unsafeCoerce d -- TODO something nicer here
 
 type JoinConfig d = { 
     what :: AddElement
-  , where :: FFI.Selection_
+  , where :: Selection_
   , using :: DataSource d
   , key :: KeyFunction
   , attributes :: {
@@ -99,24 +100,24 @@ instance showAddElement :: Show AddElement where
 
 -- | DSL functions below this line
 
-select :: String -> Selector -> FFI.Selection_
+select :: String -> Selector -> Selection_
 select name (SelectorString s) = Debug.trace ("select with string: " <> s) \_ -> unsafeCoerce $ FFI.selectManyWithString_ name s
 select name (SelectorFunction f) = Debug.trace "select with function" \_ -> unsafeCoerce $ FFI.selectManyWithFunction_ name (unsafeCoerce f)
 
 -- | TODO once tested remove the individual functions and just use this one
-addElement :: FFI.Selection_ -> AddElement -> Effect FFI.Selection_
+addElement :: Selection_ -> AddElement -> Effect Selection_
 addElement s (Append element) = appendElement s element
 -- TODO handle other "before selectors" (and function) instead of fixing it to ":first-child"
 addElement s (Insert element selector) = insertElement s element ":first-child"
 
-appendElement :: FFI.Selection_ -> Element -> Effect FFI.Selection_
+appendElement :: Selection_ -> Element -> Effect Selection_
 appendElement s element = do
   Console.log ("appending " <> show element)
   pure $ case element of
     SVG tag -> FFI.appendElement_ tag s
     HTML tag -> FFI.appendElement_ tag s
 
-insertElement :: FFI.Selection_ -> Element -> String -> Effect FFI.Selection_
+insertElement :: Selection_ -> Element -> String -> Effect Selection_
 insertElement s element selector = do
   Console.log $ "inserting " <> show element
   pure $ case element of
@@ -130,22 +131,17 @@ infixr 5 insertElement as |^|
 -- NB the semantics of D3 are not spelt out and a selection is returned from every attr 
 -- to facilitate function chaining. In PureScript we're going to say that the Attribute Setter
 -- effects the DOM and returns only Unit.
-addAttributes :: forall d. FFI.Selection_ -> Array (Attribute d) -> Effect FFI.Selection_
+addAttributes :: forall d. Selection_ -> Array (Attribute d) -> Effect Selection_
 addAttributes s attrs = do
   let _ = (addAttribute s) <$> attrs -- relies on the fact that addAttribute returns the same selection each time
   pure s
 
--- | TODO modulo compile cycles and other issues, this should be in the Attributes module
-addAttribute :: forall d. FFI.Selection_ -> Attribute d -> Unit
-addAttribute s attr = FFI.addAttribute_ s (getKeyFromAttribute attr) (getValueFromAttribute attr)
-
-
-appendStyledElement :: forall d. FFI.Selection_ -> Element -> Array (Attribute d) -> Effect FFI.Selection_
+appendStyledElement :: forall d. Selection_ -> Element -> Array (Attribute d) -> Effect Selection_
 appendStyledElement s element attrs = 
   Debug.trace ("appending styled eleemnt: " <> show element <> show attrs) \_ -> 
   pure s -- TODO
 
-insertStyledElement :: forall d. FFI.Selection_ -> Element -> Array (Attribute d) -> Effect FFI.Selection_
+insertStyledElement :: forall d. Selection_ -> Element -> Array (Attribute d) -> Effect Selection_
 insertStyledElement s element attrs = 
   Debug.trace ("inserting styled element " <> show element <> show attrs) \_ -> 
   pure s -- TODO
@@ -158,7 +154,7 @@ insertStyledElement s element attrs =
 -- | actually will have, but we'll see when we try to add transitions and other things
 -- | that are not simple attributes. It may be that there's a wholly different API approach
 -- | available for those things anyway. 
-visualize :: forall d. (Show d) => JoinConfig d -> Effect FFI.Selection_
+visualize :: forall d. (Show d) => JoinConfig d -> Effect Selection_
 visualize config = do
   let element = getElementName config.what
   let s' = FFI.beginJoin_ config.where element
@@ -177,15 +173,15 @@ visualize config = do
   pure $ FFI.orderSelection_ merged
     
 --| here the data is already in the DOM, we just need to update the visualisation with some new data
-revisualize :: forall d. FFI.Selection_ -> Array d -> Effect FFI.Selection_
+revisualize :: forall d. Selection_ -> Array d -> Effect Selection_
 revisualize s ds = 
   Debug.trace "joining new data to the DOM and updating visualiztion with it" \_ -> 
   pure s -- TODO
 
-filter :: FFI.Selection_ -> String -> FFI.Selection_
+filter :: Selection_ -> String -> Selection_
 filter s _ = s -- TODO  
 
-style :: forall d. FFI.Selection_ -> Array (Attribute d) -> Effect FFI.Selection_
+style :: forall d. Selection_ -> Array (Attribute d) -> Effect Selection_
 style = addAttributes
 
 

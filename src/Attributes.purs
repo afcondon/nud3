@@ -2,6 +2,7 @@ module Nud3.Attributes where
 
 import Prelude
 
+import Nud3.Types (Selection_)
 import Unsafe.Coerce (unsafeCoerce)
 
 -- | the foreign AttributeSetter_ is not really typeable in PureScript while still being efficient
@@ -13,6 +14,11 @@ exportAttributeSetter_ :: forall d. d -> AttributeSetter_
 exportAttributeSetter_ = unsafeCoerce 
 
 type AttributeSetter d t = d -> Int -> t
+
+addAttribute :: forall d. Selection_ -> Attribute d -> Unit
+addAttribute s attr = addAttribute_ s (getKeyFromAttribute attr) (getValueFromAttribute attr)
+
+foreign import addAttribute_ :: forall d. Selection_ -> String -> d -> Unit
 
 data Attribute d = 
     Remove

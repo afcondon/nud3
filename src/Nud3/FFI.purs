@@ -15,10 +15,7 @@ module Nud3.FFI where
 import Effect (Effect)
 import Prelude (Unit)
 import Web.DOM as DOM
-
-foreign import data Selection_ :: Type -- opaque and mutable data 
-
-foreign import data D3SelectorFunction :: Type
+import Nud3.Types (Selection_, D3SelectorFunction)
 
 foreign import getGroups_ :: Selection_ -> Array DOM.NodeList
 foreign import getParents_ :: Selection_ -> Array DOM.Node
@@ -36,8 +33,6 @@ foreign import selectManyWithFunction_ :: String -> D3SelectorFunction -> Select
 
 foreign import appendElement_ :: String -> Selection_ -> Selection_
 foreign import insertElement_ :: String -> String -> Selection_ -> Selection_
-
-foreign import addAttribute_ :: forall d. Selection_ -> String -> d -> Unit
 
 foreign import beginJoin_ :: Selection_ -> String -> Selection_
 foreign import useInheritedData_ :: Selection_ -> Selection_
