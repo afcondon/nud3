@@ -9,20 +9,74 @@ import Unsafe.Coerce (unsafeCoerce)
 -- | certainly could be an option to remove all this and do something complicated with Variants or 
 -- | Options or heterogeneous lists or whatever
 foreign import data AttributeSetter_ :: Type 
+foreign import addAttribute_ :: forall d. Selection_ -> String -> d -> Unit
+foreign import addTransition_ :: forall d. Selection_ -> Number -> Number -> Selection_
 
 exportAttributeSetter_ :: forall d. d -> AttributeSetter_
 exportAttributeSetter_ = unsafeCoerce 
 
 type AttributeSetter d t = d -> Int -> t
 
+-- | we special case on some attributes - Text, InnerHTML, ViewBox, TransitionTo and Transition attributes
 addAttribute :: forall d. Selection_ -> Attribute d -> Unit
+-- | transition attributes are handled by creating a transition selection,
+-- | then applying the transition attributes and regular attributes to this transition selection
+addAttribute s (NamedTransition name config attrs)) = -- TODO
+addAttribute s (NewTransition config attrs ) = -- TODO
+-- | these special cases are still TODO, they need to call selectionText_, selectionInnerHTML_ etc
+addAttribute s attr@(Text d) = addAttribute_ s (getKeyFromAttribute attr) (getValueFromAttribute attr)
+addAttribute s attr@(Text_ d) = addAttribute_ s (getKeyFromAttribute attr) (getValueFromAttribute attr)
+addAttribute s attr@(InnerHTML d) = addAttribute_ s (getKeyFromAttribute attr) (getValueFromAttribute attr)
+addAttribute s attr@(InnerHTML_ d) = addAttribute_ s (getKeyFromAttribute attr) (getValueFromAttribute attr)
+-- | regular attributes all handled the same way
 addAttribute s attr = addAttribute_ s (getKeyFromAttribute attr) (getValueFromAttribute attr)
 
-foreign import addAttribute_ :: forall d. Selection_ -> String -> d -> Unit
+addTransition :: forall d. Selection_ -> Array (TransitionAttribute d) -> Unit
+addTransition s attrs = do
+  let t = addTransition_ s -- this makes a transition selection to which we can add attributes, including transition attributes
+  let t' = addTransitionAttributes t attrs
+  pure t'
+
+addTransitionAttributes :: forall d. Selection_ -> TransitionAttribute d -> Unit
+addTransitionAttributes t (TransitionDuration_ v) = addTransitionAttribute_ t "transitionDuration" v
+addTransitionAttributes t (TransitionDelay_ v) = addTransitionAttribute_ t "transitionDelay" v
+addTransitionAttributes t (TransitionDuration f) = addTransitionAttribute_ t "transitionDuration" f
+addTransitionAttributes t (TransitionDelay f) = addTransitionAttribute_ t "transitionDelay" f
+addTransitionAttributes t (Attr a) = addAttributes t a -- t needs to definitely be the transition selection here
+addTransitionAttributes t Remove = remove_ t "remove" true
+
+addAttributes :: forall d. Selection_ -> Array (Attribute d) -> Effect Selection_
+addAttributes s attrs = do
+  let _ = (addAttribute s) <$> attrs -- relies on the fact that addAttribute returns the same selection each time
+  pure s
+
+
+
+data TransitionAttribute d = -- TODO - add more transition attributes
+    TransitionDuration_ Number
+  | TransitionDuration (AttributeSetter d Number)
+  | TransitionDelay_ Number
+  | TransitionDelay (AttributeSetter d Number)
+  -- | The easing function is invoked for each frame of the animation, 
+  -- |being passed the normalized time t in the range [0, 1];
+  -- | it must then return the eased time tʹ which is typically also in the range [0, 1]. 
+  -- | A good easing function should return 0 if t = 0 and 1 if t = 1. 
+  | TransitionEasing (AttributeSetter d Number) 
+  | Remove
+  | Attr (Attribute d)
+  
+instance showTransitionAttribute :: Show (TransitionAttribute d) where
+  show (TransitionDuration_ v) = "TransitionDuration_" <> " set directly to " <> show v
+  show (TransitionDelay_ v) = "TransitionDelay_" <> " set directly to " <> show v
+  show (Attr a) = "Attr" <> " set directly to " <> show a
+  show (TransitionDuration f) = "TransitionDuration set by function"
+  show (TransitionDelay f) = "TransitionDelay set by function"
+  show Remove = "Remove these nodes"
+
+type TransitionConfig = { duration :: Number, delay :: Number, easing :: Number -> Number }
 
 data Attribute d = 
-    Remove
-  | Background_ String
+    Background_ String
   | Background (AttributeSetter d String)
   | Color_ String
   | Color (AttributeSetter d String)
@@ -60,7 +114,8 @@ data Attribute d =
   | Text (AttributeSetter d String)
   | TextAnchor_ String
   | TextAnchor (AttributeSetter d String)
-  | TransitionTo (Array (TransitionAttribute d))
+  | NamedTransition String TransitionConfig (Array (Attribute d))
+  | NewTransition TransitionConfig (Array (Attribute d))
   | Width_ Number
   | Width (AttributeSetter d Number)
   | ViewBox_ Number Number Number Number
@@ -79,7 +134,6 @@ data Attribute d =
 
 getValueFromAttribute :: forall d v. Attribute d -> AttributeSetter_
 getValueFromAttribute = case _ of 
-  Remove -> exportAttributeSetter_ unit -- TODO this one is a special case
   Background_ v -> exportAttributeSetter_ v
   Background f -> exportAttributeSetter_ f
   Color_ v -> exportAttributeSetter_ v
@@ -140,7 +194,6 @@ foreign import uncurry_ :: forall d t. AttributeSetter d t -> AttributeSetter_
 
 getKeyFromAttribute :: forall d. Attribute d -> String
 getKeyFromAttribute = case _ of 
-  Remove -> "remove" -- TODO this one is a special case
   Background_ _ -> "background"
   Background _ -> "background"
   Color_ _ -> "color"
@@ -197,7 +250,6 @@ getKeyFromAttribute = case _ of
   Y2 _ -> "y2"
 
 instance showAttribute :: Show (Attribute d) where
-  show (Remove) = "\n\t\tRemove"
   show (Background_ v) = "\n\t\tBackground_" <> " set directly to " <> v
   show (Color_ v) = "\n\t\tColor_" <> " set directly to " <> v
   show (Classed_ v) = "\n\t\tClassed_" <> " set directly to " <> v
@@ -252,18 +304,3 @@ instance showAttribute :: Show (Attribute d) where
   show (X2 f) = "\n\t\tX2 set by function"
   show (Y1 f) = "\n\t\tY1 set by function"
   show (Y2 f) = "\n\t\tY2 set by function"
-
-
-data TransitionAttribute d = -- TODO - add more transition attributes
-    TransitionDuration_ Number
-  | TransitionDuration (AttributeSetter d Number)
-  | TransitionDelay_ Number
-  | TransitionDelay (AttributeSetter d Number)
-  | Attr (Attribute d)
-  
-instance showTransitionAttribute :: Show (TransitionAttribute d) where
-  show (TransitionDuration_ v) = "TransitionDuration_" <> " set directly to " <> show v
-  show (TransitionDelay_ v) = "TransitionDelay_" <> " set directly to " <> show v
-  show (Attr a) = "Attr" <> " set directly to " <> show a
-  show (TransitionDuration f) = "TransitionDuration set by function"
-  show (TransitionDelay f) = "TransitionDelay set by function"

@@ -10,7 +10,7 @@ import Data.Traversable (traverse)
 import Debug as Debug
 import Effect (Effect)
 import Effect.Class.Console as Console
-import Nud3.Attributes (Attribute, addAttribute, getKeyFromAttribute, getValueFromAttribute)
+import Nud3.Attributes (Attribute, addAttributes, getKeyFromAttribute, getValueFromAttribute)
 import Nud3.FFI as FFI
 import Nud3.Types
 import Unsafe.Coerce (unsafeCoerce)
@@ -128,13 +128,6 @@ insertElement s element selector = do
 infixr 5 appendElement as |+|
 infixr 5 insertElement as |^|
 
--- NB the semantics of D3 are not spelt out and a selection is returned from every attr 
--- to facilitate function chaining. In PureScript we're going to say that the Attribute Setter
--- effects the DOM and returns only Unit.
-addAttributes :: forall d. Selection_ -> Array (Attribute d) -> Effect Selection_
-addAttributes s attrs = do
-  let _ = (addAttribute s) <$> attrs -- relies on the fact that addAttribute returns the same selection each time
-  pure s
 
 appendStyledElement :: forall d. Selection_ -> Element -> Array (Attribute d) -> Effect Selection_
 appendStyledElement s element attrs = 
