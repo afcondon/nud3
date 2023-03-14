@@ -13,9 +13,9 @@ module Nud3.FFI where
 
 
 import Effect (Effect)
+import Nud3.Types (D3SelectorFunction, Selection_, Transition_)
 import Prelude (Unit)
 import Web.DOM as DOM
-import Nud3.Types (Selection_, D3SelectorFunction)
 
 foreign import getGroups_ :: Selection_ -> Array DOM.NodeList
 foreign import getParents_ :: Selection_ -> Array DOM.Node
@@ -27,7 +27,7 @@ foreign import selectManyWithString_ :: String -> Selection_
 -- foreign import selectFirstFromWithString_ :: Selection -> String -> Selection_
 
 -- foreign import selectFirstWithFunction_ :: D3SelectorFunction -> Selection_
-foreign import selectManyWithFunction_ :: String -> D3SelectorFunction -> Selection_
+foreign import selectManyWithFunction_ :: D3SelectorFunction -> Selection_
 -- foreign import selectGroupedWithFunction_ :: Selection -> D3SelectorFunction -> Selection_
 -- foreign import selectFirstFromWithFunction_ :: Selection -> D3SelectorFunction -> Selection_
 
@@ -41,4 +41,8 @@ foreign import getEnterUpdateExitSelections_ :: Selection_ -> { enter :: Selecti
 foreign import mergeSelections_ :: Selection_ -> Selection_ -> Selection_
 -- | only used by visualize after merging the enter and update selections
 foreign import orderSelection_ :: Selection_ -> Selection_
+
+
+-- | functions for transitions here
+foreign import createNewTransition_ :: Unit -> Transition_
 

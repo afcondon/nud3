@@ -14,6 +14,8 @@ export function selectManyWithFunction_ (selectorFn) {
   return new Selection([array(selectorFn)], root) // root = [null]
 }
 
+// TODO probably try to NOT expose these and keep them completely opaque
+// or else find a way to expose this stuff in PureScript instead
 export function getGroups_ (selection) { return selection._groups }
 export function getParents_ (selection) { return selection._parents }
 export function getName_ (selection) { return selection._name }
@@ -54,9 +56,107 @@ export function mergeSelections_ (first) {
 export function orderSelection_ (selection) {
   return selection.order()
 }
-  // Code below this comment is from D3.js, introduced in the order that the dependencies played out
+
+// Stuff from Transition modules - need to bite the bullet and figure out the modules for this later, but for now don't want to just import the whole thing
+
+// in D3 this is d3.transition() which delegates to d3.selection/selection.js 
+// we'll spell out exactly what gets done here to make it easier to replace later
+// (and easier to understand)
+export function createNewTransition_ () { // WIP
+  let s = new Selection([[document.documentElement]], root);
+  // TODO setup all the transition stuff here if necessary - may not be
+  return s;
+}
+
+
+
 // ---------------------------------------------------------------------
-// -- from D3/selection/join.js
+// Code below this comment is from D3.js, introduced in the order that the dependencies played out
+// First up are the prototype definitions for Selection_ and Transition_
+// ---------------------------------------------------------------------
+
+// ---------------------------------------------------------------------
+// - add the functions to the constructor / prototype. 
+// we'll be adding these as needed in order to fully understand the dependencies
+Selection.prototype = selection.prototype = {
+  constructor: Selection,
+  // [Symbol.iterator]: selection_iterator
+  // call: selection_call,
+  // classed: selection_classed,
+  // clone: selection_clone,
+  // datum: selection_datum,
+  // dispatch: selection_dispatch,
+  // empty: selection_empty,
+  // filter: selection_filter,
+  // html: selection_html,
+  // lower: selection_lower,
+  // nodes: selection_nodes,
+  // on: selection_on,
+  // property: selection_property,
+  // raise: selection_raise,
+  // selectChild: selection_selectChild,
+  // selectChildren: selection_selectChildren,
+  // size: selection_size,
+  // sort: selection_sort,
+  // style: selection_style,
+  // text: selection_text,
+  append: selection_append,
+  attr: selection_attr,
+  data: selection_data,
+  each: selection_each,
+  enter: selection_enter,
+  exit: selection_exit,
+  insert: selection_insert,
+  // join: selection_join,
+  node: selection_node,
+  merge: selection_merge,
+  order: selection_order,
+  remove: selection_remove,
+  select: selection_select,
+  selectAll: selection_selectAll,
+  selection: selection_selection,
+};
+
+// Transition.prototype = transition.prototype = {
+//   constructor: Transition,
+//   // first things that are simply inherited from selection commented out if they are
+//   // also commented out in the selection at present
+//   // [Symbol.iterator]: selection_prototype[Symbol.iterator],
+//   // selectChild: selection_selectChild,
+//   // selectChildren: selection_selectChildren,
+//   // call: selection_call,
+//   // nodes: selection_nodes,
+//   node: selection_node,
+//   // size: selection_size,
+//   // empty: selection_empty,
+//   each: selection_each,
+
+//   // now the methods that are unique to transition, to be uncommented as needed for MVP
+//   // select: transition_select,
+//   // selectAll: transition_selectAll,
+//   // filter: transition_filter,
+//   // merge: transition_merge,
+//   // selection: transition_selection,
+//   // transition: transition_transition,
+//   // on: transition_on,
+//   // attr: transition_attr,
+//   // attrTween: transition_attrTween,
+//   // style: transition_style,
+//   // styleTween: transition_styleTween,
+//   // text: transition_text,
+//   // textTween: transition_textTween,
+//   // remove: transition_remove,
+//   // tween: transition_tween,
+//   delay: transition_delay,
+//   duration: transition_duration,
+//   ease: transition_ease,
+//   // easeVarying: transition_easeVarying,
+//   // end: transition_end
+// };
+
+// ---------------------------------------------------------------------
+// -- REFERENCE from D3/selection/join.js NOT USED IN THIS IMPLEMENTATION
+// ---------------------------------------------------------------------
 // join.js is a key module as it manages the General Update Patter by running the enter and exit functions on those selections.
 // the enter and update selections are merged and returned, but can be treated differently, ie wrt attributes and transitions
 function selection_join(onenter, onupdate, onexit) {
@@ -81,6 +181,7 @@ function selection_join(onenter, onupdate, onexit) {
 
 // ---------------------------------------------------------------------
 // - from D3/selection/each.js
+// ---------------------------------------------------------------------
 function selection_each(callback) {
 
   for (var groups = this._groups, j = 0, m = groups.length; j < m; ++j) {
@@ -95,6 +196,7 @@ function selection_each(callback) {
 
 // ---------------------------------------------------------------------
 // - from D3/selection/node.j
+// ---------------------------------------------------------------------
 
 function selection_node() {
 
@@ -110,6 +212,7 @@ function selection_node() {
 
 // ---------------------------------------------------------------------
 // - from D3/selection/attr.js
+// ---------------------------------------------------------------------
 
 // all this stuff from D3.js is just Cmd-C Cmd-V at the moment, 
 // looks over-complicated too, should simplify and de-multiplex the polymorphic parameters
@@ -172,6 +275,7 @@ function selection_attr(name, value) {
 
 // ---------------------------------------------------------------------
 // - from D3.selectAll.js
+// ---------------------------------------------------------------------
 // the relevant line is included in the implementation of selectManyWithString_ above
 // the alternate path will be used for selectManyWithFunction_ when implemented
 
@@ -186,7 +290,8 @@ function selection_attr(name, value) {
 
 // ---------------------------------------------------------------------
 // - from D3.index.js
-export var root = [null];
+// ---------------------------------------------------------------------
+export var root = [null]; // root is used in selection(), d3.select() and d3. selectAll(), and via selection also in d3.transition()
 
 export function Selection(groups, parents, name) {
   this._groups = groups;
@@ -195,7 +300,8 @@ export function Selection(groups, parents, name) {
 }
 
 // ---------------------------------------------------------------------
-// from D3/selectorAll.js
+// - from D3/selectorAll.js
+// ---------------------------------------------------------------------
 
 function empty() { // TODO check that this doesn't clash with the empty function in D3/selection/empty.js now that it's all in one file
   return [];
@@ -209,6 +315,7 @@ function selectorAll(selector) {
 
 // ---------------------------------------------------------------------
 // - from D3/selection/selectAll.js (not to be confused with D3/selectAll.js)
+// ---------------------------------------------------------------------
 
 function arrayAll(select) {
   return function() {
@@ -234,6 +341,7 @@ function selection_selectAll (select) {
 
 // ---------------------------------------------------------------------
 // - from D3.array.js
+// ---------------------------------------------------------------------
 
 // Given something array like (or null), returns something that is strictly an
 // array. This is used to ensure that array-like objects passed to d3.selectAll
@@ -247,6 +355,7 @@ export default function array(x) {
 
 // ---------------------------------------------------------------------
 // - from D3.append.js
+// ---------------------------------------------------------------------
 // import creator from "../creator.js";
 
 function selection_append(name) {
@@ -258,6 +367,7 @@ function selection_append(name) {
 
 // ---------------------------------------------------------------------
 // - from D3.insert.js
+// ---------------------------------------------------------------------
 function constantNull() { // review this, it's just Cmd-C Cmd-V from D3 at the moment
   return null;
 }
@@ -273,6 +383,7 @@ function selection_insert(name, before) {
 
 // ---------------------------------------------------------------------
 // - from D3.creator.js -- TODO review this, it's just Cmd-C Cmd-V from D3 at the moment
+// ---------------------------------------------------------------------
 
 // import namespace from "./namespace.js";
 // import {xhtml} from "./namespaces.js";
@@ -302,6 +413,7 @@ function creator(name) {
 
 // ---------------------------------------------------------------------
 // - from D3.namespace.js -- TODO review this, it's just Cmd-C Cmd-V from D3 at the moment
+// ---------------------------------------------------------------------
 
 function namespace(name) {
   var prefix = name += "", i = prefix.indexOf(":");
@@ -311,6 +423,7 @@ function namespace(name) {
 
 // ---------------------------------------------------------------------
 // - from D3.namespaces.js -- TODO review this, it's just Cmd-C Cmd-V from D3 at the moment
+// ---------------------------------------------------------------------
 var xhtml = "http://www.w3.org/1999/xhtml";
 
 var namespaces = {
@@ -333,6 +446,7 @@ var namespaces = {
 
 // ---------------------------------------------------------------------
 // - from selection/index.js
+// ---------------------------------------------------------------------
 
 function selection() {
   return new Selection([[document.documentElement]], root);
@@ -344,6 +458,7 @@ function selection_selection() {
 
 // ---------------------------------------------------------------------
 // - from selection/select.js
+// ---------------------------------------------------------------------
 
 function selection_select (select) {
   if (typeof select !== "function") select = selector(select);
@@ -362,6 +477,7 @@ function selection_select (select) {
 
 // ---------------------------------------------------------------------
 // - from selection/selector.js
+// ---------------------------------------------------------------------
 function none() {}
 
 function selector (selector) {
@@ -372,18 +488,21 @@ function selector (selector) {
 
 // ---------------------------------------------------------------------
 // - from selection/sparse.js
+// ---------------------------------------------------------------------
 function sparse(update) {
   return new Array(update.length);
 }
 
 // ---------------------------------------------------------------------
 // - from d3/selection/exit.js
+// ---------------------------------------------------------------------
 
 function selection_exit() {
   return new Selection(this._exit || this._groups.map(sparse), this._parents);
 }
 // ---------------------------------------------------------------------
 // - from d3/selection/enter.js
+// ---------------------------------------------------------------------
 
 function selection_enter() {
   return new Selection(this._enter || this._groups.map(sparse), this._parents);
@@ -407,6 +526,7 @@ EnterNode.prototype = {
 
 // ---------------------------------------------------------------------
 // - from d3/src/constant.js
+// ---------------------------------------------------------------------
 
 function constant (x) {
   return function() {
@@ -416,6 +536,7 @@ function constant (x) {
 
 // ---------------------------------------------------------------------
 // - from selection/data.js
+// ---------------------------------------------------------------------
 
 function bindIndex(parent, group, enter, update, exit, data) {
   var i = 0,
@@ -544,6 +665,7 @@ function arraylike(data) {
 
 // ---------------------------------------------------------------------
 // - from d3/src/selection/merge.js
+// ---------------------------------------------------------------------
 
 function selection_merge (context) {
   var selection = context.selection ? context.selection() : context;
@@ -565,6 +687,7 @@ function selection_merge (context) {
 
 // ---------------------------------------------------------------------
 // - from d3/src/selection/remove.js
+// ---------------------------------------------------------------------
 
 function remove() {
   var parent = this.parentNode;
@@ -591,44 +714,3 @@ function selection_order () {
   return this;
 }
 
-// ---------------------------------------------------------------------
-// - add the functions to the constructor / prototype. 
-// we'll be adding these as needed in order to fully understand the dependencies
-Selection.prototype = selection.prototype = {
-  constructor: Selection,
-  // [Symbol.iterator]: selection_iterator
-  // call: selection_call,
-  // classed: selection_classed,
-  // clone: selection_clone,
-  // datum: selection_datum,
-  // dispatch: selection_dispatch,
-  // empty: selection_empty,
-  // filter: selection_filter,
-  // html: selection_html,
-  // lower: selection_lower,
-  // nodes: selection_nodes,
-  // on: selection_on,
-  // property: selection_property,
-  // raise: selection_raise,
-  // selectChild: selection_selectChild,
-  // selectChildren: selection_selectChildren,
-  // size: selection_size,
-  // sort: selection_sort,
-  // style: selection_style,
-  // text: selection_text,
-  append: selection_append,
-  attr: selection_attr,
-  data: selection_data,
-  each: selection_each,
-  enter: selection_enter,
-  exit: selection_exit,
-  insert: selection_insert,
-  join: selection_join,
-  node: selection_node,
-  merge: selection_merge,
-  order: selection_order,
-  remove: selection_remove,
-  select: selection_select,
-  selectAll: selection_selectAll,
-  selection: selection_selection,
-};

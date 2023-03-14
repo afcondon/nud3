@@ -4,6 +4,7 @@ import Prelude
 
 import Data.Nullable (Nullable)
 import Effect (Effect)
+import Nud3.FFI as FFI
 import Nud3.Types (Selection_, Transition_)
 import Unsafe.Coerce (unsafeCoerce)
 
@@ -14,7 +15,6 @@ foreign import data AttributeSetter_ :: Type
 foreign import addAttribute_ :: forall d. Selection_ -> String -> d -> Unit
 foreign import addTransitionToSelection_ :: Selection_ -> Transition_ -> Selection_
 -- | no attempt will be made to manage named transitions in contrast to D3
-foreign import createNewTransition_ :: Unit -> Transition_
 foreign import addRemoveAttribute_ :: forall d. Selection_ -> Unit
 foreign import transitionDelayFixed_ :: Transition_ -> Number -> Transition_
 foreign import transitionDelayLambda_ :: forall d t. Transition_ -> (d -> Int -> t) -> Transition_
@@ -70,7 +70,7 @@ easeCubic = identity -- TODO this is a placeholder
 
 createTransition :: TransitionConfig -> Transition_
 createTransition config = do
-  let t = createNewTransition_ unit
+  let t = FFI.createNewTransition_ unit
       _ = transitionDurationFixed_ t config.duration
       _ = transitionDelayFixed_ t config.delay
   t
@@ -80,7 +80,7 @@ createTransition config = do
 
 data Attribute d = 
     Background_ String
-  | Background (AttributeSetter d String)
+  | Background (AttributeSetter d String) -- ie CSS background-color NOT HTML background
   | Color_ String
   | Color (AttributeSetter d String)
   | Classed_ String
@@ -200,8 +200,8 @@ foreign import uncurry_ :: forall d t. AttributeSetter d t -> AttributeSetter_
 
 getKeyFromAttribute :: forall d. Attribute d -> String
 getKeyFromAttribute = case _ of 
-  Background_ _ -> "background"
-  Background _ -> "background"
+  Background_ _ -> "background-color"
+  Background _ -> "background-color"
   Color_ _ -> "color"
   Color _ -> "color"
   Classed_ _ -> "class"

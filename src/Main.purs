@@ -15,7 +15,7 @@ main :: Effect Unit
 main = do
   matrix2table
   threeLittleCircles
-  -- generalUpdatePattern
+  generalUpdatePattern
   -- drawTree 
   -- drawForceLayout
   log "🍝"

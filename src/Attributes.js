@@ -13,11 +13,6 @@ export function addTransitionToSelection_ (selection) {
     return (t) => selection.transition(t)
 }
 
-export function createNewTransition_ () {
-  // TODO we will need to bring in or rewrite the transition code here
-  return d3.transition() 
-}
-
 // can be called with any selection, in practice called only
 // as part of a list of transition attributes, ie for exit nodes
 export function addRemoveAttribute_ (transition) {
@@ -35,4 +30,7 @@ export function transitionDurationFixed_ (transition) {
 }
 export function transitionDurationLambda_ (transition) {
   return (f) => transition.duration(f)
+}
+export function transitionEaseFunction (transition) {
+  return (f) => transition.ease(f)
 }
