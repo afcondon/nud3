@@ -10,7 +10,8 @@
     "run": "spago run",
     "install": "spago install web-dom debug",
     "tidy": "purs-tidy format-in-place src/**/*.purs",
-    "bundle": "spago bundle --module Main --outfile dist/bundle.js"
+    "bundle": "spago bundle --module Main --outfile dist/bundle.js",
+    "version": "spago --version"
   },
   "keywords": [
     "purescript",
@@ -20,9 +21,15 @@
   "author": "andrew condon",
   "license": "MIT",
   "dependencies": {
-    "purescript": "^0.15.7"
+    "purescript": "^0.15.7",
+    "spago": "^0.92.9"
   },
   "devDependencies": {
+    "d3-dispatch": "^3.0.1",
+    "d3-ease": "^3.0.1",
+    "d3-selection": "^3.0.0",
+    "d3-timer": "^3.0.1",
+    "d3-transition": "^3.0.1",
     "purs-tidy": "^0.9.3"
   }
 }

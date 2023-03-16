@@ -3,6 +3,7 @@ module Examples.Matrix where
 import Nud3
 
 import Effect (Effect)
+import Effect.Class.Console (log)
 import Nud3.Attributes (Attribute(..), addAttributes)
 import Prelude (Unit, bind, pure, unit)
 

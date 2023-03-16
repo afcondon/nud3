@@ -17,6 +17,9 @@ import Nud3.Types (D3SelectorFunction, Selection_, Transition_)
 import Prelude (Unit)
 import Web.DOM as DOM
 
+foreign import foo :: Int -> Int
+
+
 foreign import getGroups_ :: Selection_ -> Array DOM.NodeList
 foreign import getParents_ :: Selection_ -> Array DOM.Node
 foreign import getName_ :: Selection_ -> String
