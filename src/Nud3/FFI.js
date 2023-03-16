@@ -62,11 +62,28 @@ export function orderSelection_ (selection) {
 // ---------------------------------------------------------------------
 
 // in D3 this is d3.transition() which delegates to d3.selection/selection.js 
+// d3-transition/src/transition/index.js imports the following things:
+
+// import {selection} from "d3-selection";
+// import selection_interrupt from "./interrupt.js";
+// import selection_transition from "./transition.js";
+
+// selection.prototype.interrupt = selection_interrupt;
+// selection.prototype.transition = selection_transition;
+
 // we'll spell out exactly what gets done here to make it easier to replace later
 // (and easier to understand)
 export function createNewTransition_ () { // WIP
-  let s = new Selection([[document.documentElement]], root);
+  let s = new Selection([[document.documentElement]], root); // first thing that happens in d3.transition() is creation of a new Selection object
   // TODO setup all the transition stuff here if necessary - may not be
+  // second thing that happens is initialisation of a new Transition object using the selection object function transition()
+  let t = s.transition(); 
+  // d3-transition/src/selection/index.js imports the following things:
+// import {Transition, newId} from "../transition/index.js";
+// import schedule from "../transition/schedule.js";
+// import {easeCubicInOut} from "d3-ease";
+// import {now} from "d3-timer";
+
   return s;
 }
 export function transitionDelayFixed_ (transition) { 
@@ -123,7 +140,7 @@ Selection.prototype = selection.prototype = {
   enter: selection_enter,
   exit: selection_exit,
   insert: selection_insert,
-  // join: selection_join,
+  // join: selection_join, // this one is re-written and we don't want to allow the original to be called from the prototype anymore
   node: selection_node,
   merge: selection_merge,
   order: selection_order,
@@ -133,42 +150,118 @@ Selection.prototype = selection.prototype = {
   selection: selection_selection,
 };
 
-// Transition.prototype = transition.prototype = {
-//   constructor: Transition,
-//   // first things that are simply inherited from selection commented out if they are
-//   // also commented out in the selection at present
-//   // [Symbol.iterator]: selection_prototype[Symbol.iterator],
-//   // selectChild: selection_selectChild,
-//   // selectChildren: selection_selectChildren,
-//   // call: selection_call,
-//   // nodes: selection_nodes,
-//   node: selection_node,
-//   // size: selection_size,
-//   // empty: selection_empty,
-//   each: selection_each,
+Transition.prototype = transition.prototype = {
+  constructor: Transition,
+  // first things that are simply inherited from selection commented out if they are
+  // also commented out in the selection at present
+  // [Symbol.iterator]: selection_prototype[Symbol.iterator],
+  // selectChild: selection_selectChild,
+  // selectChildren: selection_selectChildren,
+  // call: selection_call,
+  // nodes: selection_nodes,
+  node: selection_node,
+  // size: selection_size,
+  // empty: selection_empty,
+  each: selection_each,
 
-//   // now the methods that are unique to transition, to be uncommented as needed for MVP
-//   // select: transition_select,
-//   // selectAll: transition_selectAll,
-//   // filter: transition_filter,
-//   // merge: transition_merge,
-//   // selection: transition_selection,
-//   // transition: transition_transition,
-//   // on: transition_on,
-//   // attr: transition_attr,
-//   // attrTween: transition_attrTween,
-//   // style: transition_style,
-//   // styleTween: transition_styleTween,
-//   // text: transition_text,
-//   // textTween: transition_textTween,
-//   // remove: transition_remove,
-//   // tween: transition_tween,
-//   delay: transition_delay,
-//   duration: transition_duration,
-//   ease: transition_ease,
-//   // easeVarying: transition_easeVarying,
-//   // end: transition_end
-// };
+  // now the methods that are unique to transition, to be uncommented as needed for MVP
+  // select: transition_select,
+  // selectAll: transition_selectAll,
+  // filter: transition_filter,
+  // merge: transition_merge,
+  selection: transition_selection, // this method is added on transition prototypes only
+  transition: transition_transition, // this method is added on transition prototypes only
+  // on: transition_on,
+  // attr: transition_attr,
+  // attrTween: transition_attrTween,
+  // style: transition_style,
+  // styleTween: transition_styleTween,
+  // text: transition_text,
+  // textTween: transition_textTween,
+  // remove: transition_remove,
+  // tween: transition_tween,
+  delay: transition_delay,
+  duration: transition_duration,
+  ease: transition_ease,
+  // easeVarying: transition_easeVarying,
+  // end: transition_end
+};
+
+// ---------------------------------------------------------------------
+// -- d3-transition/src/transition/index.js
+// ---------------------------------------------------------------------
+var transition_id = 0; 
+
+export function newId() {
+  return ++transition_id;
+}
+export function Transition(groups, parents, name, id) {
+  this._groups = groups;
+  this._parents = parents;
+  this._name = name;
+  this._id = transition_id;
+}
+
+function transition(name) {
+  return selection().transition(name); // this requires that the prototype for Selection has had the transition method 
+}
+
+var selection_prototype = selection.prototype;
+
+
+// ---------------------------------------------------------------------
+// -- d3-transition/src/selection/transition.js
+// -- this is one of two extensions to the Selection prototype that the d3-transition module adds
+// -- the other is d3-transition/src/selection/interrupt.js
+// ---------------------------------------------------------------------
+// import {Transition, newId} from "../transition/index.js";
+import schedule from "../transition/schedule.js";
+// import {easeCubicInOut} from "d3-ease";
+import {now} from "d3-timer";
+
+export function cubicInOut(t) { // from d3-ease
+  return ((t *= 2) <= 1 ? t * t * t : (t -= 2) * t * t + 2) / 2;
+}
+
+var defaultTiming = {
+  time: null, // Set on use.
+  delay: 0,
+  duration: 250,
+  ease: easeCubicInOut
+};
+
+function inherit(node, id) {
+  var timing;
+  while (!(timing = node.__transition) || !(timing = timing[id])) {
+    if (!(node = node.parentNode)) {
+      throw new Error(`transition ${id} not found`);
+    }
+  }
+  return timing;
+}
+
+export default function(name) {
+  var id,
+      timing;
+
+  if (name instanceof Transition) {
+    id = name._id, name = name._name;
+  } else {
+    id = newId(), (timing = defaultTiming).time = now(), name = name == null ? null : name + "";
+  }
+
+  for (var groups = this._groups, m = groups.length, j = 0; j < m; ++j) {
+    for (var group = groups[j], n = group.length, node, i = 0; i < n; ++i) {
+      if (node = group[i]) {
+        schedule(node, name, id, i, group, timing || inherit(node, id));
+      }
+    }
+  }
+
+  return new Transition(groups, this._parents, name, id);
+}
+
+
 
 // ---------------------------------------------------------------------
 // -- REFERENCE from D3/selection/join.js NOT USED IN THIS IMPLEMENTATION
@@ -730,3 +823,246 @@ function selection_order () {
   return this;
 }
 
+// ---------------------------------------------------------------------
+// - from d3-transition/transition/dispatch.js
+// ---------------------------------------------------------------------
+// import {dispatch} from "d3-dispatch";
+import {timer, timeout} from "d3-timer";
+
+var emptyOn = dispatch("start", "end", "cancel", "interrupt");
+var emptyTween = [];
+
+export var CREATED = 0;
+export var SCHEDULED = 1;
+export var STARTING = 2;
+export var STARTED = 3;
+export var RUNNING = 4;
+export var ENDING = 5;
+export var ENDED = 6;
+
+function(node, name, id, index, group, timing) {
+  var schedules = node.__transition;
+  if (!schedules) node.__transition = {};
+  else if (id in schedules) return;
+  create(node, id, {
+    name: name,
+    index: index, // For context during callback.
+    group: group, // For context during callback.
+    on: emptyOn,
+    tween: emptyTween,
+    time: timing.time,
+    delay: timing.delay,
+    duration: timing.duration,
+    ease: timing.ease,
+    timer: null,
+    state: CREATED
+  });
+}
+
+export function init(node, id) {
+  var schedule = get(node, id);
+  if (schedule.state > CREATED) throw new Error("too late; already scheduled");
+  return schedule;
+}
+
+export function set(node, id) {
+  var schedule = get(node, id);
+  if (schedule.state > STARTED) throw new Error("too late; already running");
+  return schedule;
+}
+
+export function get(node, id) {
+  var schedule = node.__transition;
+  if (!schedule || !(schedule = schedule[id])) throw new Error("transition not found");
+  return schedule;
+}
+
+function create(node, id, self) {
+  var schedules = node.__transition,
+      tween;
+
+  // Initialize the self timer when the transition is created.
+  // Note the actual delay is not known until the first callback!
+  schedules[id] = self;
+  self.timer = timer(schedule, 0, self.time);
+
+  function schedule(elapsed) {
+    self.state = SCHEDULED;
+    self.timer.restart(start, self.delay, self.time);
+
+    // If the elapsed delay is less than our first sleep, start immediately.
+    if (self.delay <= elapsed) start(elapsed - self.delay);
+  }
+
+  function start(elapsed) {
+    var i, j, n, o;
+
+    // If the state is not SCHEDULED, then we previously errored on start.
+    if (self.state !== SCHEDULED) return stop();
+
+    for (i in schedules) {
+      o = schedules[i];
+      if (o.name !== self.name) continue;
+
+      // While this element already has a starting transition during this frame,
+      // defer starting an interrupting transition until that transition has a
+      // chance to tick (and possibly end); see d3/d3-transition#54!
+      if (o.state === STARTED) return timeout(start);
+
+      // Interrupt the active transition, if any.
+      if (o.state === RUNNING) {
+        o.state = ENDED;
+        o.timer.stop();
+        o.on.call("interrupt", node, node.__data__, o.index, o.group);
+        delete schedules[i];
+      }
+
+      // Cancel any pre-empted transitions.
+      else if (+i < id) {
+        o.state = ENDED;
+        o.timer.stop();
+        o.on.call("cancel", node, node.__data__, o.index, o.group);
+        delete schedules[i];
+      }
+    }
+
+    // Defer the first tick to end of the current frame; see d3/d3#1576.
+    // Note the transition may be canceled after start and before the first tick!
+    // Note this must be scheduled before the start event; see d3/d3-transition#16!
+    // Assuming this is successful, subsequent callbacks go straight to tick.
+    timeout(function() {
+      if (self.state === STARTED) {
+        self.state = RUNNING;
+        self.timer.restart(tick, self.delay, self.time);
+        tick(elapsed);
+      }
+    });
+
+    // Dispatch the start event.
+    // Note this must be done before the tween are initialized.
+    self.state = STARTING;
+    self.on.call("start", node, node.__data__, self.index, self.group);
+    if (self.state !== STARTING) return; // interrupted
+    self.state = STARTED;
+
+    // Initialize the tween, deleting null tween.
+    tween = new Array(n = self.tween.length);
+    for (i = 0, j = -1; i < n; ++i) {
+      if (o = self.tween[i].value.call(node, node.__data__, self.index, self.group)) {
+        tween[++j] = o;
+      }
+    }
+    tween.length = j + 1;
+  }
+
+  function tick(elapsed) {
+    var t = elapsed < self.duration ? self.ease.call(null, elapsed / self.duration) : (self.timer.restart(stop), self.state = ENDING, 1),
+        i = -1,
+        n = tween.length;
+
+    while (++i < n) {
+      tween[i].call(node, t);
+    }
+
+    // Dispatch the end event.
+    if (self.state === ENDING) {
+      self.on.call("end", node, node.__data__, self.index, self.group);
+      stop();
+    }
+  }
+
+  function stop() {
+    self.state = ENDED;
+    self.timer.stop();
+    delete schedules[id];
+    for (var i in schedules) return; // eslint-disable-line no-unused-vars
+    delete node.__transition;
+  }
+}
+
+// ---------------------------------------------------------------------
+// - from d3-dispatch/dispatch.js
+// used from d3-transition/schedule.js
+// ---------------------------------------------------------------------
+var noop = {value: () => {}};
+
+function dispatch() {
+  for (var i = 0, n = arguments.length, _ = {}, t; i < n; ++i) {
+    if (!(t = arguments[i] + "") || (t in _) || /[\s.]/.test(t)) throw new Error("illegal type: " + t);
+    _[t] = [];
+  }
+  return new Dispatch(_);
+}
+
+function Dispatch(_) {
+  this._ = _;
+}
+
+function parseTypenames(typenames, types) {
+  return typenames.trim().split(/^|\s+/).map(function(t) {
+    var name = "", i = t.indexOf(".");
+    if (i >= 0) name = t.slice(i + 1), t = t.slice(0, i);
+    if (t && !types.hasOwnProperty(t)) throw new Error("unknown type: " + t);
+    return {type: t, name: name};
+  });
+}
+
+Dispatch.prototype = dispatch.prototype = {
+  constructor: Dispatch,
+  on: function(typename, callback) {
+    var _ = this._,
+        T = parseTypenames(typename + "", _),
+        t,
+        i = -1,
+        n = T.length;
+
+    // If no callback was specified, return the callback of the given type and name.
+    if (arguments.length < 2) {
+      while (++i < n) if ((t = (typename = T[i]).type) && (t = get(_[t], typename.name))) return t;
+      return;
+    }
+
+    // If a type was specified, set the callback for the given type and name.
+    // Otherwise, if a null callback was specified, remove callbacks of the given name.
+    if (callback != null && typeof callback !== "function") throw new Error("invalid callback: " + callback);
+    while (++i < n) {
+      if (t = (typename = T[i]).type) _[t] = set(_[t], typename.name, callback);
+      else if (callback == null) for (t in _) _[t] = set(_[t], typename.name, null);
+    }
+
+    return this;
+  },
+  copy: function() {
+    var copy = {}, _ = this._;
+    for (var t in _) copy[t] = _[t].slice();
+    return new Dispatch(copy);
+  },
+  call: function(type, that) {
+    if ((n = arguments.length - 2) > 0) for (var args = new Array(n), i = 0, n, t; i < n; ++i) args[i] = arguments[i + 2];
+    if (!this._.hasOwnProperty(type)) throw new Error("unknown type: " + type);
+    for (t = this._[type], i = 0, n = t.length; i < n; ++i) t[i].value.apply(that, args);
+  },
+  apply: function(type, that, args) {
+    if (!this._.hasOwnProperty(type)) throw new Error("unknown type: " + type);
+    for (var t = this._[type], i = 0, n = t.length; i < n; ++i) t[i].value.apply(that, args);
+  }
+};
+
+function get(type, name) {
+  for (var i = 0, n = type.length, c; i < n; ++i) {
+    if ((c = type[i]).name === name) {
+      return c.value;
+    }
+  }
+}
+
+function set(type, name, callback) {
+  for (var i = 0, n = type.length; i < n; ++i) {
+    if (type[i].name === name) {
+      type[i] = noop, type = type.slice(0, i).concat(type.slice(i + 1));
+      break;
+    }
+  }
+  if (callback != null) type.push({name: name, value: callback});
+  return type;
+}
