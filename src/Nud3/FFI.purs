@@ -11,13 +11,10 @@
 
 module Nud3.FFI where
 
-
 import Effect (Effect)
 import Nud3.Types (D3SelectorFunction, Selection_, Transition_)
 import Prelude (Unit)
 import Web.DOM as DOM
-
-foreign import foo :: Int -> Int
 
 
 foreign import getGroups_ :: Selection_ -> Array DOM.NodeList

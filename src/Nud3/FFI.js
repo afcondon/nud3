@@ -1,20 +1,16 @@
-import { select } from "d3-selection";
-
-export function foo (i) {
-  const svg = select("#map");
-  return 1 + 3;
-}
+import { selectAll } from "d3-selection";
 
 // The following two functions break out two of the many ways that d3.selectAll can be called
-
 export function selectManyWithString_ (selector)  
 { 
-  console.log("selectManyWithString_");
-  foo(3);
-  //return new Selection([document.querySelectorAll(selector)], [document.documentElement])
+  return selectAll(selector);
+  // morally this function 
+  // return new Selection([document.querySelectorAll(selector)], [document.documentElement])
 }
 export function selectManyWithFunction_ (selectorFn) {
-  //return new Selection([array(selectorFn)], root) // root = [null]
+  return selectAll(selectorFn);
+  // morally this function
+  // return new Selection([array(selectorFn)], root) // root = [null]
 }
 
 // TODO probably try to NOT expose these and keep them completely opaque
