@@ -39,18 +39,18 @@ type UpdateSelection = {
 showSelection :: Selection_ -> String
 showSelection s = "Selection named: " <> FFI.getName_ s
 
-type KeyFunction = forall d i. (Ord i) => (Ord d) => d -> Int -> NodeList -> i
+type KeyFunction d = forall i. (Ord i) => (Ord d) => d -> Int -> NodeList -> i
 -- NB this key function is curried whereas, used on the JS side it needs to be uncurried
 -- optimise this later or maybe compiler optimisation will be enough
 
-identityKeyFunction :: KeyFunction
+identityKeyFunction :: forall d. KeyFunction d
 identityKeyFunction = \d _ _ -> unsafeCoerce d -- TODO something nicer here
 
 type JoinConfig d = { 
     what :: AddElement
   , where :: Selection_
   , using :: DataSource d
-  , key :: KeyFunction
+  , key :: KeyFunction d
   , attributes :: {
       enter :: ElementConfig d
     , update :: ElementConfig d
@@ -124,7 +124,6 @@ insertElement s element selector = do
     SVG tag -> FFI.insertElement_ tag selector s 
     HTML tag -> FFI.insertElement_ tag selector s
 
-
 infixr 5 appendElement as |+|
 infixr 5 insertElement as |^|
 
@@ -147,7 +146,7 @@ insertStyledElement s element attrs =
 -- | actually will have, but we'll see when we try to add transitions and other things
 -- | that are not simple attributes. It may be that there's a wholly different API approach
 -- | available for those things anyway. 
-visualize :: forall d. (Show d) => JoinConfig d -> Effect Selection_
+visualize :: forall d. JoinConfig d -> Effect Selection_
 visualize config = do
   let element = getElementName config.what
   let s' = FFI.beginJoin_ config.where element
@@ -165,7 +164,10 @@ visualize config = do
   let merged = FFI.mergeSelections_ enterNodes updateNodes
   pure $ FFI.orderSelection_ merged
     
---| here the data is already in the DOM, we just need to update the visualisation with some new data
+-- | here the data is already in the DOM, we just need to update the visualisation with some new data
+-- | we will need to either carry over the config as a parameter,
+-- | store it statefully in the selection (undesireable)
+-- | or modify the seletion to carry it  
 revisualize :: forall d. Selection_ -> Array d -> Effect Selection_
 revisualize s ds = 
   Debug.trace "joining new data to the DOM and updating visualiztion with it" \_ -> 

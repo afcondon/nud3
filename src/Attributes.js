@@ -19,3 +19,6 @@ export function addRemoveAttribute_ (transition) {
   return transition.remove()
 }
 
+export function addText_ (selection) {
+  return (text) => selection.text(text)
+}

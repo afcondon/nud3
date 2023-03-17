@@ -50,3 +50,6 @@ foreign import transitionDelayFixed_ :: Transition_ -> Number -> Transition_
 foreign import transitionDelayLambda_ :: forall d t. Transition_ -> (d -> Int -> t) -> Transition_
 foreign import transitionDurationFixed_ :: Transition_ -> Number -> Transition_
 foreign import transitionDurationLambda_ :: forall d t. Transition_ -> (d -> Int -> t) -> Transition_
+foreign import transitionEaseFunction :: Transition_ -> (Number -> Number) -> Transition_
+
+foreign import easeCubic_ :: Number -> Number

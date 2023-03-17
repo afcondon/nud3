@@ -13,6 +13,7 @@ import Unsafe.Coerce (unsafeCoerce)
 -- | Options or heterogeneous lists or whatever
 foreign import data AttributeSetter_ :: Type 
 foreign import addAttribute_ :: forall d. Selection_ -> String -> d -> Unit
+foreign import addText_ :: forall d. Selection_ -> d -> Unit
 foreign import addTransitionToSelection_ :: Selection_ -> Transition_ -> Selection_
 -- | no attempt will be made to manage named transitions in contrast to D3
 foreign import addRemoveAttribute_ :: forall d. Selection_ -> Unit
@@ -40,10 +41,9 @@ addAttribute s (TransitionThenRemove transition attrs ) = do
       s' = (addAttribute selectionTransition) <$> attrs
   unit
 
-
--- | these special cases are still TODO, they need to call selectionText_, selectionInnerHTML_ etc
-addAttribute s attr@(Text d) = addAttribute_ s (getKeyFromAttribute attr) (getValueFromAttribute attr)
-addAttribute s attr@(Text_ d) = addAttribute_ s (getKeyFromAttribute attr) (getValueFromAttribute attr)
+addAttribute s attr@(Text d) = addText_ s (getValueFromAttribute attr)
+addAttribute s attr@(Text_ d) = addText_ s (getValueFromAttribute attr)
+-- | innerHTML still TODO need to add addInnerHTML_ etc
 addAttribute s attr@(InnerHTML d) = addAttribute_ s (getKeyFromAttribute attr) (getValueFromAttribute attr)
 addAttribute s attr@(InnerHTML_ d) = addAttribute_ s (getKeyFromAttribute attr) (getValueFromAttribute attr)
 -- | regular attributes all handled the same way
@@ -61,22 +61,17 @@ type TransitionConfig = {
   , delay :: Number -- TODO this can also be a lambda
   , easing :: Number -> Number }
 
-easeCubic :: Number -> Number
-easeCubic = identity -- TODO this is a placeholder
-
 createTransition :: TransitionConfig -> Transition_
 createTransition config = do
   let t = FFI.createNewTransition_ unit
       _ = FFI.transitionDurationFixed_ t config.duration
       _ = FFI.transitionDelayFixed_ t config.delay
+      _ = FFI.transitionEaseFunction t config.easing
   t
 
-
-
-
 data Attribute d = 
-    Background_ String
-  | Background (AttributeSetter d String) -- ie CSS background-color NOT HTML background
+    BackgroundColor_ String
+  | BackgroundColor (AttributeSetter d String) -- ie CSS background-color NOT HTML background
   | Color_ String
   | Color (AttributeSetter d String)
   | Classed_ String
@@ -133,8 +128,8 @@ data Attribute d =
 
 getValueFromAttribute :: forall d v. Attribute d -> AttributeSetter_
 getValueFromAttribute = case _ of 
-  Background_ v -> exportAttributeSetter_ v
-  Background f -> exportAttributeSetter_ f
+  BackgroundColor_ v -> exportAttributeSetter_ v
+  BackgroundColor f -> exportAttributeSetter_ f
   Color_ v -> exportAttributeSetter_ v
   Classed_ v -> exportAttributeSetter_ v
   CX_ v -> exportAttributeSetter_ v
@@ -196,8 +191,8 @@ foreign import uncurry_ :: forall d t. AttributeSetter d t -> AttributeSetter_
 
 getKeyFromAttribute :: forall d. Attribute d -> String
 getKeyFromAttribute = case _ of 
-  Background_ _ -> "background-color"
-  Background _ -> "background-color"
+  BackgroundColor_ _ -> "background-color"
+  BackgroundColor _ -> "background-color"
   Color_ _ -> "color"
   Color _ -> "color"
   Classed_ _ -> "class"
@@ -255,7 +250,7 @@ getKeyFromAttribute = case _ of
   Y2 _ -> "y2"
 
 instance showAttribute :: Show (Attribute d) where
-  show (Background_ v) = "\n\t\tBackground_" <> " set directly to " <> v
+  show (BackgroundColor_ v) = "\n\t\tBackgroundColor_" <> " set directly to " <> v
   show (Color_ v) = "\n\t\tColor_" <> " set directly to " <> v
   show (Classed_ v) = "\n\t\tClassed_" <> " set directly to " <> v
   show (CX_ v) = "\n\t\tCX_" <> " set directly to " <> show v
@@ -284,7 +279,7 @@ instance showAttribute :: Show (Attribute d) where
   show (X2_ v) = "\n\t\tX2_" <> " set directly to " <> show v
   show (Y1_ v) = "\n\t\tY1_" <> " set directly to " <> show v
   show (Y2_ v) = "\n\t\tY2_" <> " set directly to " <> show v
-  show (Background f) = "\n\t\tBackground set by function"
+  show (BackgroundColor f) = "\n\t\tBackgroundColor set by function"
   show (Color f) = "\n\t\tColor set by function"
   show (Classed f) = "\n\t\tClassed set by function"
   show (CX f) = "\n\t\tCX set by function"

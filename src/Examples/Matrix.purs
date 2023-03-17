@@ -14,10 +14,8 @@ matrix2table = do
   let matrix = [ [ 1, 2, 3 ], [ 4, 5, 6 ], [ 7, 8, 9 ] ]
 
   let root = select (SelectorString "div#matrix")
-  -- | TODO selection name is not passed thru when appending, should it be? 
   table <- root |+| (HTML "table") 
-  _ <- addAttributes table [ Classed_ "matrix", Width_ 1000.0, Height_ 1000.0 ] -- just to test the addAttributes function
-  -- beforeTable <- root |^| (HTML "p")
+  _ <- addAttributes table [ Classed_ "matrix", Width_ 300.0, Height_ 300.0, BackgroundColor_ "#AAA" ] -- just to test the addAttributes function
   rows <- visualize
     { what: Append (HTML "tr")
     , where: table
@@ -25,13 +23,13 @@ matrix2table = do
     , key: identityKeyFunction
     , attributes:
         { enter: [ Classed_ "new" ]
-        , exit: [ Classed_ "exit" ] -- removed the "Remove" attribute here in case that was source of parse error
+        , exit: [ Classed_ "exit" ] -- remove is implicit, only needed on custom exit
         , update: [ Classed_ "updated" ]
         }
     }
 
   let oddrows = rows `filter` "nth-child(odd)"
-  _ <- style oddrows [ Background_ "light-gray", Color_ "white" ]
+  _ <- style oddrows [ BackgroundColor_ "light-gray", Color_ "white" ]
 
   items <- visualize
     { what: Append (HTML "td")
@@ -44,5 +42,8 @@ matrix2table = do
         , update: []
         }
     }
+
+  texts <- addAttributes items [Text \d i -> d]
+
   pure unit
 

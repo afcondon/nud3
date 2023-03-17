@@ -1,5 +1,9 @@
 import { selectAll } from "d3-selection";
+import { easeCubic } from "d3-ease";
 
+export function easeCubic_ (d) { return easeCubic(d) } // is there an easier way to do this?
+
+// ------------------ Selection ------------------
 // The following two functions break out two of the many ways that d3.selectAll can be called
 export function selectManyWithString_ (selector)  
 { 
@@ -56,31 +60,11 @@ export function orderSelection_ (selection) {
   return selection.order()
 }
 
-// in D3 this is d3.transition() which delegates to d3.selection/selection.js 
-// d3-transition/src/transition/index.js imports the following things:
+// ------------------ Transition ------------------
+import { transition } from "d3-transition";
 
-// import {selection} from "d3-selection";
-// import selection_interrupt from "./interrupt.js";
-// import selection_transition from "./transition.js";
+export function createNewTransition_ () { return transition() }
 
-// selection.prototype.interrupt = selection_interrupt;
-// selection.prototype.transition = selection_transition;
-
-// we'll spell out exactly what gets done here to make it easier to replace later
-// (and easier to understand)
-export function createNewTransition_ () { // WIP
-  let s = new Selection([[document.documentElement]], root); // first thing that happens in d3.transition() is creation of a new Selection object
-  // TODO setup all the transition stuff here if necessary - may not be
-  // second thing that happens is initialisation of a new Transition object using the selection object function transition()
-  let t = s.transition(); 
-  // d3-transition/src/selection/index.js imports the following things:
-// import {Transition, newId} from "../transition/index.js";
-// import schedule from "../transition/schedule.js";
-// import {easeCubicInOut} from "d3-ease";
-// import {now} from "d3-timer";
-
-  return s;
-}
 export function transitionDelayFixed_ (transition) { 
   return (amount) => transition.delay(amount)
 }
