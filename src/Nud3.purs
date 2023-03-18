@@ -150,10 +150,14 @@ insertStyledElement s element attrs =
 visualize :: forall d. JoinConfig d -> Effect Selection_
 visualize config = do
   let element = getElementName config.what
-  let s' = FFI.beginJoin_ config.where element
+  -- FFI.beginJoin_ uses underlying call to selection.selectAll(element) 
+  let s' = FFI.beginJoin_ config.where element 
+  -- both branches here use underlying call to selection.data(data, key)
+  -- TODO key function is not yet supported
   let s'' = case config.using of
               InheritData -> FFI.useInheritedData_ s' -- uses d => d
               NewData ds -> FFI.addData_ s' ds
+  -- FFI.getEnterUpdateExitSelections_ uses underlying call to selection.join(enter, update, exit)
   let { enter, update, exit } = FFI.getEnterUpdateExitSelections_ s''
 
   entered <- addElement enter config.what
