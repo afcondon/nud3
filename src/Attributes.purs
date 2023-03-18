@@ -23,13 +23,44 @@ exportAttributeSetter_ = unsafeCoerce
 
 type AttributeSetter d t = d -> Int -> t
 
+{-
+        enter => enter.append("text")
+            .attr("fill", "green")
+            .attr("x", (d, i) => i * 16)
+            .attr("y", -30)
+            .text(d => d)
+          .call(enter => enter.transition(t)
+            .attr("y", 0)),
+        update => update
+            .attr("fill", "black")
+            .attr("y", 0)
+          .call(update => update.transition(t)
+            .attr("x", (d, i) => i * 16)),
+        exit => exit
+            .attr("fill", "brown")
+          .call(exit => exit.transition(t)
+            .attr("y", 30)
+            .remove())
+
+From the D3 docs:
+The return value of the enter and update function is important—it specifies the
+selections to merge and return by selection.join. To avoid breaking the method
+chain, use selection.call to create transitions. Or, return an undefined enter
+or update selection to prevent merging.
+
+Now, it's not clear to me that _our_ enter, update and exit functions are being
+given to D3 correctly and it's certainly the case given the way we map over
+attributes that we are not returning the underlying selection after the
+transition is added
+
+I believe it's still possible under the hood to use the previous general update
+patter and it may turn out to be necessary to do it this way if we can't find a
+way to make the PureScript version work exactly as the above example shows
+
+-}
 -- | we special case on some attributes - Text, InnerHTML, Transition
 addAttribute :: forall d. Selection_ -> Attribute d -> Unit
--- | given a transition (which has to be prepared earlier) add this transition to the selection
--- | and then just apply the additional attributes to that selection as normal
--- | in D3 this reversion to the regular selection is done by using the `call` function
--- | but this is confusing and horrible. We'll just insist on transition prepared beforehand 
--- | and see what edge-cases arise later.
+-- | TODO we need to use the format .call() see blockcomment above
 addAttribute s (Transition transition attrs ) = do
   let selectionTransition = addTransitionToSelection_ s transition 
       -- we coerce the transition back to a selection to add the attributes, not pretty but isolated here
@@ -54,12 +85,13 @@ addAttributes s attrs = do
   let _ = (addAttribute s) <$> attrs -- relies on the fact that addAttribute returns the same selection each time
   pure s
 
--- | TransitionConfig needs to be fully specified, all possible params set (tho in practice it may be
+-- | TODO TransitionConfig needs to be fully specified, all possible params set (tho in practice it may be
 -- | built by modifying a default config)
 type TransitionConfig = { 
-    duration :: Number -- TODO this can also be a lambda
-  , delay :: Number -- TODO this can also be a lambda
-  , easing :: Number -> Number }
+    duration :: Int -- TODO this can also be a lambda, see AttributeSetter for how to do this
+  , delay :: Int -- TODO this can also be a lambda, see AttributeSetter for how to do this
+  , easing :: Number -> Number 
+}
 
 createTransition :: TransitionConfig -> Transition_
 createTransition config = do
@@ -67,7 +99,7 @@ createTransition config = do
       _ = FFI.transitionDurationFixed_ t config.duration
       _ = FFI.transitionDelayFixed_ t config.delay
       _ = FFI.transitionEaseFunction t config.easing
-  t
+  t -- NB we return t because all the intermediate steps are just for FFI side-effects which we aren't exposing here
 
 data Attribute d = 
     BackgroundColor_ String
@@ -112,7 +144,7 @@ data Attribute d =
   | TransitionThenRemove Transition_ (Array (Attribute d))
   | Width_ Number
   | Width (AttributeSetter d Number)
-  | ViewBox_ Number Number Number Number
+  | ViewBox_ Number Number Number Number -- TODO can't these be Int instead of Number?
   | X_ Number
   | X (AttributeSetter d Number)
   | Y_ Number

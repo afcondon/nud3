@@ -63,21 +63,32 @@ export function orderSelection_ (selection) {
 // ------------------ Transition ------------------
 import { transition } from "d3-transition";
 
-export function createNewTransition_ () { return transition() }
+export function createNewTransition_ () { 
+  let t = transition();
+  console.log("creating new transition ", t._id);
+  return t
+}
 
 export function transitionDelayFixed_ (transition) { 
-  return (amount) => transition.delay(amount)
+  return (amount) => {
+    console.log("adding a fixed delay of " + amount + " to transition " + transition._id + "");
+    return transition.delay(amount)
+  }
 }
 export function transitionDelayLambda_ (transition) {
   return (f) => transition.delay(f)
 }
 export function transitionDurationFixed_ (transition) { 
-  return (amount) => transition.duration(amount)
+  return (amount) => {
+    console.log("adding a fixed duration of " + amount + " to transition " + transition._id + "");
+    return transition.duration(amount)
+  }
 }
 export function transitionDurationLambda_ (transition) {
   return (f) => transition.duration(f)
 }
 export function transitionEaseFunction (transition) {
-  return (f) => transition.ease(f)
+  return (f) => transition
+  // return (f) => transition.ease(f()) // TODO find out how to export the underlying function instead of wrapping it
 }
 

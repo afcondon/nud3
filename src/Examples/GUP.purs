@@ -1,6 +1,6 @@
 module Examples.GUP
   ( generalUpdatePattern
-  , twoSecondTransition
+  , shortDelayedTransition
   )
   where
 
@@ -14,8 +14,8 @@ import Nud3.FFI as FFI
 import Nud3.Types (Selection_, Transition_)
 import Prelude (Unit, bind, identity, pure, unit, ($), (*), (+))
 
-config :: Selection_ -> Array Char -> KeyFunction Char -> JoinConfig Char
-config gupGroup letterdata keyFunction = {
+config :: Selection_ -> Array Char -> KeyFunction Char -> Transition_ -> JoinConfig Char
+config gupGroup letterdata keyFunction transition_ = {
       what: Append (SVG "text")
     , using: NewData letterdata
     , where: gupGroup
@@ -28,12 +28,12 @@ config gupGroup letterdata keyFunction = {
             , Y_ 0.0
             , FontSize_ 96.0
             , FontFamily_ "monospace"
-            , Transition twoSecondTransition [ Y_ 200.0 ]
+            , Transition transition_ [ Y_ 200.0 ]
             ]
         , exit:
             [ Classed_ "exit"
             , Fill_ "brown"
-            , TransitionThenRemove twoSecondTransition [ Y_ 400.0 ]
+            , TransitionThenRemove transition_ [ Y_ 400.0 ]
             ]
         , update:
             [ Classed_ "update"
@@ -43,26 +43,27 @@ config gupGroup letterdata keyFunction = {
         }
     }
 
-twoSecondTransition :: Transition_
-twoSecondTransition = createTransition { duration: 2.0, delay: 2.0, easing: FFI.easeCubic_ }
+shortDelayedTransition :: Unit -> Transition_
+shortDelayedTransition _ = createTransition { duration: 2000, delay: 750, easing: FFI.easeCubic_ }
+
+letterdata :: Array Char
+letterdata = toCharArray "abcdefghijklmnopqrstuvwxyz"
+
+letterdata2 :: Array Char
+letterdata2 = toCharArray "acdefglmnostxz"
 
 -- | General Update Pattern
 generalUpdatePattern :: Effect Unit
 generalUpdatePattern = do
-  let letterdata = toCharArray "abcdefghijklmnopqrstuvwxyz"
-  let letterdata2 = toCharArray "acdefglmnostxz"
-
   let root = select (SelectorString "div#gup")
-
   svg <- root |+| (SVG "svg")
   _ <- style svg
     [ ViewBox_ 0.0 0.0 650.0 650.0
     , Classed_ "d3svg gup"
     ]
-
   gupGroup <- svg |+| (SVG "g")
-  letters <- visualize $ config gupGroup letterdata identityKeyFunction
+  _ <- visualize $ config gupGroup letterdata identityKeyFunction (shortDelayedTransition unit)
+  _ <- visualize $ config gupGroup letterdata2 identityKeyFunction (shortDelayedTransition unit)
   -- TODO would definitely be nicer to use record update rather than function parameters here:
   -- _ <- revisualize $ config { using = NewData letterdata2 }
-  _ <- revisualize $ config gupGroup letterdata2 identityKeyFunction
   pure unit

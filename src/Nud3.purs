@@ -1,5 +1,6 @@
 module Nud3 where
 
+import Nud3.Types
 import Prelude
 
 import Data.Array (head, last, tail)
@@ -11,8 +12,8 @@ import Debug as Debug
 import Effect (Effect)
 import Effect.Class.Console as Console
 import Nud3.Attributes (Attribute, addAttributes, getKeyFromAttribute, getValueFromAttribute)
+import Nud3.FFI (selectManyWithString_)
 import Nud3.FFI as FFI
-import Nud3.Types
 import Unsafe.Coerce (unsafeCoerce)
 import Web.DOM (Node) as DOM
 
@@ -164,15 +165,6 @@ visualize config = do
   let merged = FFI.mergeSelections_ enterNodes updateNodes
   pure $ FFI.orderSelection_ merged
     
--- | here the data is already in the DOM, we just need to update the visualisation with some new data
--- | we will need to either carry over the config as a parameter,
--- | store it statefully in the selection (undesireable)
--- | or modify the seletion to carry it  
-revisualize :: forall d. Selection_ -> Array d -> Effect Selection_
-revisualize s ds = 
-  Debug.trace "joining new data to the DOM and updating visualiztion with it" \_ -> 
-  pure s -- TODO
-
 filter :: Selection_ -> String -> Selection_
 filter s _ = s -- TODO  
 

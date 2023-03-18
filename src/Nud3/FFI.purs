@@ -46,10 +46,10 @@ foreign import orderSelection_ :: Selection_ -> Selection_
 -- | functions for transitions here
 foreign import createNewTransition_ :: Unit -> Transition_
 
-foreign import transitionDelayFixed_ :: Transition_ -> Number -> Transition_
-foreign import transitionDelayLambda_ :: forall d t. Transition_ -> (d -> Int -> t) -> Transition_
-foreign import transitionDurationFixed_ :: Transition_ -> Number -> Transition_
-foreign import transitionDurationLambda_ :: forall d t. Transition_ -> (d -> Int -> t) -> Transition_
+foreign import transitionDelayFixed_ :: Transition_ -> Int -> Transition_
+foreign import transitionDelayLambda_ :: forall d. Transition_ -> (d -> Int -> Int) -> Transition_
+foreign import transitionDurationFixed_ :: Transition_ -> Int -> Transition_
+foreign import transitionDurationLambda_ :: forall d t. Transition_ -> (d -> Int -> Int) -> Transition_
 foreign import transitionEaseFunction :: Transition_ -> (Number -> Number) -> Transition_
 
 foreign import easeCubic_ :: Number -> Number
