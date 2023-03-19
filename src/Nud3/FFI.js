@@ -43,7 +43,7 @@ export function useInheritedData_ (selection) {
 }
 // addData_ :: Selection_ -> Array d -> Selection_
 export function addData_ (selection) {
-  return (data) => selection.data(data) -- TODO use key function if provided
+  return (data) => selection.data(data) // TODO use key function if provided
 }
 
 export function getEnterUpdateExitSelections_ (selection) {
@@ -51,7 +51,7 @@ export function getEnterUpdateExitSelections_ (selection) {
 }
 
 export function completeJoin_ (selection) {
-  return (enterUpdateExitFunctions) => selection.join(enter: enterUpdateExitFunctions.enter, update: enterUpdateExitFunctions.update, exit: enterUpdateExitFunctions.exit)
+  return (enterUpdateExitFunctions) => selection.join(enterUpdateExitFunctions.enterFn, enterUpdateExitFunctions.updateFn, enterUpdateExitFunctions.exitFn)
 }
 
 // mergeSelections_ :: Selection_ -> Selection_ -> Selection_

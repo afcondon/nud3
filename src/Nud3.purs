@@ -105,23 +105,23 @@ select :: Selector -> Selection_
 select (SelectorString s) = Debug.trace ("select with string: " <> s) \_ -> FFI.selectManyWithString_ s
 select (SelectorFunction f) = Debug.trace "select with function" \_ -> unsafeCoerce $ FFI.selectManyWithFunction_ (unsafeCoerce f)
 
--- | TODO once tested remove the individual functions and just use this one
-addElement :: Selection_ -> AddElement -> Selection_
+-- | TODO once tested remove the individual functions (ie that take Element not AddElement) and just use this one
+addElement :: Selection_ -> AddElement -> Effect Selection_
 addElement s (Append element) = appendElement s element
 -- TODO handle other "before selectors" (and function) instead of fixing it to ":first-child"
 addElement s (Insert element selector) = insertElement s element ":first-child"
 
-appendElement :: Selection_ -> Element -> Selection_
+appendElement :: Selection_ -> Element -> Effect Selection_
 appendElement s element = do
-  -- Console.log ("appending " <> show element)
-  case element of
+  Console.log ("appending " <> show element)
+  pure $ case element of
     SVG tag -> FFI.appendElement_ tag s
     HTML tag -> FFI.appendElement_ tag s
 
-insertElement :: Selection_ -> Element -> String -> Selection_
+insertElement :: Selection_ -> Element -> String -> Effect Selection_
 insertElement s element selector = do
-  -- Console.log $ "inserting " <> show element
-  case element of
+  Console.log $ "inserting " <> show element
+  pure $ case element of
     SVG tag -> FFI.insertElement_ tag selector s 
     HTML tag -> FFI.insertElement_ tag selector s
 
@@ -151,27 +151,47 @@ visualize :: forall d. JoinConfig d -> Effect Selection_
 visualize config = do
   let element = getElementName config.what
   -- FFI.prepareJoin uses underlying call to selection.selectAll(element) 
-  let s' = FFI.prepareJoin_ config.where element 
+  let prepped = FFI.prepareJoin_ config.where element 
   -- both branches here use underlying call to selection.data(data, key)
   -- TODO key function is not yet supported
-  let s'' = case config.using of
-              InheritData -> FFI.useInheritedData_ s' -- uses d => d
-              NewData ds -> FFI.addData_ s' ds
+  let hasData = case config.using of
+              InheritData -> FFI.useInheritedData_ prepped -- uses d => d
+              NewData ds -> FFI.addData_ prepped ds
   -- FFI.getEnterUpdateExitSelections_ uses underlying call to selection.join(enter, update, exit)
-  joined <- FFI.completeJoin_ s'' { 
-      enterFn: \s -> do
-        let s' = addElement s config.what
-        s'' <- addAttributes s' config.attributes.enter
-        s''
-    , updateFn: \s -> do
-        let s' = addAttributes s config.attributes.update
-        s'
-    , exitFn: \s -> do
-        let s' = addAttributes s config.attributes.exit
-        s'
+  pure $ FFI.completeJoin_ hasData { 
+      enterFn: \enter -> do
+        let entered = addElementXXX enter config.what
+        let _ = (addAttribute entered) <$> config.attributes.enter
+        entered
+    , updateFn: \update -> do
+        let _ = (addAttribute update) <$> config.attributes.update
+        update
+    , exitFn: \exit -> do
+        let _ = (addAttribute exit) <$> config.attributes.exit
+        exit
     }
 
-  pure joined
+-- | ********* Tempororary unsafe code in this section  *********
+-- This code is here just to keep the Effect Selection out of the completeJoin_ function
+-- It duplicates the DSL (exported) API for Append / Insert Elements but with the Effect removed
+-- This is clearly wrong but it's a temporary hack to get things working
+addElementXXX :: Selection_ -> AddElement -> Selection_
+addElementXXX s (Append element) = appendElementXXX s element
+-- TODO handle other "before selectors" (and function) instead of fixing it to ":first-child"
+addElementXXX s (Insert element selector) = insertElementXXX s element ":first-child"
+
+appendElementXXX :: Selection_ -> Element -> Selection_
+appendElementXXX s element = do
+  case element of
+    SVG tag -> FFI.appendElement_ tag s
+    HTML tag -> FFI.appendElement_ tag s
+
+insertElementXXX :: Selection_ -> Element -> String -> Selection_
+insertElementXXX s element selector = do
+  case element of
+    SVG tag -> FFI.insertElement_ tag selector s 
+    HTML tag -> FFI.insertElement_ tag selector s
+-- | ********* Tempororary unsafe code in this section  *********
     
 filter :: Selection_ -> String -> Selection_
 filter s _ = s -- TODO  

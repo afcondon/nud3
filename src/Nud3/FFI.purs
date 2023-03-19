@@ -61,12 +61,12 @@ foreign import prepareJoin_ :: Selection_ -> String -> Selection_
 foreign import useInheritedData_ :: Selection_ -> Selection_
 foreign import addData_ :: forall d. Selection_ -> Array d -> Selection_
 foreign import getEnterUpdateExitSelections_ :: Selection_ -> { enter :: Selection_, update :: Selection_, exit :: Selection_ }
-foreign import completeJoin_ :: 
+foreign import completeJoin_ :: -- | NB under the hood here in the FFI this is typed as if it were pure but obviously it isn't
   Selection_ -> 
-  { enterFn :: Selection_ -> Selection_
+  { enterFn :: Selection_ -> Selection_ -- | and neither are these enterFn, updateFn, exitFn functions
   , updateFn :: Selection_ -> Selection_
   , exitFn :: Selection_ -> Selection_ } -> 
-  Selection_
+  Selection_ 
 foreign import mergeSelections_ :: Selection_ -> Selection_ -> Selection_
 -- | only used by visualize after merging the enter and update selections
 foreign import orderSelection_ :: Selection_ -> Selection_
