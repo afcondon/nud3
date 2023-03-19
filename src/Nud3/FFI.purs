@@ -9,7 +9,30 @@
 -- | The Git history should make the various stages of the process clear.
 
 
-module Nud3.FFI where
+module Nud3.FFI
+  ( addData_
+  , appendElement_
+  , insertElement_
+  , createNewTransition_
+  , completeJoin_
+  , easeCubic_
+  , getEnterUpdateExitSelections_
+  , getGroups_
+  , getName_
+  , getParents_
+  , mergeSelections_
+  , orderSelection_
+  , prepareJoin_
+  , selectManyWithFunction_
+  , selectManyWithString_
+  , transitionDelayFixed_
+  , transitionDelayLambda_
+  , transitionDurationFixed_
+  , transitionDurationLambda_
+  , transitionEaseFunction
+  , useInheritedData_
+  )
+  where
 
 import Effect (Effect)
 import Nud3.Types (D3SelectorFunction, Selection_, Transition_)
@@ -34,10 +57,16 @@ foreign import selectManyWithFunction_ :: D3SelectorFunction -> Selection_
 foreign import appendElement_ :: String -> Selection_ -> Selection_
 foreign import insertElement_ :: String -> String -> Selection_ -> Selection_
 
-foreign import beginJoin_ :: Selection_ -> String -> Selection_
+foreign import prepareJoin_ :: Selection_ -> String -> Selection_
 foreign import useInheritedData_ :: Selection_ -> Selection_
 foreign import addData_ :: forall d. Selection_ -> Array d -> Selection_
 foreign import getEnterUpdateExitSelections_ :: Selection_ -> { enter :: Selection_, update :: Selection_, exit :: Selection_ }
+foreign import completeJoin_ :: 
+  Selection_ -> 
+  { enterFn :: Selection_ -> Selection_
+  , updateFn :: Selection_ -> Selection_
+  , exitFn :: Selection_ -> Selection_ } -> 
+  Selection_
 foreign import mergeSelections_ :: Selection_ -> Selection_ -> Selection_
 -- | only used by visualize after merging the enter and update selections
 foreign import orderSelection_ :: Selection_ -> Selection_

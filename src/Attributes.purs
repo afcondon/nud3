@@ -24,6 +24,7 @@ exportAttributeSetter_ = unsafeCoerce
 type AttributeSetter d t = d -> Int -> t
 
 {-
+      .join(
         enter => enter.append("text")
             .attr("fill", "green")
             .attr("x", (d, i) => i * 16)

@@ -34,7 +34,7 @@ export function insertElement_ (name) {
 }
 
 // beginJoin_ :: Selection_ -> String -> Selection_
-export function beginJoin_ (selection) {
+export function prepareJoin_ (selection) {
   return (element) => selection.selectAll(element)
 }
 // useInheritedData_ :: Selection_ -> Selection_
@@ -43,11 +43,15 @@ export function useInheritedData_ (selection) {
 }
 // addData_ :: Selection_ -> Array d -> Selection_
 export function addData_ (selection) {
-  return (data) => selection.data(data)
+  return (data) => selection.data(data) -- TODO use key function if provided
 }
 
 export function getEnterUpdateExitSelections_ (selection) {
   return { enter: selection.enter(), update: selection, exit: selection.exit() }
+}
+
+export function completeJoin_ (selection) {
+  return (enterUpdateExitFunctions) => selection.join(enter: enterUpdateExitFunctions.enter, update: enterUpdateExitFunctions.update, exit: enterUpdateExitFunctions.exit)
 }
 
 // mergeSelections_ :: Selection_ -> Selection_ -> Selection_

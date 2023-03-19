@@ -11,7 +11,7 @@ import Data.Traversable (traverse)
 import Debug as Debug
 import Effect (Effect)
 import Effect.Class.Console as Console
-import Nud3.Attributes (Attribute, addAttributes, getKeyFromAttribute, getValueFromAttribute)
+import Nud3.Attributes (Attribute, addAttribute, addAttributes, getKeyFromAttribute, getValueFromAttribute)
 import Nud3.FFI (selectManyWithString_)
 import Nud3.FFI as FFI
 import Unsafe.Coerce (unsafeCoerce)
@@ -106,22 +106,22 @@ select (SelectorString s) = Debug.trace ("select with string: " <> s) \_ -> FFI.
 select (SelectorFunction f) = Debug.trace "select with function" \_ -> unsafeCoerce $ FFI.selectManyWithFunction_ (unsafeCoerce f)
 
 -- | TODO once tested remove the individual functions and just use this one
-addElement :: Selection_ -> AddElement -> Effect Selection_
+addElement :: Selection_ -> AddElement -> Selection_
 addElement s (Append element) = appendElement s element
 -- TODO handle other "before selectors" (and function) instead of fixing it to ":first-child"
 addElement s (Insert element selector) = insertElement s element ":first-child"
 
-appendElement :: Selection_ -> Element -> Effect Selection_
+appendElement :: Selection_ -> Element -> Selection_
 appendElement s element = do
-  Console.log ("appending " <> show element)
-  pure $ case element of
+  -- Console.log ("appending " <> show element)
+  case element of
     SVG tag -> FFI.appendElement_ tag s
     HTML tag -> FFI.appendElement_ tag s
 
-insertElement :: Selection_ -> Element -> String -> Effect Selection_
+insertElement :: Selection_ -> Element -> String -> Selection_
 insertElement s element selector = do
-  Console.log $ "inserting " <> show element
-  pure $ case element of
+  -- Console.log $ "inserting " <> show element
+  case element of
     SVG tag -> FFI.insertElement_ tag selector s 
     HTML tag -> FFI.insertElement_ tag selector s
 
@@ -150,24 +150,28 @@ insertStyledElement s element attrs =
 visualize :: forall d. JoinConfig d -> Effect Selection_
 visualize config = do
   let element = getElementName config.what
-  -- FFI.beginJoin_ uses underlying call to selection.selectAll(element) 
-  let s' = FFI.beginJoin_ config.where element 
+  -- FFI.prepareJoin uses underlying call to selection.selectAll(element) 
+  let s' = FFI.prepareJoin_ config.where element 
   -- both branches here use underlying call to selection.data(data, key)
   -- TODO key function is not yet supported
   let s'' = case config.using of
               InheritData -> FFI.useInheritedData_ s' -- uses d => d
               NewData ds -> FFI.addData_ s' ds
   -- FFI.getEnterUpdateExitSelections_ uses underlying call to selection.join(enter, update, exit)
-  let { enter, update, exit } = FFI.getEnterUpdateExitSelections_ s''
+  joined <- FFI.completeJoin_ s'' { 
+      enterFn: \s -> do
+        let s' = addElement s config.what
+        s'' <- addAttributes s' config.attributes.enter
+        s''
+    , updateFn: \s -> do
+        let s' = addAttributes s config.attributes.update
+        s'
+    , exitFn: \s -> do
+        let s' = addAttributes s config.attributes.exit
+        s'
+    }
 
-  entered <- addElement enter config.what
-  
-  enterNodes <- addAttributes entered config.attributes.enter
-  exitNodes <- addAttributes exit config.attributes.exit
-  updateNodes <- addAttributes update config.attributes.update
-  -- | TODO this should only do the merge if the enter selection is not null cf D3 implementation
-  let merged = FFI.mergeSelections_ enterNodes updateNodes
-  pure $ FFI.orderSelection_ merged
+  pure joined
     
 filter :: Selection_ -> String -> Selection_
 filter s _ = s -- TODO  
