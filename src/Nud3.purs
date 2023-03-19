@@ -157,8 +157,7 @@ visualize config = do
   let hasData = case config.using of
               InheritData -> FFI.useInheritedData_ prepped -- uses d => d
               NewData ds -> FFI.addData_ prepped ds
-  -- FFI.getEnterUpdateExitSelections_ uses underlying call to selection.join(enter, update, exit)
-  pure $ FFI.completeJoin_ hasData { 
+  pure $ FFI.completeJoin_ hasData {
       enterFn: \enter -> do
         let entered = addElementXXX enter config.what
         let _ = (addAttribute entered) <$> config.attributes.enter

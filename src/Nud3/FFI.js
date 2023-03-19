@@ -50,8 +50,10 @@ export function getEnterUpdateExitSelections_ (selection) {
   return { enter: selection.enter(), update: selection, exit: selection.exit() }
 }
 
-export function completeJoin_ (selection) {
-  return (enterUpdateExitFunctions) => selection.join(enterUpdateExitFunctions.enterFn, enterUpdateExitFunctions.updateFn, enterUpdateExitFunctions.exitFn)
+export function completeJoin_ (selection) { // NB the order of the functions arguments is important: enter, update, exit
+  // update and exit are optional - but enter is not
+  // also exit is more optional than update, which is just terrible
+  return (gupFunctions) => selection.join(gupFunctions.enterFn, gupFunctions.updateFn, gupFunctions.exitFn)
 }
 
 // mergeSelections_ :: Selection_ -> Selection_ -> Selection_
