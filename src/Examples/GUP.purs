@@ -63,7 +63,7 @@ generalUpdatePattern = do
     ]
   gupGroup <- svg |+| (SVG "g")
   _ <- visualize $ config gupGroup letterdata identityKeyFunction (shortDelayedTransition unit)
-  -- _ <- visualize $ config2 gupGroup letterdata2 identityKeyFunction (shortDelayedTransition unit)
+  _ <- visualize $ config gupGroup letterdata2 identityKeyFunction (shortDelayedTransition unit)
   -- TODO would definitely be nicer to use record update rather than function parameters here:
   -- _ <- revisualize $ config { using = NewData letterdata2 }
   pure unit

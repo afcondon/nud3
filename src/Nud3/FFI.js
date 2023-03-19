@@ -71,6 +71,8 @@ import { transition } from "d3-transition";
 
 export function createNewTransition_ () { 
   let t = transition();
+  t.end().then(() => console.log("transition ended"));
+  t.on("interrupt", () => console.log("transition interrupted"));
   console.log("creating new transition ", t._id);
   return t
 }
