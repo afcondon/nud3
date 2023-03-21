@@ -83,14 +83,15 @@ addAttribute s attr = addAttribute_ s (getKeyFromAttribute attr) (getValueFromAt
 -- | TODO TransitionConfig needs to be fully specified, all possible params set (tho in practice it may be
 -- | built by modifying a default config)
 type TransitionConfig = { 
-    duration :: Int -- TODO this can also be a lambda, see AttributeSetter for how to do this
+    name :: String
+  , duration :: Int -- TODO this can also be a lambda, see AttributeSetter for how to do this
   , delay :: Int -- TODO this can also be a lambda, see AttributeSetter for how to do this
   , easing :: Number -> Number 
 }
 
 createTransition :: TransitionConfig -> Transition_
 createTransition config = do
-  let t = FFI.createNewTransition_ unit
+  let t = FFI.createNewTransition_ config.name
       _ = FFI.transitionDurationFixed_ t config.duration
       _ = FFI.transitionDelayFixed_ t config.delay
       _ = FFI.transitionEaseFunction t config.easing

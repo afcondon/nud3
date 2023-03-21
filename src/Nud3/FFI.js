@@ -35,25 +35,26 @@ export function insertElement_ (name) {
 
 // beginJoin_ :: Selection_ -> String -> Selection_
 export function prepareJoin_ (selection) {
-  return (element) => selection.selectAll(element)
+  return (element) => { 
+    console.log("selection.selectAll: " + element);
+    let openSelection = selection.selectAll(element);
+    return openSelection // selection.selectAll(element)
+  }
 }
 // useInheritedData_ :: Selection_ -> Selection_
 export function useInheritedData_ (selection) {
   return selection.data(d => d); // TODO use a key function if provided
 }
 // addData_ :: Selection_ -> Array d -> Selection_
+// NB uses the identity function as the key function always
 export function addData_ (selection) {
   return (data) => selection.data(data, d => d) // TODO use key function if provided
 }
 
-// export function getEnterUpdateExitSelections_ (selection) {
-//   return { enter: selection.enter(), update: selection, exit: selection.exit() }
-// }
-
 export function completeJoin_ (selection) { // NB the order of the functions arguments is important: enter, update, exit
   // update and exit are optional - but enter is not
   // also exit is more optional than update, which is just terrible
-  return (gupFunctions) => selection.join(gupFunctions.enterFn, gupFunctions.updateFn, gupFunctions.exitFn)
+  return (fns) => selection.join(fns.enterFn, fns.updateFn, fns.exitFn)
 }
 
 // mergeSelections_ :: Selection_ -> Selection_ -> Selection_
@@ -69,9 +70,9 @@ export function orderSelection_ (selection) {
 // ------------------ Transition ------------------
 import { transition } from "d3-transition";
 
-export function createNewTransition_ () { 
-  let t = transition();
-  console.log("creating new transition ", t._id);
+export function createNewTransition_ (name) { 
+  let t = transition(name);
+  console.log("creating new transition ", t._id, " with name ", name);
   t.end().then(() => console.log("transition ended for t: ", t._id));
   t.on("interrupt", () => console.log("transition interrupted for t: ", t._id));
   return t

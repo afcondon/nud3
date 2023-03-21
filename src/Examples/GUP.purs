@@ -42,12 +42,15 @@ config gupGroup letters keyFunction transition_ = {
             [ Classed_ "update"
             , Fill_ "gray"
             , Y_ 200.0
+            , Transition { transition_
+                         , name: "TODO"
+                         , attrs: [ X \_ i -> toNumber (i * 48 + 50) ] }
             ]
         }
     }
 
-newTransition :: Int -> Int -> Transition_
-newTransition duration delay = createTransition { duration, delay, easing: FFI.easeCubic_ }
+newTransition :: String -> Int -> Int -> Transition_
+newTransition name duration delay = createTransition { name, duration, delay, easing: FFI.easeCubic_ }
 
 letterdata :: Array Char
 letterdata = toCharArray "abcdefghijklmnopqrstuvwxyz"
@@ -65,8 +68,8 @@ generalUpdatePattern = do
                   , Classed_ "d3svg gup"
                   ]
   gupGroup <- styled |+| (SVG "g")
-  gupGroup' <- visualize $ config gupGroup letterdata identityKeyFunction (newTransition 2000 0)
-  _ <- visualize $ config gupGroup' letterdata2 identityKeyFunction (newTransition 2000 1000)
+  gupGroup' <- visualize $ config gupGroup letterdata identityKeyFunction (newTransition "foo" 2000 0)
+  _ <- visualize $ config gupGroup letterdata2 identityKeyFunction (newTransition "bar" 2000 1000)
   -- TODO would definitely be nicer to use record update rather than function parameters here:
   -- _ <- revisualize $ config { using = NewData letterdata2 }
   pure unit

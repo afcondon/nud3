@@ -65,7 +65,9 @@ showJoin join = "Join details: { \n" <>
   "\n\tupdate attrs:" <> show join.attributes.update <>
   "\n\texit attrs: " <> show join.attributes.exit
 
-data DataSource d = InheritData | NewData (Array d)
+data DataSource d = 
+   InheritData -- NB this will fail if there is no data attached to the parent (TODO DSL should protect against this)
+ | NewData (Array d)
 
 instance showDataSource :: (Show d) => Show (DataSource d) where
   show InheritData = "data is inherited from parent"
@@ -145,13 +147,13 @@ insertStyledElement s element attrs =
 -- | available for those things anyway. 
 visualize :: forall d. JoinConfig d -> Effect Selection_
 visualize config = do
-  let element = getElementName config.what
   -- FFI.prepareJoin uses underlying call to selection.selectAll(element) 
-  let prepped = FFI.prepareJoin_ config.where element 
+  let prepped = FFI.prepareJoin_ config.where (getElementName config.what) 
   -- both branches here use underlying call to selection.data(data, key)
   let hasData = case config.using of
               InheritData -> FFI.useInheritedData_ prepped -- TODO use key function
               NewData ds -> FFI.addData_ prepped ds -- TODO use key function
+  -- FFI.completeJoin_ provides functions for each of the three selections: enter, update and exit
   pure $ FFI.completeJoin_ hasData {
       enterFn: \enter -> foldAttributes (addElementXXX enter config.what) config.attributes.enter
     , updateFn: \update -> foldAttributes update config.attributes.update

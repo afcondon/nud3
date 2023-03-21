@@ -59,6 +59,7 @@ foreign import prepareJoin_ :: Selection_ -> String -> Selection_
 foreign import useInheritedData_ :: Selection_ -> Selection_
 foreign import addData_ :: forall d. Selection_ -> Array d -> Selection_
 -- foreign import getEnterUpdateExitSelections_ :: Selection_ -> { enter :: Selection_, update :: Selection_, exit :: Selection_ }
+-- | in D3 these functions are positional but we name them here for clarity
 foreign import completeJoin_ :: -- | NB under the hood here in the FFI this is typed as if it were pure but obviously it isn't
   Selection_ -> 
   { enterFn :: Selection_ -> Selection_ -- | and neither are these enterFn, updateFn, exitFn functions
@@ -71,7 +72,7 @@ foreign import orderSelection_ :: Selection_ -> Selection_
 
 
 -- | functions for transitions here
-foreign import createNewTransition_ :: Unit -> Transition_
+foreign import createNewTransition_ :: String -> Transition_
 
 foreign import transitionDelayFixed_ :: Transition_ -> Int -> Transition_
 foreign import transitionDelayLambda_ :: forall d. Transition_ -> (d -> Int -> Int) -> Transition_
