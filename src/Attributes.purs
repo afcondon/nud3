@@ -13,10 +13,10 @@ import Unsafe.Coerce (unsafeCoerce)
 -- | Options or heterogeneous lists or whatever
 foreign import data AttributeSetter_ :: Type 
 foreign import addAttribute_ :: forall d. Selection_ -> String -> d -> Unit
-foreign import addText_ :: forall d. Selection_ -> d -> Unit
+foreign import addText_ :: forall d. Selection_ -> d -> Selection_
 foreign import addTransitionToSelection_ :: Selection_ -> Transition_ -> Selection_
 -- | no attempt will be made to manage named transitions in contrast to D3
-foreign import addRemoveAttribute_ :: forall d. Selection_ -> Unit
+foreign import removeElement_ :: forall d. Selection_ -> Unit
 
 exportAttributeSetter_ :: forall d. d -> AttributeSetter_
 exportAttributeSetter_ = unsafeCoerce 
@@ -60,18 +60,18 @@ way to make the PureScript version work exactly as the above example shows
 
 -}
 -- | we special case on some attributes - Text, InnerHTML, Transition
-addAttribute :: forall d. Selection_ -> Attribute d -> Unit
+addAttribute :: forall d. Selection_ -> Attribute d -> Selection_
 -- | TODO we need to use the format .call() see blockcomment above
 addAttribute s (Transition transition attrs ) = do
   let selectionTransition = addTransitionToSelection_ s transition 
       -- we coerce the transition back to a selection to add the attributes, not pretty but isolated here
       s' = (addAttribute selectionTransition) <$> attrs 
-  unit
+  s'
 addAttribute s (TransitionThenRemove transition attrs ) = do
   let selectionTransition = addTransitionToSelection_ s transition
-  let _ = addRemoveAttribute_ selectionTransition -- we can just go ahead and add this at the start given the semantics
+  let _ = removeElement_ selectionTransition -- we can just go ahead and add this at the start given the semantics
       s' = (addAttribute selectionTransition) <$> attrs
-  unit
+  s'
 
 addAttribute s attr@(Text d) = addText_ s (getValueFromAttribute attr)
 addAttribute s attr@(Text_ d) = addText_ s (getValueFromAttribute attr)

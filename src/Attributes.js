@@ -15,7 +15,7 @@ export function addTransitionToSelection_ (selection) {
 
 // can be called with any selection, in practice called only
 // as part of a list of transition attributes, ie for exit nodes
-export function addRemoveAttribute_ (transition) {
+export function removeElement_ (transition) {
   return transition.remove()
 }
 
