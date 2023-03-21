@@ -26,7 +26,7 @@ config gupGroup letters keyFunction transition_ = {
             , Fill_ "green"
             , X \_ i -> toNumber (i * 48 + 50)
             , Y_ 0.0
-            , FontSize_ 96.0
+            , FontSize_ 48.0
             , FontFamily_ "monospace"
             , Transition { transition_
                          , name: "TODO"

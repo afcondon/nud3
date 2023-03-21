@@ -17,7 +17,7 @@ threeLittleCircles = do
   let _ = style svg -- TODO: return this to being effectful, ie <- style svg
                   [ Width_ 650.0
                   , Height_ 650.0
-                  , ViewBox_ (-100) (-100) 650 650
+                  , ViewBox_ (-100) (-100) 300 300
                   , Classed_ "d3svg circles"
                   ]
 
@@ -30,9 +30,9 @@ threeLittleCircles = do
     , attributes:
         { enter:
             [ Fill_ "green"
-            , CX \_ i -> toNumber (i * 100)
-            , CY_ 50.0
-            , Radius_ 50.0
+            , CX \_ i -> toNumber (i * 30)
+            , CY_ 30.0
+            , Radius_ 10.0
             , Classed_ "enter"
             ]
         , exit: [Classed_ "exit"]

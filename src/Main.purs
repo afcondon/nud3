@@ -9,26 +9,29 @@ import Effect.Aff (Milliseconds(..), delay, launchAff_)
 import Effect.Class (liftEffect)
 import Effect.Console (log)
 import Examples.GUP (generalUpdatePatternDraw, generalUpdatePatternSetup)
+import Examples.Matrix (matrix2table)
+import Examples.ThreeLittleCircles (threeLittleCircles)
 
+examplesInEffect :: Effect Unit
+examplesInEffect = do
+  matrix2table
+  threeLittleCircles
+  -- drawTree 
+  -- drawForceLayout
 
-letterdata :: Array Char
-letterdata = toCharArray "abcdefghijklmnopqrstuvwxyz"
-
-letterdata2 :: Array Char
-letterdata2 = toCharArray "acdefglmnostxz"
-
-
-main :: Effect Unit
-main = launchAff_ do
-  -- matrix2table
-  -- threeLittleCircles
+examplesInAff :: Effect Unit
+examplesInAff = launchAff_ do
   letters <- liftEffect $ generalUpdatePatternSetup
   _ <- liftEffect $ generalUpdatePatternDraw letters "acdefglmnostxz"
   delay $ Milliseconds 1800.0
   _ <- liftEffect $ generalUpdatePatternDraw letters "abcdejklmnopqrstuvwxyz" 
   delay $ Milliseconds 1800.0
-  _ <- liftEffect $ generalUpdatePatternDraw letters "abdejklmnopwxz" 
-  -- drawTree 
-  -- drawForceLayout
+  _ <- liftEffect $ generalUpdatePatternDraw letters "abdejklmnopwxz"
+  pure unit
+
+main :: Effect Unit
+main = do
+  examplesInEffect
+  examplesInAff
   liftEffect $ log "🍝"
 
