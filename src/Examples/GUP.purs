@@ -1,5 +1,6 @@
 module Examples.GUP
-  ( generalUpdatePattern
+  ( generalUpdatePatternDraw
+  , generalUpdatePatternSetup
   )
   where
 
@@ -11,7 +12,7 @@ import Effect (Effect)
 import Nud3.Attributes (Attribute(..), createTransition)
 import Nud3.FFI as FFI
 import Nud3.Types (Selection_, Transition_)
-import Prelude (Unit, bind, pure, unit, ($), (*), (+))
+import Prelude (bind, ($), (*), (+))
 
 config :: Selection_ -> Array Char -> KeyFunction Char -> Transition_ -> JoinConfig Char
 config gupGroup letters keyFunction transition_ = {
@@ -52,24 +53,20 @@ config gupGroup letters keyFunction transition_ = {
 newTransition :: String -> Int -> Int -> Transition_
 newTransition name duration delay = createTransition { name, duration, delay, easing: FFI.easeCubic_ }
 
-letterdata :: Array Char
-letterdata = toCharArray "abcdefghijklmnopqrstuvwxyz"
-
-letterdata2 :: Array Char
-letterdata2 = toCharArray "acdefglmnostxz"
-
 -- | General Update Pattern
-generalUpdatePattern :: Effect Unit
-generalUpdatePattern = do
+generalUpdatePatternSetup :: Effect Selection_
+generalUpdatePatternSetup = do
   let root = select (SelectorString "div#gup")
   svg <- root |+| (SVG "svg")
   let styled = style svg -- TODO: return this to being effectful / <- style svg
                   [ ViewBox_ 0 0 650 650
                   , Classed_ "d3svg gup"
                   ]
-  gupGroup <- styled |+| (SVG "g")
-  gupGroup' <- visualize $ config gupGroup letterdata identityKeyFunction (newTransition "foo" 2000 0)
-  _ <- visualize $ config gupGroup letterdata2 identityKeyFunction (newTransition "bar" 2000 1000)
+  styled |+| (SVG "g")
+
+generalUpdatePatternDraw :: Selection_ -> String -> Effect Selection_
+generalUpdatePatternDraw selection letterdata = do
+  let letters = toCharArray letterdata
+  visualize $ config selection letters identityKeyFunction (newTransition "foo" 1000 500)
   -- TODO would definitely be nicer to use record update rather than function parameters here:
   -- _ <- revisualize $ config { using = NewData letterdata2 }
-  pure unit

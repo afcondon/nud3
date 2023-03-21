@@ -3,20 +3,32 @@ module Main  where
 
 import Prelude
 
+import Data.String.CodeUnits (toCharArray)
 import Effect (Effect)
+import Effect.Aff (Milliseconds(..), delay, launchAff_)
+import Effect.Class (liftEffect)
 import Effect.Console (log)
-import Examples.GUP (generalUpdatePattern)
-import Examples.Matrix (matrix2table)
-import Examples.Miserables (drawForceLayout)
-import Examples.ThreeLittleCircles (threeLittleCircles)
-import Examples.Tree (drawTree)
+import Examples.GUP (generalUpdatePatternDraw, generalUpdatePatternSetup)
+
+
+letterdata :: Array Char
+letterdata = toCharArray "abcdefghijklmnopqrstuvwxyz"
+
+letterdata2 :: Array Char
+letterdata2 = toCharArray "acdefglmnostxz"
+
 
 main :: Effect Unit
-main = do
+main = launchAff_ do
   -- matrix2table
   -- threeLittleCircles
-  generalUpdatePattern
+  letters <- liftEffect $ generalUpdatePatternSetup
+  _ <- liftEffect $ generalUpdatePatternDraw letters "acdefglmnostxz"
+  delay $ Milliseconds 1800.0
+  _ <- liftEffect $ generalUpdatePatternDraw letters "abcdejklmnopqrstuvwxyz" 
+  delay $ Milliseconds 1800.0
+  _ <- liftEffect $ generalUpdatePatternDraw letters "abdejklmnopwxz" 
   -- drawTree 
   -- drawForceLayout
-  log "🍝"
+  liftEffect $ log "🍝"
 
