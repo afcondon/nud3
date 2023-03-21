@@ -1,6 +1,5 @@
 module Examples.GUP
   ( generalUpdatePattern
-  , shortDelayedTransition
   )
   where
 
@@ -12,19 +11,19 @@ import Effect (Effect)
 import Nud3.Attributes (Attribute(..), createTransition)
 import Nud3.FFI as FFI
 import Nud3.Types (Selection_, Transition_)
-import Prelude (Unit, bind, identity, pure, unit, ($), (*), (+))
+import Prelude (Unit, bind, pure, unit, ($), (*), (+))
 
 config :: Selection_ -> Array Char -> KeyFunction Char -> Transition_ -> JoinConfig Char
-config gupGroup letterdata keyFunction transition_ = {
+config gupGroup letters keyFunction transition_ = {
       what: Append (SVG "text")
-    , using: NewData letterdata
+    , using: NewData letters
     , where: gupGroup
     , key: keyFunction
     , attributes:
         { enter:
-            [ Text \d i -> singleton d
+            [ Text \d _ -> singleton d
             , Fill_ "green"
-            , X \d i -> toNumber (i * 48 + 50)
+            , X \_ i -> toNumber (i * 48 + 50)
             , Y_ 0.0
             , FontSize_ 96.0
             , FontFamily_ "monospace"
@@ -43,8 +42,8 @@ config gupGroup letterdata keyFunction transition_ = {
         }
     }
 
-shortDelayedTransition :: Unit -> Transition_
-shortDelayedTransition _ = createTransition { duration: 2000, delay: 750, easing: FFI.easeCubic_ }
+newTransition :: Int -> Int -> Transition_
+newTransition duration delay = createTransition { duration, delay, easing: FFI.easeCubic_ }
 
 letterdata :: Array Char
 letterdata = toCharArray "abcdefghijklmnopqrstuvwxyz"
@@ -57,13 +56,13 @@ generalUpdatePattern :: Effect Unit
 generalUpdatePattern = do
   let root = select (SelectorString "div#gup")
   svg <- root |+| (SVG "svg")
-  _ <- style svg
-    [ ViewBox_ 0.0 0.0 650.0 650.0
-    , Classed_ "d3svg gup"
-    ]
-  gupGroup <- svg |+| (SVG "g")
-  _ <- visualize $ config gupGroup letterdata identityKeyFunction (shortDelayedTransition unit)
-  _ <- visualize $ config gupGroup letterdata2 identityKeyFunction (shortDelayedTransition unit)
+  let styled = style svg -- TODO: return this to being effectful / <- style svg
+                  [ ViewBox_ 0 0 650 650
+                  , Classed_ "d3svg gup"
+                  ]
+  gupGroup <- styled |+| (SVG "g")
+  gupGroup' <- visualize $ config gupGroup letterdata identityKeyFunction (newTransition 2000 0)
+  _ <- visualize $ config gupGroup' letterdata2 identityKeyFunction (newTransition 2000 1000)
   -- TODO would definitely be nicer to use record update rather than function parameters here:
   -- _ <- revisualize $ config { using = NewData letterdata2 }
   pure unit

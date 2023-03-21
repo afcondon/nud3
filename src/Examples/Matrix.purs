@@ -3,8 +3,7 @@ module Examples.Matrix where
 import Nud3
 
 import Effect (Effect)
-import Effect.Class.Console (log)
-import Nud3.Attributes (Attribute(..), addAttributes)
+import Nud3.Attributes (Attribute(..), foldAttributes)
 import Prelude (Unit, bind, pure, unit)
 
 
@@ -15,10 +14,10 @@ matrix2table = do
 
   let root = select (SelectorString "div#matrix")
   table <- root |+| (HTML "table") 
-  _ <- addAttributes table [ Classed_ "matrix", Width_ 300.0, Height_ 300.0, BackgroundColor_ "#AAA" ] -- just to test the addAttributes function
+  let tableWithAttrs = foldAttributes table [ Classed_ "matrix", Width_ 300.0, Height_ 300.0, BackgroundColor_ "#AAA" ] -- TODO: return this to being effectful here
   rows <- visualize
     { what: Append (HTML "tr")
-    , where: table
+    , where: tableWithAttrs
     , using: NewData matrix
     , key: identityKeyFunction
     , attributes:
@@ -29,7 +28,7 @@ matrix2table = do
     }
 
   let oddrows = rows `filter` "nth-child(odd)"
-  _ <- style oddrows [ BackgroundColor_ "light-gray", Color_ "white" ]
+      _ = style oddrows [ BackgroundColor_ "light-gray", Color_ "white" ]
 
   items <- visualize
     { what: Append (HTML "td")
@@ -43,7 +42,7 @@ matrix2table = do
         }
     }
 
-  texts <- addAttributes items [Text \d i -> d]
+  let _ = foldAttributes items [Text \d _ -> d]
 
   pure unit
 

@@ -3,8 +3,6 @@ module Nud3.Attributes where
 import Prelude
 
 import Data.Array (foldl)
-import Data.Nullable (Nullable)
-import Effect (Effect)
 import Nud3.FFI as FFI
 import Nud3.Types (Selection_, Transition_)
 import Unsafe.Coerce (unsafeCoerce)
@@ -16,8 +14,10 @@ foreign import data AttributeSetter_ :: Type
 foreign import addAttribute_ :: forall d. Selection_ -> String -> d -> Selection_
 foreign import addText_ :: forall d. Selection_ -> d -> Selection_
 foreign import addTransitionToSelection_ :: Selection_ -> Transition_ -> Selection_
+-- | we're actually retrieving a selection from a transition here but it's not worth exposing that in the types
+foreign import retrieveSelection_ :: Selection_ -> Selection_
 -- | no attempt will be made to manage named transitions in contrast to D3
-foreign import removeElement_ :: forall d. Selection_ -> Unit
+foreign import removeElement_ :: Selection_ -> Selection_
 
 exportAttributeSetter_ :: forall d. d -> AttributeSetter_
 exportAttributeSetter_ = unsafeCoerce 
@@ -36,8 +36,7 @@ type AttributeSetter d t = d -> Int -> t
         update => update
             .attr("fill", "black")
             .attr("y", 0)
-          .call(update => update.transition(t)
-            .attr("x", (d, i) => i * 16)),
+          .call(update => update.transition(t).attr("x", (d, i) => i * 16)),
         exit => exit
             .attr("fill", "brown")
           .call(exit => exit.transition(t)
@@ -50,45 +49,35 @@ selections to merge and return by selection.join. To avoid breaking the method
 chain, use selection.call to create transitions. Or, return an undefined enter
 or update selection to prevent merging.
 
-Now, it's not clear to me that _our_ enter, update and exit functions are being
-given to D3 correctly and it's certainly the case given the way we map over
-attributes that we are not returning the underlying selection after the
-transition is added
-
-I believe it's still possible under the hood to use the previous general update
-patter and it may turn out to be necessary to do it this way if we can't find a
-way to make the PureScript version work exactly as the above example shows
-
 -}
 
 foldAttributes :: forall d. Selection_ -> Array (Attribute d) -> Selection_
-foldAttributes selection attrs = foldl go selection attrs
-  where go s attr = addAttribute selection attr
+foldAttributes = foldl go
+  where go selection attr = addAttribute selection attr
 
 -- | we special case on some attributes - Text, InnerHTML, Transition
 addAttribute :: forall d. Selection_ -> Attribute d -> Selection_
--- | TODO we need to use the format .call() see blockcomment above
+-- | handling transitions is a bit special: D3 makes a distinction between
+-- | selections and transition but the latter is a subset of the former
+-- | in order to do a join we need to get back the original selection, not the transition
+-- | this is usually done in d3 by wrapping the transition in a .call() but that doesn't 
+-- | really work with the DSL we have here
 addAttribute s (Transition transition attrs ) = do
   let selectionTransition = addTransitionToSelection_ s transition 
-      -- we coerce the transition back to a selection to add the attributes, not pretty but isolated here
-  foldAttributes selectionTransition attrs 
+  retrieveSelection_ $ foldAttributes selectionTransition attrs -- apply the attrs to the transition, then retrieve the selection
 addAttribute s (TransitionThenRemove transition attrs ) = do
   let selectionTransition = addTransitionToSelection_ s transition
-  let _ = removeElement_ selectionTransition -- we can just go ahead and add this at the start given the semantics
-  foldAttributes selectionTransition attrs
-
-addAttribute s attr@(Text d) = addText_ s (getValueFromAttribute attr)
-addAttribute s attr@(Text_ d) = addText_ s (getValueFromAttribute attr)
+      t = removeElement_ $ foldAttributes selectionTransition attrs -- apply the attrs to the transition, then remove the element
+  retrieveSelection_ t -- then retrieve the selection
+-- | Text and InnerHTML are special cases because they are not attributes in the DOM sense
+-- | We are deliberately eliding this distinction in the DSL
+addAttribute s attr@(Text _) = addText_ s (getValueFromAttribute attr)
+addAttribute s attr@(Text_ _) = addText_ s (getValueFromAttribute attr)
 -- | innerHTML still TODO need to add addInnerHTML_ etc
-addAttribute s attr@(InnerHTML d) = addAttribute_ s (getKeyFromAttribute attr) (getValueFromAttribute attr)
-addAttribute s attr@(InnerHTML_ d) = addAttribute_ s (getKeyFromAttribute attr) (getValueFromAttribute attr)
+addAttribute s attr@(InnerHTML _) = addAttribute_ s (getKeyFromAttribute attr) (getValueFromAttribute attr)
+addAttribute s attr@(InnerHTML_ _) = addAttribute_ s (getKeyFromAttribute attr) (getValueFromAttribute attr)
 -- | regular attributes all handled the same way
 addAttribute s attr = addAttribute_ s (getKeyFromAttribute attr) (getValueFromAttribute attr)
-
-addAttributes :: forall d. Selection_ -> Array (Attribute d) -> Effect Selection_
-addAttributes s attrs = do
-  let _ = (addAttribute s) <$> attrs -- relies on the fact that addAttribute returns the same selection each time
-  pure s
 
 -- | TODO TransitionConfig needs to be fully specified, all possible params set (tho in practice it may be
 -- | built by modifying a default config)
@@ -149,7 +138,7 @@ data Attribute d =
   | TransitionThenRemove Transition_ (Array (Attribute d))
   | Width_ Number
   | Width (AttributeSetter d Number)
-  | ViewBox_ Number Number Number Number -- TODO can't these be Int instead of Number?
+  | ViewBox_ Int Int Int Int -- TODO can't these be Int instead of Number?
   | X_ Number
   | X (AttributeSetter d Number)
   | Y_ Number
@@ -163,7 +152,7 @@ data Attribute d =
   | Y2_ Number
   | Y2 (AttributeSetter d Number)
 
-getValueFromAttribute :: forall d v. Attribute d -> AttributeSetter_
+getValueFromAttribute :: forall d. Attribute d -> AttributeSetter_
 getValueFromAttribute = case _ of 
   BackgroundColor_ v -> exportAttributeSetter_ v
   BackgroundColor f -> exportAttributeSetter_ f
@@ -187,8 +176,8 @@ getValueFromAttribute = case _ of
   TextAnchor_ v -> exportAttributeSetter_ v
   -- | transition attributes are different and we never actually getValueFromAttribute 
   -- | from them like this but we have to typecheck here
-  Transition t vs -> exportAttributeSetter_ vs
-  TransitionThenRemove t vs -> exportAttributeSetter_ vs
+  Transition _ vs -> exportAttributeSetter_ vs
+  TransitionThenRemove _ vs -> exportAttributeSetter_ vs
   Width_ v -> exportAttributeSetter_ v
   ViewBox_ x y w h -> exportAttributeSetter_ [x, y, w, h] -- TODO this one is a special case, impressive that CoPilot guessed it
   X_ v -> exportAttributeSetter_ v
@@ -316,29 +305,29 @@ instance showAttribute :: Show (Attribute d) where
   show (X2_ v) = "\n\t\tX2_" <> " set directly to " <> show v
   show (Y1_ v) = "\n\t\tY1_" <> " set directly to " <> show v
   show (Y2_ v) = "\n\t\tY2_" <> " set directly to " <> show v
-  show (BackgroundColor f) = "\n\t\tBackgroundColor set by function"
-  show (Color f) = "\n\t\tColor set by function"
-  show (Classed f) = "\n\t\tClassed set by function"
-  show (CX f) = "\n\t\tCX set by function"
-  show (CY f) = "\n\t\tCY set by function"
-  show (DX f) = "\n\t\tDX set by function"
-  show (DY f) = "\n\t\tDY set by function"
-  show (Fill f) = "\n\t\tFill set by function"
-  show (FontFamily f) = "\n\t\tFontFamily set by function"
-  show (FontSize f) = "\n\t\tFontSize set by function"
-  show (Height f) = "\n\t\tHeight set by function"
-  show (InnerHTML f) = "\n\t\tInnerHTML set by function"
-  show (Radius f) = "\n\t\tRadius set by function"
-  show (StrokeColor f) = "\n\t\tStrokeColor set by function"
-  show (StrokeOpacity f) = "\n\t\tStrokeOpacity set by function"
-  show (StrokeWidth f) = "\n\t\tStrokeWidth set by function"
-  show (Style f) = "\n\t\tStyle set by function"
-  show (Text f) = "\n\t\tText set by function"
-  show (TextAnchor f) = "\n\t\tTextAnchor set by function"
-  show (Width f) = "\n\t\tWidth set by function"
-  show (X f) = "\n\t\tX set by function"
-  show (Y f) = "\n\t\tY set by function"
-  show (X1 f) = "\n\t\tX1 set by function"
-  show (X2 f) = "\n\t\tX2 set by function"
-  show (Y1 f) = "\n\t\tY1 set by function"
-  show (Y2 f) = "\n\t\tY2 set by function"
+  show (BackgroundColor _) = "\n\t\tBackgroundColor set by function"
+  show (Color _) = "\n\t\tColor set by function"
+  show (Classed _) = "\n\t\tClassed set by function"
+  show (CX _) = "\n\t\tCX set by function"
+  show (CY _) = "\n\t\tCY set by function"
+  show (DX _) = "\n\t\tDX set by function"
+  show (DY _) = "\n\t\tDY set by function"
+  show (Fill _) = "\n\t\tFill set by function"
+  show (FontFamily _) = "\n\t\tFontFamily set by function"
+  show (FontSize _) = "\n\t\tFontSize set by function"
+  show (Height _) = "\n\t\tHeight set by function"
+  show (InnerHTML _) = "\n\t\tInnerHTML set by function"
+  show (Radius _) = "\n\t\tRadius set by function"
+  show (StrokeColor _) = "\n\t\tStrokeColor set by function"
+  show (StrokeOpacity _) = "\n\t\tStrokeOpacity set by function"
+  show (StrokeWidth _) = "\n\t\tStrokeWidth set by function"
+  show (Style _) = "\n\t\tStyle set by function"
+  show (Text _) = "\n\t\tText set by function"
+  show (TextAnchor _) = "\n\t\tTextAnchor set by function"
+  show (Width _) = "\n\t\tWidth set by function"
+  show (X _) = "\n\t\tX set by function"
+  show (Y _) = "\n\t\tY set by function"
+  show (X1 _) = "\n\t\tX1 set by function"
+  show (X2 _) = "\n\t\tX2 set by function"
+  show (Y1 _) = "\n\t\tY1 set by function"
+  show (Y2 _) = "\n\t\tY2 set by function"

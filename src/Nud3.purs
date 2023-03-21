@@ -1,19 +1,15 @@
 module Nud3 where
 
-import Nud3.Types
 import Prelude
 
-import Data.Array (foldl, head, last, tail)
 import Data.Generic.Rep (class Generic)
-import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Show.Generic (genericShow)
-import Data.Traversable (traverse)
 import Debug as Debug
 import Effect (Effect)
 import Effect.Class.Console as Console
-import Nud3.Attributes (Attribute, addAttribute, addAttributes, foldAttributes, getKeyFromAttribute, getValueFromAttribute)
-import Nud3.FFI (selectManyWithString_)
+import Nud3.Attributes (Attribute, foldAttributes)
 import Nud3.FFI as FFI
+import Nud3.Types (Selection_)
 import Unsafe.Coerce (unsafeCoerce)
 import Web.DOM (Node) as DOM
 
@@ -131,12 +127,12 @@ infixr 5 insertElement as |^|
 
 appendStyledElement :: forall d. Selection_ -> Element -> Array (Attribute d) -> Effect Selection_
 appendStyledElement s element attrs = 
-  Debug.trace ("appending styled eleemnt: " <> show element <> show attrs) \_ -> 
+  Debug.trace ("TODO appending styled eleemnt: " <> show element <> show attrs) \_ -> 
   pure s -- TODO
 
 insertStyledElement :: forall d. Selection_ -> Element -> Array (Attribute d) -> Effect Selection_
 insertStyledElement s element attrs = 
-  Debug.trace ("inserting styled element " <> show element <> show attrs) \_ -> 
+  Debug.trace ("TODO inserting styled element " <> show element <> show attrs) \_ -> 
   pure s -- TODO
 
 -- | visualize replaces the (config.where).selectAll(config.what).data(config.using).append(config.what) 
@@ -153,21 +149,14 @@ visualize config = do
   -- FFI.prepareJoin uses underlying call to selection.selectAll(element) 
   let prepped = FFI.prepareJoin_ config.where element 
   -- both branches here use underlying call to selection.data(data, key)
-  -- TODO key function is not yet supported
   let hasData = case config.using of
-              InheritData -> FFI.useInheritedData_ prepped -- uses d => d
-              NewData ds -> FFI.addData_ prepped ds
+              InheritData -> FFI.useInheritedData_ prepped -- TODO use key function
+              NewData ds -> FFI.addData_ prepped ds -- TODO use key function
   pure $ FFI.completeJoin_ hasData {
-      enterFn: \enter -> do
-        let entered = addElementXXX enter config.what
-        foldAttributes entered config.attributes.enter
-    , updateFn: \update -> do
-        foldAttributes update config.attributes.update
-    , exitFn: \exit -> do
-        foldAttributes exit config.attributes.exit
+      enterFn: \enter -> foldAttributes (addElementXXX enter config.what) config.attributes.enter
+    , updateFn: \update -> foldAttributes update config.attributes.update
+    , exitFn: \exit ->  foldAttributes exit config.attributes.exit
     }
-
--- foldl:: forall a b. (a -> b -> a) -> a -> Array b -> a
 
 -- | ********* Tempororary unsafe code in this section  *********
 -- This code is here just to keep the Effect Selection out of the completeJoin_ function
@@ -194,7 +183,7 @@ insertElementXXX s element selector = do
 filter :: Selection_ -> String -> Selection_
 filter s _ = s -- TODO  
 
-style :: forall d. Selection_ -> Array (Attribute d) -> Effect Selection_
-style = addAttributes
+style :: forall d. Selection_ -> Array (Attribute d) -> Selection_
+style = foldAttributes
 
 

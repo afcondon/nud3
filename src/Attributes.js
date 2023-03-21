@@ -13,6 +13,10 @@ export function addTransitionToSelection_ (selection) {
     return (t) => selection.transition(t)
 }
 
+export function retrieveSelection_ (transition) {
+  return transition.selection();
+}
+
 // can be called with any selection, in practice called only
 // as part of a list of transition attributes, ie for exit nodes
 export function removeElement_ (transition) {

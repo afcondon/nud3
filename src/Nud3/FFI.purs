@@ -16,7 +16,6 @@ module Nud3.FFI
   , createNewTransition_
   , completeJoin_
   , easeCubic_
-  , getEnterUpdateExitSelections_
   , getGroups_
   , getName_
   , getParents_
@@ -34,7 +33,6 @@ module Nud3.FFI
   )
   where
 
-import Effect (Effect)
 import Nud3.Types (D3SelectorFunction, Selection_, Transition_)
 import Prelude (Unit)
 import Web.DOM as DOM
@@ -60,7 +58,7 @@ foreign import insertElement_ :: String -> String -> Selection_ -> Selection_
 foreign import prepareJoin_ :: Selection_ -> String -> Selection_
 foreign import useInheritedData_ :: Selection_ -> Selection_
 foreign import addData_ :: forall d. Selection_ -> Array d -> Selection_
-foreign import getEnterUpdateExitSelections_ :: Selection_ -> { enter :: Selection_, update :: Selection_, exit :: Selection_ }
+-- foreign import getEnterUpdateExitSelections_ :: Selection_ -> { enter :: Selection_, update :: Selection_, exit :: Selection_ }
 foreign import completeJoin_ :: -- | NB under the hood here in the FFI this is typed as if it were pure but obviously it isn't
   Selection_ -> 
   { enterFn :: Selection_ -> Selection_ -- | and neither are these enterFn, updateFn, exitFn functions
@@ -78,7 +76,7 @@ foreign import createNewTransition_ :: Unit -> Transition_
 foreign import transitionDelayFixed_ :: Transition_ -> Int -> Transition_
 foreign import transitionDelayLambda_ :: forall d. Transition_ -> (d -> Int -> Int) -> Transition_
 foreign import transitionDurationFixed_ :: Transition_ -> Int -> Transition_
-foreign import transitionDurationLambda_ :: forall d t. Transition_ -> (d -> Int -> Int) -> Transition_
+foreign import transitionDurationLambda_ :: forall d. Transition_ -> (d -> Int -> Int) -> Transition_
 foreign import transitionEaseFunction :: Transition_ -> (Number -> Number) -> Transition_
 
 foreign import easeCubic_ :: Number -> Number

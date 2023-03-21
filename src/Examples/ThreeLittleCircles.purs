@@ -14,12 +14,12 @@ threeLittleCircles = do
   let root = select (SelectorString "div#circles")
 
   svg <- root |+| (SVG "svg")
-  _ <- style svg
-    [ Width_ 650.0
-    , Height_ 650.0
-    , ViewBox_ (-100.0) (-100.0) 650.0 650.0
-    , Classed_ "d3svg circles"
-    ]
+  let _ = style svg -- TODO: return this to being effectful, ie <- style svg
+                  [ Width_ 650.0
+                  , Height_ 650.0
+                  , ViewBox_ (-100) (-100) 650 650
+                  , Classed_ "d3svg circles"
+                  ]
 
   circleGroup <- svg |+| (SVG "g")
   circles <- visualize

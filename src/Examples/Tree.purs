@@ -38,7 +38,7 @@ drawTree tree = do
 
   layoutTreeData <- VizTree.verticalLayout tree
   svg <- appendStyledElement root (SVG "svg")
-    [ ViewBox_ 0.0 0.0 650.0 650.0
+    [ ViewBox_ 0 0 650 650
     , Classed_ "tree"
     , Width_ 650.0
     , Height_ 650.0
@@ -59,17 +59,17 @@ drawTree tree = do
         }
     }
   circles <- appendStyledElement node (SVG "circle")
-    [ Fill \d i -> if d.hasChildren then "#999" else "#555"
+    [ Fill \d _ -> if d.hasChildren then "#999" else "#555"
     , Radius_ 2.5
     , StrokeColor_ "white"
     ]
 
   labels <- appendStyledElement node (SVG "text")
     [ DY_ 0.31
-    , X \d i -> computeX VizTree.Vertical d.hasChildren d.x
+    , X \d _ -> computeX VizTree.Vertical d.hasChildren d.x
     , Fill_ "red"
-    , Text \d i -> d.name
-    , TextAnchor \d i -> computeTextAnchor VizTree.Vertical d.hasChildren d.x
+    , Text \d _ -> d.name
+    , TextAnchor \d _ -> computeTextAnchor VizTree.Vertical d.hasChildren d.x
     ]
 
   individualLink <- visualize

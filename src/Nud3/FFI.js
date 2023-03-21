@@ -39,16 +39,16 @@ export function prepareJoin_ (selection) {
 }
 // useInheritedData_ :: Selection_ -> Selection_
 export function useInheritedData_ (selection) {
-  return selection.data(d => d);
+  return selection.data(d => d); // TODO use a key function if provided
 }
 // addData_ :: Selection_ -> Array d -> Selection_
 export function addData_ (selection) {
-  return (data) => selection.data(data) // TODO use key function if provided
+  return (data) => selection.data(data, d => d) // TODO use key function if provided
 }
 
-export function getEnterUpdateExitSelections_ (selection) {
-  return { enter: selection.enter(), update: selection, exit: selection.exit() }
-}
+// export function getEnterUpdateExitSelections_ (selection) {
+//   return { enter: selection.enter(), update: selection, exit: selection.exit() }
+// }
 
 export function completeJoin_ (selection) { // NB the order of the functions arguments is important: enter, update, exit
   // update and exit are optional - but enter is not
@@ -71,9 +71,9 @@ import { transition } from "d3-transition";
 
 export function createNewTransition_ () { 
   let t = transition();
-  t.end().then(() => console.log("transition ended"));
-  t.on("interrupt", () => console.log("transition interrupted"));
   console.log("creating new transition ", t._id);
+  t.end().then(() => console.log("transition ended for t: ", t._id));
+  t.on("interrupt", () => console.log("transition interrupted for t: ", t._id));
   return t
 }
 

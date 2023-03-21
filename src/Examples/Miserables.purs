@@ -29,21 +29,20 @@ drawForceLayout :: Number -> Number -> Simulation.Model -> Effect Unit
 drawForceLayout width height model = do
   let root = select (SelectorString "div#miserables")
   svg <- root |+| (SVG "svg")
-  _ <- style svg
-    [ ViewBox_ 0.0 0.0 650.0 650.0
-    , Classed_ "force-layout"
-    , Width_ width
-    , Height_ height
-    ]
+  let _ = style svg --| TODO: return this to being effectful, ie <- style svg
+                [ ViewBox_ 0 0 650 650
+                , Classed_ "force-layout"
+                , Width_ width
+                , Height_ height
+                ]
   linksGroup <- appendStyledElement svg (SVG "g") [ Classed_ "link", StrokeColor_ "#999", StrokeOpacity_ 0.6 ]
   nodesGroup <- appendStyledElement svg (SVG "g") [ Classed_ "node", StrokeColor_ "#fff", StrokeOpacity_ 1.5 ]
 
-  simulator <- Simulation.newEngine
-    { width: width
-    , height: height
-    , alpha: 0.1
+  simulator <- Simulation.newEngine -- these params are just the defaults in D3 anyway, for now
+    { alpha: 0.1
     , alphaMin: 0.001
     , alphaDecay: 0.0228
+    , alphaTarget: 0.0
     , velocityDecay: 0.4
     }
   -- side-effects ahoy, the data in these selections will change as the simulator runs
@@ -53,7 +52,7 @@ drawForceLayout width height model = do
     , key: \d -> d.id
     }
 
-  _ <- Simulation.onTickNode simulator simNodes [ CX \d i -> d.x, CY \d i -> d.y ]
+  _ <- Simulation.onTickNode simulator simNodes [ CX \d _ -> d.x, CY \d _ -> d.y ]
   _ <- Simulation.onDrag simulator simNodes Simulation.DefaultDragBehavior
 
   simLinks <- Simulation.addLinks
@@ -64,10 +63,10 @@ drawForceLayout width height model = do
     }
 
   _ <- Simulation.onTickLink simulator simLinks 
-        [ X1 \l i -> l.source.x
-        , Y1 \l i -> l.source.y
-        , X2 \l i -> l.target.x
-        , Y2 \l i -> l.target.y
+        [ X1 \l _ -> l.source.x
+        , Y1 \l _ -> l.source.y
+        , X2 \l _ -> l.target.x
+        , Y2 \l _ -> l.target.y
         ]
 
   nodes <- visualize
@@ -78,7 +77,7 @@ drawForceLayout width height model = do
     , attributes:
         { enter:
             [ Radius_ 5.0
-            , Fill \d i -> colorByGroup d.group
+            , Fill \d _ -> colorByGroup d.group
             ]
         , exit: [] -- Remove is the default, no need for other attrs here
         , update: []
