@@ -9,7 +9,7 @@ import Nud3
 import Data.Int (toNumber)
 import Data.String.CodeUnits (singleton, toCharArray)
 import Effect (Effect)
-import Nud3.Attributes (Attribute(..), createTransition)
+import Nud3.Attributes (Attribute(..), createTransition, foldAttributes)
 import Nud3.FFI as FFI
 import Nud3.Types (Selection_, Transition_)
 import Prelude (bind, ($), (*), (+))
@@ -57,12 +57,12 @@ newTransition name duration delay = createTransition { name, duration, delay, ea
 generalUpdatePatternSetup :: Effect Selection_
 generalUpdatePatternSetup = do
   let root = select (SelectorString "div#gup")
-  svg <- root |+| (SVG "svg")
-  let styled = style svg -- TODO: return this to being effectful / <- style svg
+  svg <- addElement root $ Append $ SVG "svg"
+  let styled = foldAttributes svg
                   [ ViewBox_ 0 0 650 650
                   , Classed_ "d3svg gup"
                   ]
-  styled |+| (SVG "g")
+  addElement styled $ Append $ SVG "g"
 
 generalUpdatePatternDraw :: Selection_ -> String -> Effect Selection_
 generalUpdatePatternDraw selection letterdata = do

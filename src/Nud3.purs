@@ -6,7 +6,6 @@ import Data.Generic.Rep (class Generic)
 import Data.Show.Generic (genericShow)
 import Debug as Debug
 import Effect (Effect)
-import Effect.Class.Console as Console
 import Nud3.Attributes (Attribute, foldAttributes)
 import Nud3.FFI as FFI
 import Nud3.Types (Selection_)
@@ -103,39 +102,13 @@ select :: Selector -> Selection_
 select (SelectorString s) = Debug.trace ("select with string: " <> s) \_ -> FFI.selectManyWithString_ s
 select (SelectorFunction f) = Debug.trace "select with function" \_ -> unsafeCoerce $ FFI.selectManyWithFunction_ (unsafeCoerce f)
 
--- | TODO once tested remove the individual functions (ie that take Element not AddElement) and just use this one
 addElement :: Selection_ -> AddElement -> Effect Selection_
-addElement s (Append element) = appendElement s element
--- TODO handle other "before selectors" (and function) instead of fixing it to ":first-child"
-addElement s (Insert element selector) = insertElement s element ":first-child"
-
-appendElement :: Selection_ -> Element -> Effect Selection_
-appendElement s element = do
-  Console.log ("appending " <> show element)
-  pure $ case element of
-    SVG tag -> FFI.appendElement_ tag s
-    HTML tag -> FFI.appendElement_ tag s
-
-insertElement :: Selection_ -> Element -> String -> Effect Selection_
-insertElement s element selector = do
-  Console.log $ "inserting " <> show element
-  pure $ case element of
-    SVG tag -> FFI.insertElement_ tag selector s 
-    HTML tag -> FFI.insertElement_ tag selector s
-
-infixr 5 appendElement as |+|
-infixr 5 insertElement as |^|
-
-
-appendStyledElement :: forall d. Selection_ -> Element -> Array (Attribute d) -> Effect Selection_
-appendStyledElement s element attrs = 
-  Debug.trace ("TODO appending styled eleemnt: " <> show element <> show attrs) \_ -> 
-  pure s -- TODO
-
-insertStyledElement :: forall d. Selection_ -> Element -> Array (Attribute d) -> Effect Selection_
-insertStyledElement s element attrs = 
-  Debug.trace ("TODO inserting styled element " <> show element <> show attrs) \_ -> 
-  pure s -- TODO
+addElement s = case _ of
+  Append (SVG tag) -> pure $ FFI.appendElement_ tag s
+  Append (HTML tag) -> pure $ FFI.appendElement_ tag s
+-- TODO for insert handle other "before selectors" (and function) instead of fixing it to ":first-child"
+  Insert (SVG tag) selector -> pure $ FFI.insertElement_ tag selector s
+  Insert (HTML tag) selector -> pure $ FFI.insertElement_ tag selector s
 
 -- | visualize replaces the (config.where).selectAll(config.what).data(config.using).append(config.what) 
 -- | chain in d3 with a single function
@@ -165,27 +138,14 @@ visualize config = do
 -- It duplicates the DSL (exported) API for Append / Insert Elements but with the Effect removed
 -- This is clearly wrong but it's a temporary hack to get things working
 addElementXXX :: Selection_ -> AddElement -> Selection_
-addElementXXX s (Append element) = appendElementXXX s element
--- TODO handle other "before selectors" (and function) instead of fixing it to ":first-child"
-addElementXXX s (Insert element selector) = insertElementXXX s element ":first-child"
-
-appendElementXXX :: Selection_ -> Element -> Selection_
-appendElementXXX s element = do
-  case element of
-    SVG tag -> FFI.appendElement_ tag s
-    HTML tag -> FFI.appendElement_ tag s
-
-insertElementXXX :: Selection_ -> Element -> String -> Selection_
-insertElementXXX s element selector = do
-  case element of
-    SVG tag -> FFI.insertElement_ tag selector s 
-    HTML tag -> FFI.insertElement_ tag selector s
+addElementXXX s = case _ of
+  Append (SVG tag) -> FFI.appendElement_ tag s
+  Append (HTML tag) -> FFI.appendElement_ tag s
+-- TODO for insert handle other "before selectors" (and function) instead of fixing it to ":first-child"
+  Insert (SVG tag) selector -> FFI.insertElement_ tag selector s
+  Insert (HTML tag) selector -> FFI.insertElement_ tag selector s
 -- | ********* Tempororary unsafe code in this section  *********
     
 filter :: Selection_ -> String -> Selection_
 filter s _ = s -- TODO  
-
-style :: forall d. Selection_ -> Array (Attribute d) -> Selection_
-style = foldAttributes
-
 

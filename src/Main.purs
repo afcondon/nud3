@@ -3,7 +3,6 @@ module Main  where
 
 import Prelude
 
-import Data.String.CodeUnits (toCharArray)
 import Effect (Effect)
 import Effect.Aff (Milliseconds(..), delay, launchAff_)
 import Effect.Class (liftEffect)

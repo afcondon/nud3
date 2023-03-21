@@ -1,10 +1,10 @@
 module Examples.Miserables where
 
 import Nud3
-import Effect (Effect)
-import Nud3.Attributes (Attribute(..))
-import Prelude (Unit, bind, pure, unit)
 
+import Effect (Effect)
+import Nud3.Attributes (Attribute(..), foldAttributes)
+import Prelude (Unit, bind, pure, unit, ($))
 import Simulation as Simulation
 
 
@@ -28,15 +28,17 @@ colorByGroup group =
 drawForceLayout :: Number -> Number -> Simulation.Model -> Effect Unit
 drawForceLayout width height model = do
   let root = select (SelectorString "div#miserables")
-  svg <- root |+| (SVG "svg")
-  let _ = style svg --| TODO: return this to being effectful, ie <- style svg
+  svg <- addElement root $ Append $ SVG "svg"
+  let _ = foldAttributes svg
                 [ ViewBox_ 0 0 650 650
                 , Classed_ "force-layout"
                 , Width_ width
                 , Height_ height
                 ]
-  linksGroup <- appendStyledElement svg (SVG "g") [ Classed_ "link", StrokeColor_ "#999", StrokeOpacity_ 0.6 ]
-  nodesGroup <- appendStyledElement svg (SVG "g") [ Classed_ "node", StrokeColor_ "#fff", StrokeOpacity_ 1.5 ]
+  linksGroup <- addElement svg $ Append (SVG "g") 
+  let _ = foldAttributes linksGroup [ Classed_ "link", StrokeColor_ "#999", StrokeOpacity_ 0.6 ]
+  nodesGroup <- addElement svg $ Append (SVG "g") 
+  let _ = foldAttributes nodesGroup [ Classed_ "node", StrokeColor_ "#fff", StrokeOpacity_ 1.5 ]
 
   simulator <- Simulation.newEngine -- these params are just the defaults in D3 anyway, for now
     { alpha: 0.1
