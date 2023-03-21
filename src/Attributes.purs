@@ -62,13 +62,14 @@ addAttribute :: forall d. Selection_ -> Attribute d -> Selection_
 -- | in order to do a join we need to get back the original selection, not the transition
 -- | this is usually done in d3 by wrapping the transition in a .call() but that doesn't 
 -- | really work with the DSL we have here
-addAttribute s (Transition transition attrs ) = do
-  let selectionTransition = addTransitionToSelection_ s transition 
-  retrieveSelection_ $ foldAttributes selectionTransition attrs -- apply the attrs to the transition, then retrieve the selection
-addAttribute s (TransitionThenRemove transition attrs ) = do
-  let selectionTransition = addTransitionToSelection_ s transition
-      t = removeElement_ $ foldAttributes selectionTransition attrs -- apply the attrs to the transition, then remove the element
-  retrieveSelection_ t -- then retrieve the selection
+addAttribute s (Transition t) = do
+  let selectionWithTransition = addTransitionToSelection_ s t.transition_
+  -- apply the attrs to the transition, then retrieve the selection
+  retrieveSelection_ $ foldAttributes selectionWithTransition t.attrs
+addAttribute s (TransitionThenRemove t) = do
+  let selectionWithTransition = addTransitionToSelection_ s t.transition_
+  -- apply the attrs to the transition, then remove the element, then retrieve the selection
+  retrieveSelection_ $ removeElement_ $ foldAttributes selectionWithTransition t.attrs
 -- | Text and InnerHTML are special cases because they are not attributes in the DOM sense
 -- | We are deliberately eliding this distinction in the DSL
 addAttribute s attr@(Text _) = addText_ s (getValueFromAttribute attr)
@@ -134,8 +135,8 @@ data Attribute d =
   | Text (AttributeSetter d String)
   | TextAnchor_ String
   | TextAnchor (AttributeSetter d String)
-  | Transition Transition_ (Array (Attribute d))
-  | TransitionThenRemove Transition_ (Array (Attribute d))
+  | Transition { transition_ :: Transition_, name :: String, attrs :: (Array (Attribute d))}
+  | TransitionThenRemove { transition_ :: Transition_, name :: String, attrs :: (Array (Attribute d))}
   | Width_ Number
   | Width (AttributeSetter d Number)
   | ViewBox_ Int Int Int Int -- TODO can't these be Int instead of Number?
@@ -176,8 +177,8 @@ getValueFromAttribute = case _ of
   TextAnchor_ v -> exportAttributeSetter_ v
   -- | transition attributes are different and we never actually getValueFromAttribute 
   -- | from them like this but we have to typecheck here
-  Transition _ vs -> exportAttributeSetter_ vs
-  TransitionThenRemove _ vs -> exportAttributeSetter_ vs
+  Transition t -> exportAttributeSetter_ t.attrs
+  TransitionThenRemove t -> exportAttributeSetter_ t.attrs
   Width_ v -> exportAttributeSetter_ v
   ViewBox_ x y w h -> exportAttributeSetter_ [x, y, w, h] -- TODO this one is a special case, impressive that CoPilot guessed it
   X_ v -> exportAttributeSetter_ v
@@ -257,8 +258,8 @@ getKeyFromAttribute = case _ of
   TextAnchor _ -> "text-anchor"
   -- | transition attributes are different and we never actually getKeyFromAttribute 
   -- | from them like this but we have to typecheck here
-  Transition _ _ -> "transition" -- special case
-  TransitionThenRemove _ _ -> "transition with removal afterwards" -- special case
+  Transition _ -> "transition" -- special case
+  TransitionThenRemove _ -> "transition with removal afterwards" -- special case
   Width_ _ -> "width"
   Width _ -> "width"
   ViewBox_ _ _ _ _ -> "viewBox"
@@ -295,8 +296,8 @@ instance showAttribute :: Show (Attribute d) where
   show (Style_ v) = "\n\t\tStyle_" <> " set directly to " <> v
   show (Text_ v) = "\n\t\tText_" <> " set directly to " <> v
   show (TextAnchor_ v) = "\n\t\tTextAnchor_" <> " set directly to " <> v
-  show (Transition _ vs) = "\n\t\tTransition to these following attrs " <> show vs -- could show transition config too
-  show (TransitionThenRemove _ vs) = "\n\t\tTransition to these following attrs " <> show vs -- could show transition config too
+  show (Transition t) = "\n\t\tTransition " <> t.name <> " to these following attrs " <> show t.attrs -- could show transition config too
+  show (TransitionThenRemove t) = "\n\t\tTransition " <> t.name <> " to these following attrs " <> show t.attrs -- could show transition config too
   show (Width_ v) = "\n\t\tWidth_" <> " set directly to " <> show v
   show (ViewBox_ x y w h) = "\n\t\tViewBox_" <> " set directly to " <> show x <> " " <> show y <> " " <> show w <> " " <> show h
   show (X_ v) = "\n\t\tX_" <> " set directly to " <> show v

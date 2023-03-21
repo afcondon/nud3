@@ -27,12 +27,16 @@ config gupGroup letters keyFunction transition_ = {
             , Y_ 0.0
             , FontSize_ 96.0
             , FontFamily_ "monospace"
-            , Transition transition_ [ Y_ 200.0 ]
+            , Transition { transition_
+                         , name: "TODO"
+                         , attrs: [ Y_ 200.0 ]}
             ]
         , exit:
             [ Classed_ "exit"
             , Fill_ "brown"
-            , TransitionThenRemove transition_ [ Y_ 400.0 ]
+            , TransitionThenRemove { transition_
+                                   , name: "TODO"
+                                   , attrs: [ Y_ 400.0 ]}
             ]
         , update:
             [ Classed_ "update"
