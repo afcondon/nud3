@@ -35,18 +35,18 @@ type UpdateSelection = {
 showSelection :: Selection_ -> String
 showSelection s = "Selection named: " <> FFI.getName_ s
 
-type KeyFunction d = forall i. (Ord i) => (Ord d) => d -> Int -> NodeList -> i
+type KeyFunction d i = (Ord i) => (Ord d) => d -> Int -> NodeList -> i
 -- NB this key function is curried whereas, used on the JS side it needs to be uncurried
--- optimise this later or maybe compiler optimisation will be enough
+-- could optimise this later or maybe compiler optimisation will be enough
 
-identityKeyFunction :: forall d. KeyFunction d
+identityKeyFunction :: forall d i. KeyFunction d i
 identityKeyFunction = \d _ _ -> unsafeCoerce d -- TODO something nicer here
 
-type JoinConfig d = { 
+type JoinConfig d i = { 
     what :: AddElement
   , where :: Selection_
   , using :: DataSource d
-  , key :: KeyFunction d
+  , key :: KeyFunction d i
   , attributes :: {
       enter :: ElementConfig d
     , update :: ElementConfig d
@@ -54,7 +54,7 @@ type JoinConfig d = {
   }
   }
 
-showJoin :: forall d. (Show d) => JoinConfig d -> String
+showJoin :: forall d i. (Ord i) => (Show d) => JoinConfig d i-> String
 showJoin join = "Join details: { \n" <>
   "\twhat: " <> show join.what <>
   "\n\twhere: " <> showSelection join.where <>
@@ -118,7 +118,7 @@ addElement s = case _ of
 -- | actually will have, but we'll see when we try to add transitions and other things
 -- | that are not simple attributes. It may be that there's a wholly different API approach
 -- | available for those things anyway. 
-visualize :: forall d. JoinConfig d -> Effect Selection_
+visualize :: forall d i. JoinConfig d i -> Effect Selection_
 visualize config = do
   -- FFI.prepareJoin uses underlying call to selection.selectAll(element) 
   let prepped = FFI.prepareJoin_ config.where (getElementName config.what) 

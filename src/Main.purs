@@ -25,7 +25,7 @@ examplesInAff = launchAff_ do
   delay $ Milliseconds 1800.0
   _ <- liftEffect $ generalUpdatePatternDraw letters "abcdejklmnopqrstuvwxyz" 
   delay $ Milliseconds 1800.0
-  _ <- liftEffect $ generalUpdatePatternDraw letters "abdejklmnopwxz"
+  _ <- liftEffect $ generalUpdatePatternDraw letters "lkjhgfdsa"
   pure unit
 
 main :: Effect Unit

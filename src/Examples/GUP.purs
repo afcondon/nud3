@@ -6,6 +6,7 @@ module Examples.GUP
 
 import Nud3
 
+import Data.Char (toCharCode)
 import Data.Int (toNumber)
 import Data.String.CodeUnits (singleton, toCharArray)
 import Effect (Effect)
@@ -14,7 +15,7 @@ import Nud3.FFI as FFI
 import Nud3.Types (Selection_, Transition_)
 import Prelude (bind, ($), (*), (+))
 
-config :: Selection_ -> Array Char -> KeyFunction Char -> Transition_ -> JoinConfig Char
+config :: Selection_ -> Array Char -> KeyFunction Char Int -> Transition_ -> JoinConfig Char Int
 config gupGroup letters keyFunction transition_ = {
       what: Append (SVG "text")
     , using: NewData letters
@@ -29,14 +30,14 @@ config gupGroup letters keyFunction transition_ = {
             , FontSize_ 48.0
             , FontFamily_ "monospace"
             , Transition { transition_
-                         , name: "TODO"
+                         , name: "TODO" -- get the name from the transition_
                          , attrs: [ Y_ 200.0 ]}
             ]
         , exit:
             [ Classed_ "exit"
             , Fill_ "brown"
             , TransitionThenRemove { transition_
-                                   , name: "TODO"
+                                   , name: "TODO" -- get the name from the transition_
                                    , attrs: [ Y_ 400.0 ]}
             ]
         , update:
@@ -44,7 +45,7 @@ config gupGroup letters keyFunction transition_ = {
             , Fill_ "gray"
             , Y_ 200.0
             , Transition { transition_
-                         , name: "TODO"
+                         , name: "TODO" -- get the name from the transition_
                          , attrs: [ X \_ i -> toNumber (i * 48 + 50) ] }
             ]
         }
@@ -64,9 +65,17 @@ generalUpdatePatternSetup = do
                   ]
   addElement styled $ Append $ SVG "g"
 
+crazyKeyFunction :: KeyFunction Char Char
+crazyKeyFunction 'b' _ _ = 'a' -- just force the 'b' to be a different key
+crazyKeyFunction d _ _ = d
+
+otherKeyFunction :: KeyFunction Char Int
+otherKeyFunction d _ _ = toCharCode d
+
 generalUpdatePatternDraw :: Selection_ -> String -> Effect Selection_
 generalUpdatePatternDraw selection letterdata = do
   let letters = toCharArray letterdata
-  visualize $ config selection letters identityKeyFunction (newTransition "foo" 1000 500)
+  visualize $ config selection letters otherKeyFunction (newTransition "foo" 1000 500)
+  -- visualize $ config selection letters identityKeyFunction (newTransition "foo" 1000 500)
   -- TODO would definitely be nicer to use record update rather than function parameters here:
   -- _ <- revisualize $ config { using = NewData letterdata2 }
