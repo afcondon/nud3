@@ -7,9 +7,8 @@ import Web.DOM (Node) as DOM
 
 foreign import data Selection_ :: Type -- opaque and mutable data 
 foreign import data Transition_ :: Type -- opaque and mutable data 
-
+foreign import data KeyFunction_ :: Type -- opaque type for key functions in JavaScript
 foreign import data D3SelectorFunction :: Type
-
 
 data Selector
   = SelectorString String
@@ -33,11 +32,10 @@ type UpdateSelection =
 -- if the identity function is used, then the first element of the data array is assigned to the first node in the selection, etc.
 -- if the key function is used, then the node with the key value that matches the key function is assigned the data element
 -- note that the key function is therefore evaluated twice, once per datum and once per node
-type KeyFunction = forall d i. (Ord i) => (Ord d) => d -> Int -> NodeList -> i
+data KeyFunction d i = 
+    IdentityKey
+  | HasIdField -- there's no easy way to express this generically is there? 
+  | KeyFunction (KeyFunctionType d i)
 
--- NB this key function is curried whereas, used on the JS side it needs to be uncurried, can optimise this later or maybe compiler optimisation will be enough
-
--- special case where the datum is used as the key and we just ignore the index and nodes
-identityKeyFunction :: KeyFunction
-identityKeyFunction d _ _ = unsafeCoerce d -- in the case of the identity function, the key is the datum itself
+type KeyFunctionType d i = ((Ord i) => (Ord d) => d -> Int -> NodeList -> i)
 

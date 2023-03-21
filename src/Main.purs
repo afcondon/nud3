@@ -21,7 +21,7 @@ examplesInEffect = do
 examplesInAff :: Effect Unit
 examplesInAff = launchAff_ do
   letters <- liftEffect $ generalUpdatePatternSetup
-  _ <- liftEffect $ generalUpdatePatternDraw letters "acdefglmnostxz"
+  _ <- liftEffect $ generalUpdatePatternDraw letters "abcdefglmnostxz"
   delay $ Milliseconds 1800.0
   _ <- liftEffect $ generalUpdatePatternDraw letters "abcdejklmnopqrstuvwxyz" 
   delay $ Milliseconds 1800.0

@@ -1,4 +1,22 @@
-module Nud3 where
+module Nud3
+  ( AddElement(..)
+  , DataSource(..)
+  , Element(..)
+  , ElementConfig
+  , JoinConfig
+  , NodeList
+  , Selector(..)
+  , UpdateSelection
+  , addElement
+  , addElementXXX
+  , filter
+  , getElementName
+  , select
+  , showJoin
+  , showSelection
+  , visualize
+  )
+  where
 
 import Prelude
 
@@ -8,7 +26,7 @@ import Debug as Debug
 import Effect (Effect)
 import Nud3.Attributes (Attribute, foldAttributes)
 import Nud3.FFI as FFI
-import Nud3.Types (Selection_)
+import Nud3.Types (KeyFunction(..), Selection_)
 import Unsafe.Coerce (unsafeCoerce)
 import Web.DOM (Node) as DOM
 
@@ -35,18 +53,11 @@ type UpdateSelection = {
 showSelection :: Selection_ -> String
 showSelection s = "Selection named: " <> FFI.getName_ s
 
-type KeyFunction d i = (Ord i) => (Ord d) => d -> Int -> NodeList -> i
--- NB this key function is curried whereas, used on the JS side it needs to be uncurried
--- could optimise this later or maybe compiler optimisation will be enough
-
-identityKeyFunction :: forall d i. KeyFunction d i
-identityKeyFunction = \d _ _ -> unsafeCoerce d -- TODO something nicer here
-
 type JoinConfig d i = { 
     what :: AddElement
   , where :: Selection_
   , using :: DataSource d
-  , key :: KeyFunction d i
+  , key :: KeyFunction d i 
   , attributes :: {
       enter :: ElementConfig d
     , update :: ElementConfig d
@@ -54,7 +65,7 @@ type JoinConfig d i = {
   }
   }
 
-showJoin :: forall d i. (Ord i) => (Show d) => JoinConfig d i-> String
+showJoin :: forall d i. (Show d) => JoinConfig d i -> String
 showJoin join = "Join details: { \n" <>
   "\twhat: " <> show join.what <>
   "\n\twhere: " <> showSelection join.where <>
@@ -123,9 +134,10 @@ visualize config = do
   -- FFI.prepareJoin uses underlying call to selection.selectAll(element) 
   let prepped = FFI.prepareJoin_ config.where (getElementName config.what) 
   -- both branches here use underlying call to selection.data(data, key)
+  let keyFunction = FFI.uncurryKeyFunction config.key
   let hasData = case config.using of
-              InheritData -> FFI.useInheritedData_ prepped -- TODO use key function
-              NewData ds -> FFI.addData_ prepped ds -- TODO use key function
+              InheritData -> FFI.useInheritedData_ prepped keyFunction
+              NewData ds -> FFI.addData_ prepped ds keyFunction
   -- FFI.completeJoin_ provides functions for each of the three selections: enter, update and exit
   pure $ FFI.completeJoin_ hasData {
       enterFn: \enter -> foldAttributes (addElementXXX enter config.what) config.attributes.enter

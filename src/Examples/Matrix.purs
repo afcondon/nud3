@@ -4,8 +4,8 @@ import Nud3
 
 import Effect (Effect)
 import Nud3.Attributes (Attribute(..), foldAttributes)
+import Nud3.Types (KeyFunction(..))
 import Prelude (Unit, bind, pure, unit, ($))
-
 
 -- | Matrix code ideal
 matrix2table :: Effect Unit
@@ -21,7 +21,7 @@ matrix2table = do
     { what: Append (HTML "tr")
     , where: tableWithAttrs
     , using: NewData matrix
-    , key: identityKeyFunction
+    , key: IdentityKey
     , attributes:
         { enter: [ Classed_ "new" ]
         , exit: [ Classed_ "exit" ] -- NB remove is implicit, only needed on custom exit
@@ -30,15 +30,16 @@ matrix2table = do
     }
 
   -- | Just for yuks, style like a spreadsheet with alternating colors
-  let oddrows = rows `filter` "nth-child(odd)"
-      _ = foldAttributes oddrows [ BackgroundColor_ "light-gray", Color_ "white" ]
+  let
+    oddrows = rows `filter` "nth-child(odd)"
+    _ = foldAttributes oddrows [ BackgroundColor_ "light-gray", Color_ "white" ]
 
   -- | Insert the cells
   items <- visualize
     { what: Append (HTML "td")
     , using: InheritData :: DataSource (Array Int) -- need to give the type to ensure Show instance for debugging, no other reason
     , where: rows
-    , key: identityKeyFunction
+    , key: IdentityKey
     , attributes:
         { enter: [ Classed_ "cell" ]
         , exit: []
@@ -46,7 +47,7 @@ matrix2table = do
         }
     }
 
-  let _ = foldAttributes items [Text \d _ -> d]
+  let _ = foldAttributes items [ Text \d _ -> d ]
 
   pure unit
 

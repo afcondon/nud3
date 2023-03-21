@@ -7,8 +7,8 @@ import Data.Tree (Tree)
 import Effect (Effect)
 import Nud3.Attributes (Attribute(..), foldAttributes)
 import Nud3.Tree as VizTree
+import Nud3.Types (KeyFunction(..))
 import Prelude (class Show, Unit, bind, negate, pure, unit, ($), (<), (==))
-
 
 -- | Tree
 computeX :: VizTree.TreeLayout -> Boolean -> Number -> Number
@@ -38,12 +38,13 @@ drawTree tree = do
 
   layoutTreeData <- VizTree.verticalLayout tree
   svg <- addElement root $ Append $ SVG "svg"
-  let _ = foldAttributes svg
-            [ ViewBox_ 0 0 650 650
-            , Classed_ "tree"
-            , Width_ 650.0
-            , Height_ 650.0
-            ]
+  let
+    _ = foldAttributes svg
+      [ ViewBox_ 0 0 650 650
+      , Classed_ "tree"
+      , Width_ 650.0
+      , Height_ 650.0
+      ]
   container <- addElement svg $ Append $ SVG "g"
   let _ = foldAttributes container [ FontFamily_ "sans-serif", FontSize_ 10.0 ]
   linksGroup <- addElement svg $ Append $ SVG "g"
@@ -53,7 +54,7 @@ drawTree tree = do
     { what: Append (SVG "g")
     , using: NewData $ VizTree.getNodes layoutTreeData -- could use newtype and unwrap here perhaps
     , where: nodesGroup
-    , key: identityKeyFunction
+    , key: IdentityKey
     , attributes:
         { enter: [] -- group for each circle and its label 
         , exit: [] -- remove is the default
@@ -61,26 +62,28 @@ drawTree tree = do
         }
     }
   circles <- addElement node $ Append $ SVG "circle"
-  let _ = foldAttributes circles
-            [ Fill \d _ -> if d.hasChildren then "#999" else "#555"
-            , Radius_ 2.5
-            , StrokeColor_ "white"
-            ]
+  let
+    _ = foldAttributes circles
+      [ Fill \d _ -> if d.hasChildren then "#999" else "#555"
+      , Radius_ 2.5
+      , StrokeColor_ "white"
+      ]
 
   labels <- addElement node $ Append $ SVG "text"
-  let _ = foldAttributes labels
-              [ DY_ 0.31
-              , X \d _ -> computeX VizTree.Vertical d.hasChildren d.x
-              , Fill_ "red"
-              , Text \d _ -> d.name
-              , TextAnchor \d _ -> computeTextAnchor VizTree.Vertical d.hasChildren d.x
-              ]
+  let
+    _ = foldAttributes labels
+      [ DY_ 0.31
+      , X \d _ -> computeX VizTree.Vertical d.hasChildren d.x
+      , Fill_ "red"
+      , Text \d _ -> d.name
+      , TextAnchor \d _ -> computeTextAnchor VizTree.Vertical d.hasChildren d.x
+      ]
 
   individualLink <- visualize
     { what: Append (SVG "path")
     , using: NewData $ VizTree.getNodes layoutTreeData
     , where: linksGroup
-    , key: identityKeyFunction
+    , key: IdentityKey
     , attributes:
         { enter:
             [ StrokeWidth_ 1.5
