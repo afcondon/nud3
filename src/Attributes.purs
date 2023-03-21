@@ -52,7 +52,7 @@ or update selection to prevent merging.
 -}
 
 foldAttributes :: forall d. Selection_ -> Array (Attribute d) -> Selection_
-foldAttributes = foldl go
+foldAttributes s as = foldl go s as
   where go selection attr = addAttribute selection attr
 
 -- | we special case on some attributes - Text, InnerHTML, Transition
