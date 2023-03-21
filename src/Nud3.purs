@@ -3,7 +3,7 @@ module Nud3 where
 import Nud3.Types
 import Prelude
 
-import Data.Array (head, last, tail)
+import Data.Array (foldl, head, last, tail)
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Show.Generic (genericShow)
@@ -11,7 +11,7 @@ import Data.Traversable (traverse)
 import Debug as Debug
 import Effect (Effect)
 import Effect.Class.Console as Console
-import Nud3.Attributes (Attribute, addAttribute, addAttributes, getKeyFromAttribute, getValueFromAttribute)
+import Nud3.Attributes (Attribute, addAttribute, addAttributes, foldAttributes, getKeyFromAttribute, getValueFromAttribute)
 import Nud3.FFI (selectManyWithString_)
 import Nud3.FFI as FFI
 import Unsafe.Coerce (unsafeCoerce)
@@ -160,15 +160,14 @@ visualize config = do
   pure $ FFI.completeJoin_ hasData {
       enterFn: \enter -> do
         let entered = addElementXXX enter config.what
-        let _ = (addAttribute entered) <$> config.attributes.enter
-        entered
+        foldAttributes entered config.attributes.enter
     , updateFn: \update -> do
-        let _ = (addAttribute update) <$> config.attributes.update
-        update
+        foldAttributes update config.attributes.update
     , exitFn: \exit -> do
-        let _ = (addAttribute exit) <$> config.attributes.exit
-        exit
+        foldAttributes exit config.attributes.exit
     }
+
+-- foldl:: forall a b. (a -> b -> a) -> a -> Array b -> a
 
 -- | ********* Tempororary unsafe code in this section  *********
 -- This code is here just to keep the Effect Selection out of the completeJoin_ function

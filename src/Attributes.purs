@@ -2,6 +2,7 @@ module Nud3.Attributes where
 
 import Prelude
 
+import Data.Array (foldl)
 import Data.Nullable (Nullable)
 import Effect (Effect)
 import Nud3.FFI as FFI
@@ -12,7 +13,7 @@ import Unsafe.Coerce (unsafeCoerce)
 -- | certainly could be an option to remove all this and do something complicated with Variants or 
 -- | Options or heterogeneous lists or whatever
 foreign import data AttributeSetter_ :: Type 
-foreign import addAttribute_ :: forall d. Selection_ -> String -> d -> Unit
+foreign import addAttribute_ :: forall d. Selection_ -> String -> d -> Selection_
 foreign import addText_ :: forall d. Selection_ -> d -> Selection_
 foreign import addTransitionToSelection_ :: Selection_ -> Transition_ -> Selection_
 -- | no attempt will be made to manage named transitions in contrast to D3
@@ -59,19 +60,22 @@ patter and it may turn out to be necessary to do it this way if we can't find a
 way to make the PureScript version work exactly as the above example shows
 
 -}
+
+foldAttributes :: forall d. Selection_ -> Array (Attribute d) -> Selection_
+foldAttributes selection attrs = foldl go selection attrs
+  where go s attr = addAttribute selection attr
+
 -- | we special case on some attributes - Text, InnerHTML, Transition
 addAttribute :: forall d. Selection_ -> Attribute d -> Selection_
 -- | TODO we need to use the format .call() see blockcomment above
 addAttribute s (Transition transition attrs ) = do
   let selectionTransition = addTransitionToSelection_ s transition 
       -- we coerce the transition back to a selection to add the attributes, not pretty but isolated here
-      s' = (addAttribute selectionTransition) <$> attrs 
-  s'
+  foldAttributes selectionTransition attrs 
 addAttribute s (TransitionThenRemove transition attrs ) = do
   let selectionTransition = addTransitionToSelection_ s transition
   let _ = removeElement_ selectionTransition -- we can just go ahead and add this at the start given the semantics
-      s' = (addAttribute selectionTransition) <$> attrs
-  s'
+  foldAttributes selectionTransition attrs
 
 addAttribute s attr@(Text d) = addText_ s (getValueFromAttribute attr)
 addAttribute s attr@(Text_ d) = addText_ s (getValueFromAttribute attr)
