@@ -9,7 +9,7 @@ import Data.Maybe (Maybe(..))
 import Data.String.CodeUnits (fromCharArray, toCharArray)
 import Data.Traversable (sequence)
 import Effect (Effect)
-import Effect.Aff (Aff, Milliseconds(..), delay, launchAff_)
+import Effect.Aff (Milliseconds(..), delay, launchAff_)
 import Effect.Class (liftEffect)
 import Effect.Console (log)
 import Effect.Random (random)
@@ -17,22 +17,6 @@ import Examples.GUP (generalUpdatePatternDraw, generalUpdatePatternSetup)
 import Examples.Matrix (matrix2table)
 import Examples.ThreeLittleCircles (threeLittleCircles)
 import Nud3.Types (Selection_)
-
-examplesInEffect :: Effect Unit
-examplesInEffect = do
-  matrix2table
-  threeLittleCircles
-  -- drawTree 
-  -- drawForceLayout
-
-examplesInAff :: Selection_ -> Effect Unit
-examplesInAff letters = launchAff_ do
-  _ <- liftEffect $ generalUpdatePatternDraw letters "abcdefglmnostxz"
-  delay $ Milliseconds 1800.0
-  _ <- liftEffect $ generalUpdatePatternDraw letters "abcdejklmnopqrstuvwxyz" 
-  delay $ Milliseconds 1800.0
-  _ <- liftEffect $ generalUpdatePatternDraw letters "lkjhgfdsa"
-  pure unit
 
 runUpdate :: Selection_ -> Effect Unit
 runUpdate letters = launchAff_ $ forever do
@@ -56,9 +40,15 @@ runUpdate letters = launchAff_ $ forever do
 
 main :: Effect Unit
 main = do
-  examplesInEffect
+  matrix2table
+  threeLittleCircles
+  -- drawTree 
+  -- drawForceLayout
+  
+  -- | the "General Update Pattern" runs in Aff, so it's tidier to run it in a separate function
+  -- | we create the selection and then pass it to the update function which loops forever
   letters <- generalUpdatePatternSetup
-  -- examplesInAff letters
   runUpdate letters
+
   liftEffect $ log "🍝"
 

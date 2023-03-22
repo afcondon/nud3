@@ -24,9 +24,9 @@ config gupGroup letters keyFunction transition_ =
       { enter:
           [ Text \d _ -> singleton d
           , Fill_ "green"
-          , X \_ i -> toNumber (i * 48 + 50)
+          , X \_ i -> toNumber (i * 24 + 50)
           , Y_ 0.0
-          , FontSize_ 48.0
+          , FontSize_ 24.0
           , FontFamily_ "monospace"
           , Transition
               { transition_
@@ -40,7 +40,9 @@ config gupGroup letters keyFunction transition_ =
           , TransitionThenRemove
               { transition_
               , name: "TODO" -- get the name from the transition_
-              , attrs: [ Y_ 400.0 ]
+              , attrs: [ Y_ 400.0
+                        -- Opacity_ 0.0001
+                       , FontSize_ 96.0 ]
               }
           ]
       , update:
@@ -50,7 +52,7 @@ config gupGroup letters keyFunction transition_ =
           , Transition
               { transition_
               , name: "TODO" -- get the name from the transition_
-              , attrs: [ X \_ i -> toNumber (i * 48 + 50) ]
+              , attrs: [ X \_ i -> toNumber (i * 24 + 50) ]
               }
           ]
       }

@@ -122,6 +122,8 @@ data Attribute d =
   | Height (AttributeSetter d Number)
   | InnerHTML_ String
   | InnerHTML (AttributeSetter d String)
+  | Opacity_ Number
+  | Opacity (AttributeSetter d Number)
   | Radius_ Number
   | Radius (AttributeSetter d Number)
   | StrokeColor_ String
@@ -169,6 +171,7 @@ getValueFromAttribute = case _ of
   FontSize_ v -> exportAttributeSetter_ v
   Height_ v -> exportAttributeSetter_ v
   InnerHTML_ v -> exportAttributeSetter_ v
+  Opacity_ v -> exportAttributeSetter_ v
   Radius_ v -> exportAttributeSetter_ v
   StrokeColor_ v -> exportAttributeSetter_ v
   StrokeOpacity_ v -> exportAttributeSetter_ v
@@ -201,6 +204,7 @@ getValueFromAttribute = case _ of
   Height f -> exportAttributeSetter_ (uncurry_ f)
   InnerHTML f -> exportAttributeSetter_ (uncurry_ f)
   Radius f -> exportAttributeSetter_ (uncurry_ f)
+  Opacity f -> exportAttributeSetter_ (uncurry_ f)
   StrokeColor f -> exportAttributeSetter_ (uncurry_ f)
   StrokeOpacity f -> exportAttributeSetter_ (uncurry_ f)
   StrokeWidth f -> exportAttributeSetter_ (uncurry_ f)
@@ -243,6 +247,8 @@ getKeyFromAttribute = case _ of
   Height _ -> "height"
   InnerHTML_ _ -> "html"
   InnerHTML _ -> "html"
+  Opacity_ _ -> "opacity"
+  Opacity _ -> "opacity"
   Radius_ _ -> "r"
   Radius _ -> "r"
   StrokeColor_ _ -> "stroke"
@@ -290,6 +296,7 @@ instance showAttribute :: Show (Attribute d) where
   show (FontSize_ v) = "\n\t\tFontSize_" <> " set directly to " <> show v
   show (Height_ v) = "\n\t\tHeight_" <> " set directly to " <> show v
   show (InnerHTML_ v) = "\n\t\tInnerHTML_" <> " set directly to " <> v
+  show (Opacity_ v) = "\n\tOpacity_" <> " set directly to " <> show v
   show (Radius_ v) = "\n\t\tRadius_" <> " set directly to " <> show v
   show (StrokeColor_ v) = "\n\t\tStrokeColor_" <> " set directly to " <> v
   show (StrokeOpacity_ v) = "\n\t\tStrokeOpacity_" <> " set directly to " <> show v
@@ -320,6 +327,7 @@ instance showAttribute :: Show (Attribute d) where
   show (Height _) = "\n\t\tHeight set by function"
   show (InnerHTML _) = "\n\t\tInnerHTML set by function"
   show (Radius _) = "\n\t\tRadius set by function"
+  show (Opacity _) = "\n\t\tOpacity set by function"
   show (StrokeColor _) = "\n\t\tStrokeColor set by function"
   show (StrokeOpacity _) = "\n\t\tStrokeOpacity set by function"
   show (StrokeWidth _) = "\n\t\tStrokeWidth set by function"
