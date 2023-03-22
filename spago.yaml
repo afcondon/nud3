@@ -5,6 +5,7 @@ package:
     - debug
     - effect
     - prelude
+    - random
     - web-dom
   name: nud3
   test:

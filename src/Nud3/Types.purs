@@ -32,9 +32,13 @@ type UpdateSelection =
 -- if the identity function is used, then the first element of the data array is assigned to the first node in the selection, etc.
 -- if the key function is used, then the node with the key value that matches the key function is assigned the data element
 -- note that the key function is therefore evaluated twice, once per datum and once per node
+
+-- the key function in D3 returns a STRING always, but that seems unnecessarily restrictive in PureScript
+-- so we'll maintain a type parameter for the key function type
+-- data KeyFunction :: forall k1 k2. k1 -> k2 -> Type
 data KeyFunction d i = 
     IdentityKey
-  | HasIdField -- there's no easy way to express this generically is there? 
+  | HasIdField -- if there's a way to constrain this, ie forall r. (HasIdField r) => r -> i, that would be great
   | KeyFunction (KeyFunctionType d i)
 
 type KeyFunctionType d i = ((Ord i) => (Ord d) => d -> Int -> NodeList -> i)

@@ -71,12 +71,12 @@ generalUpdatePatternSetup = do
       ]
   addElement styled $ Append $ SVG "g"
 
-crazyKeyFunction :: KeyFunction Char Char
+crazyKeyFunction :: KeyFunction Char String
 crazyKeyFunction = 
-  let keyFn :: Char -> Int -> NodeList -> Char
-      keyFn 'a' _ _ = 'b'
-      keyFn 'b' _ _ = 'a'
-      keyFn d _ _ = d
+  let keyFn :: Char -> Int -> NodeList -> String
+      keyFn 'a' _ _ = "b"
+      keyFn 'b' _ _ = "a"
+      keyFn d _ _ = singleton d
   in KeyFunction keyFn
   
 
@@ -89,7 +89,7 @@ otherKeyFunction =
 generalUpdatePatternDraw :: Selection_ -> String -> Effect Selection_
 generalUpdatePatternDraw selection letterdata = do
   let letters = toCharArray letterdata
-  visualize $ config selection letters crazyKeyFunction (newTransition "foo" 1000 500)
+  visualize $ config selection letters IdentityKey (newTransition "foo" 1000 500)
 -- visualize $ config selection letters identityKeyFunction (newTransition "foo" 1000 500)
 -- TODO would definitely be nicer to use record update rather than function parameters here:
 -- _ <- revisualize $ config { using = NewData letterdata2 }

@@ -8,7 +8,7 @@
     "initps": "spago init",
     "build": "spago build",
     "run": "spago run",
-    "install": "spago install web-dom debug aff",
+    "install": "spago install web-dom debug aff random",
     "tidy": "purs-tidy format-in-place src/**/*.purs",
     "bundle": "spago bundle --module Main --outfile dist/bundle.js",
     "version": "spago --version"
