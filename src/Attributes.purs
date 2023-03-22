@@ -13,6 +13,7 @@ import Unsafe.Coerce (unsafeCoerce)
 foreign import data AttributeSetter_ :: Type 
 foreign import addAttribute_ :: forall d. Selection_ -> String -> d -> Selection_
 foreign import addText_ :: forall d. Selection_ -> d -> Selection_
+foreign import addStyle_ :: forall d. Selection_ -> String -> d -> Selection_
 foreign import addTransitionToSelection_ :: Selection_ -> Transition_ -> Selection_
 -- | we're actually retrieving a selection from a transition here but it's not worth exposing that in the types
 foreign import retrieveSelection_ :: Selection_ -> Selection_
@@ -81,6 +82,11 @@ addAttribute s attr@(Text_ _) = addText_ s (getValueFromAttribute attr)
 -- | innerHTML still TODO need to add addInnerHTML_ etc
 addAttribute s attr@(InnerHTML _) = addAttribute_ s (getKeyFromAttribute attr) (getValueFromAttribute attr)
 addAttribute s attr@(InnerHTML_ _) = addAttribute_ s (getKeyFromAttribute attr) (getValueFromAttribute attr)
+-- | style and opacity are special cases because they are not attributes in the DOM sense
+addAttribute s attr@(Opacity _) = addStyle_ s "opacity" (getValueFromAttribute attr)
+addAttribute s attr@(Opacity_ _) = addStyle_ s "opacity" (getValueFromAttribute attr)
+addAttribute s attr@(Style _) = addStyle_ s (getKeyFromAttribute attr) (getValueFromAttribute attr)
+addAttribute s attr@(Style_ _) = addStyle_ s (getKeyFromAttribute attr) (getValueFromAttribute attr)
 -- | regular attributes all handled the same way
 addAttribute s attr = addAttribute_ s (getKeyFromAttribute attr) (getValueFromAttribute attr)
 

@@ -9,6 +9,11 @@ export function addAttribute_(selection) {
     selection.attr(name, value)
 }
 
+export function addStyle_(selection) {
+  return (name) => (value) =>
+    selection.style(name, value)
+}
+
 export function addTransitionToSelection_(selection) {
   return (t) => {
     console.log('addTransitionToSelection_ ', t._id);
