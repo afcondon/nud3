@@ -2,7 +2,8 @@ module Nud3.Attributes where
 
 import Prelude
 
-import Data.Array (foldl)
+import Data.Array (find, foldl)
+import Data.Maybe (Maybe(..))
 import Nud3.FFI as FFI
 import Nud3.Types (Selection_, Transition_)
 import Unsafe.Coerce (unsafeCoerce)
@@ -92,20 +93,44 @@ addAttribute s attr = addAttribute_ s (getKeyFromAttribute attr) (getValueFromAt
 
 -- | TODO TransitionConfig needs to be fully specified, all possible params set (tho in practice it may be
 -- | built by modifying a default config)
-type TransitionConfig = { 
-    name :: String
-  , duration :: Int -- TODO this can also be a lambda, see AttributeSetter for how to do this
-  , delay :: Int -- TODO this can also be a lambda, see AttributeSetter for how to do this
-  , easing :: Number -> Number 
-}
+-- type TransitionConfig = { 
+--     name :: String
+--   , duration :: Int -- TODO this can also be a lambda, see AttributeSetter for how to do this
+--   , delay :: Int -- TODO this can also be a lambda, see AttributeSetter for how to do this
+--   , easing :: Number -> Number 
+-- }
 
-createTransition :: TransitionConfig -> Transition_
+data TransitionAttribute d = 
+    TransitionName String
+  | Delay Int
+  | Duration Int
+  | Easing (Number -> Number)
+  | Delay_ (AttributeSetter d Int)
+  | Duration_ (AttributeSetter d Int)
+
+
+
+createTransition :: forall d. Array (TransitionAttribute d) -> Transition_
 createTransition config = do
-  let t = FFI.createNewTransition_ config.name
-      _ = FFI.transitionDurationFixed_ t config.duration
-      _ = FFI.transitionDelayFixed_ t config.delay
-      _ = FFI.transitionEaseFunction t config.easing
-  t -- NB we return t because all the intermediate steps are just for FFI side-effects which we aren't exposing here
+  let
+    foldTransitionAttributes :: forall d. Transition_ -> Array (TransitionAttribute d) -> Transition_
+    foldTransitionAttributes t as = foldl go t as
+      where 
+        go t' attr = case attr of
+          Delay d -> FFI.transitionDelayFixed_ t' d
+          Duration d -> FFI.transitionDurationFixed_ t' d
+          Easing e -> FFI.transitionEaseFunction t' e
+          Delay_ d -> FFI.transitionDelayLambda_ t' d
+          Duration_ d -> FFI.transitionDurationLambda_ t' d
+          _ -> t'
+    getTransitionName :: Array (TransitionAttribute d) -> String
+    getTransitionName attrs = foldl go "" attrs
+      where
+      go name attr = case attr of
+        TransitionName name -> name
+        _ -> ""
+    t = FFI.createNewTransition_ $ getTransitionName config
+  foldTransitionAttributes t config
 
 data Attribute d = 
     BackgroundColor String

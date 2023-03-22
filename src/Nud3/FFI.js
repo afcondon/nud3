@@ -94,7 +94,15 @@ export function transitionDelayFixed_(transition) {
   }
 }
 export function transitionDelayLambda_(transition) {
-  return (f) => transition.delay(f)
+  // return (f) => transition.delay(f)
+  return (f) => {
+    console.log("adding a lambda delay to transition " + transition._id + "");
+    return transition.delay(stagger)
+  }
+}
+function stagger(d,i,nodes) {
+  console.log("staggering transition for d: ", d, " i: ", i, " nodes: ", nodes);
+  return i * 100
 }
 export function transitionDurationFixed_(transition) {
   return (amount) => {
@@ -103,7 +111,10 @@ export function transitionDurationFixed_(transition) {
   }
 }
 export function transitionDurationLambda_(transition) {
-  return (f) => transition.duration(f)
+  return (f) => {
+    console.log("adding a lambda duration to transition " + transition._id + "");
+    return transition.duration(f)
+  }
 }
 export function transitionEaseFunction(transition) {
   return (f) => transition

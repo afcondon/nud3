@@ -9,7 +9,7 @@ import Data.Char (toCharCode)
 import Data.Int (toNumber)
 import Data.String.CodeUnits (singleton, toCharArray)
 import Effect (Effect)
-import Nud3.Attributes (Attribute(..), createTransition, foldAttributes)
+import Nud3.Attributes (Attribute(..), TransitionAttribute(..), createTransition, foldAttributes)
 import Nud3.FFI as FFI
 import Nud3.Types (KeyFunction(..), Selection_, Transition_)
 import Prelude (bind, ($), (*), (+))
@@ -61,9 +61,6 @@ config gupGroup letters keyFunction transition_ =
       }
   }
 
-newTransition :: String -> Int -> Int -> Transition_
-newTransition name duration delay = createTransition { name, duration, delay, easing: FFI.easeCubic_ }
-
 -- | General Update Pattern
 generalUpdatePatternSetup :: Effect Selection_
 generalUpdatePatternSetup = do
@@ -94,7 +91,9 @@ otherKeyFunction =
 generalUpdatePatternDraw :: Selection_ -> String -> Effect Selection_
 generalUpdatePatternDraw selection letterdata = do
   let letters = toCharArray letterdata
-  visualize $ config selection letters IdentityKey (newTransition "foo" 1000 500)
+  visualize $ config selection letters IdentityKey $
+    createTransition [ Duration 1000, Delay_ \_ i -> i * 20 ]
+    -- (newTransition "foo" 1000 500)
 -- visualize $ config selection letters identityKeyFunction (newTransition "foo" 1000 500)
 -- TODO would definitely be nicer to use record update rather than function parameters here:
 -- _ <- revisualize $ config { using = NewData letterdata2 }
