@@ -22,37 +22,37 @@ config gupGroup letters keyFunction transition_ =
   , key: keyFunction
   , attributes:
       { enter:
-          [ Text \d _ -> singleton d
-          , Fill_ "green"
-          , X \_ i -> toNumber (i * 24 + 50)
-          , Y_ 0.0
-          , FontSize_ 24.0
-          , FontFamily_ "monospace"
+          [ Text_ \d _ -> singleton d
+          , Fill "green"
+          , X_ \_ i -> toNumber (i * 24 + 50)
+          , Y 0.0
+          , FontSize 24.0
+          , FontFamily "monospace"
           , Transition
               { transition_
               , name: "TODO" -- get the name from the transition_
-              , attrs: [ Y_ 200.0 ]
+              , attrs: [ Y 200.0 ]
               }
           ]
       , exit:
-          [ Classed_ "exit"
-          , Fill_ "brown"
+          [ Classed "exit"
+          , Fill "brown"
           , TransitionThenRemove
               { transition_
               , name: "TODO" -- get the name from the transition_
-              , attrs: [ Y_ 400.0
-                        -- Opacity_ 0.0001
-                       , FontSize_ 96.0 ]
+              , attrs: [ Y 400.0
+                      --  , Opacity 0.000000001
+                       , FontSize 96.0 ]
               }
           ]
       , update:
-          [ Classed_ "update"
-          , Fill_ "gray"
-          , Y_ 200.0
+          [ Classed "update"
+          , Fill "gray"
+          , Y 200.0
           , Transition
               { transition_
               , name: "TODO" -- get the name from the transition_
-              , attrs: [ X \_ i -> toNumber (i * 24 + 50) ]
+              , attrs: [ X_ \_ i -> toNumber (i * 24 + 50) ]
               }
           ]
       }
@@ -68,8 +68,8 @@ generalUpdatePatternSetup = do
   svg <- addElement root $ Append $ SVG "svg"
   let
     styled = foldAttributes svg
-      [ ViewBox_ 0 0 650 650
-      , Classed_ "d3svg gup"
+      [ ViewBox 0 0 650 650
+      , Classed "d3svg gup"
       ]
   addElement styled $ Append $ SVG "g"
 

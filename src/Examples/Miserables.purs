@@ -31,15 +31,15 @@ drawForceLayout width height model = do
   svg <- addElement root $ Append $ SVG "svg"
   let
     _ = foldAttributes svg
-      [ ViewBox_ 0 0 650 650
-      , Classed_ "force-layout"
-      , Width_ width
-      , Height_ height
+      [ ViewBox 0 0 650 650
+      , Classed "force-layout"
+      , Width width
+      , Height height
       ]
   linksGroup <- addElement svg $ Append (SVG "g")
-  let _ = foldAttributes linksGroup [ Classed_ "link", StrokeColor_ "#999", StrokeOpacity_ 0.6 ]
+  let _ = foldAttributes linksGroup [ Classed "link", StrokeColor "#999", StrokeOpacity 0.6 ]
   nodesGroup <- addElement svg $ Append (SVG "g")
-  let _ = foldAttributes nodesGroup [ Classed_ "node", StrokeColor_ "#fff", StrokeOpacity_ 1.5 ]
+  let _ = foldAttributes nodesGroup [ Classed "node", StrokeColor "#fff", StrokeOpacity 1.5 ]
 
   simulator <- Simulation.newEngine -- these params are just the defaults in D3 anyway, for now
     { alpha: 0.1
@@ -55,7 +55,7 @@ drawForceLayout width height model = do
     , key: \d -> d.id
     }
 
-  _ <- Simulation.onTickNode simulator simNodes [ CX \d _ -> d.x, CY \d _ -> d.y ]
+  _ <- Simulation.onTickNode simulator simNodes [ CX_ \d _ -> d.x, CY_ \d _ -> d.y ]
   _ <- Simulation.onDrag simulator simNodes Simulation.DefaultDragBehavior
 
   simLinks <- Simulation.addLinks
@@ -66,10 +66,10 @@ drawForceLayout width height model = do
     }
 
   _ <- Simulation.onTickLink simulator simLinks
-    [ X1 \l _ -> l.source.x
-    , Y1 \l _ -> l.source.y
-    , X2 \l _ -> l.target.x
-    , Y2 \l _ -> l.target.y
+    [ X1_ \l _ -> l.source.x
+    , Y1_ \l _ -> l.source.y
+    , X2_ \l _ -> l.target.x
+    , Y2_ \l _ -> l.target.y
     ]
 
   nodes <- visualize
@@ -79,8 +79,8 @@ drawForceLayout width height model = do
     , key: IdentityKey
     , attributes:
         { enter:
-            [ Radius_ 5.0
-            , Fill \d _ -> colorByGroup d.group
+            [ Radius 5.0
+            , Fill_ \d _ -> colorByGroup d.group
             ]
         , exit: [] -- Remove is the default, no need for other attrs here
         , update: []
@@ -94,10 +94,10 @@ drawForceLayout width height model = do
     , key: IdentityKey
     , attributes:
         { enter:
-            [ StrokeWidth_ 1.5
-            , StrokeColor_ "#555"
-            , StrokeOpacity_ 0.4
-            , Fill_ "none"
+            [ StrokeWidth 1.5
+            , StrokeColor "#555"
+            , StrokeOpacity 0.4
+            , Fill "none"
             ]
         , exit: [] -- Remove is the default, no need for other attrs here
         , update: []

@@ -16,10 +16,10 @@ threeLittleCircles = do
   svg <- addElement root $ Append $ SVG "svg"
   let
     _ = foldAttributes svg
-      [ Width_ 650.0
-      , Height_ 650.0
-      , ViewBox_ (-100) (-100) 300 300
-      , Classed_ "d3svg circles"
+      [ Width 650.0
+      , Height 650.0
+      , ViewBox (-100) (-100) 300 300
+      , Classed "d3svg circles"
       ]
 
   circleGroup <- addElement svg $ Append $ SVG "g"
@@ -30,14 +30,14 @@ threeLittleCircles = do
     , key: IdentityKey
     , attributes:
         { enter:
-            [ Fill_ "green"
-            , CX \_ i -> toNumber (i * 30)
-            , CY_ 30.0
-            , Radius_ 10.0
-            , Classed_ "enter"
+            [ Fill "green"
+            , CX_ \_ i -> toNumber (i * 30)
+            , CY 30.0
+            , Radius 10.0
+            , Classed "enter"
             ]
-        , exit: [ Classed_ "exit" ]
-        , update: [ Classed_ "update" ]
+        , exit: [ Classed "exit" ]
+        , update: [ Classed "update" ]
         }
     }
   pure unit

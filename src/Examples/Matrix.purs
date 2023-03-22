@@ -15,7 +15,7 @@ matrix2table = do
   let root = select (SelectorString "div#matrix")
   -- | Insert the table
   table <- addElement root $ Append $ HTML "table"
-  let tableWithAttrs = foldAttributes table [ Classed_ "matrix", Width_ 300.0, Height_ 300.0, BackgroundColor_ "#AAA" ] -- TODO: return this to being effectful here
+  let tableWithAttrs = foldAttributes table [ Classed "matrix", Width 300.0, Height 300.0, BackgroundColor "#AAA" ] -- TODO: return this to being effectful here
   -- | Insert the rows
   rows <- visualize
     { what: Append (HTML "tr")
@@ -23,16 +23,16 @@ matrix2table = do
     , using: NewData matrix
     , key: IdentityKey
     , attributes:
-        { enter: [ Classed_ "new" ]
-        , exit: [ Classed_ "exit" ] -- NB remove is implicit, only needed on custom exit
-        , update: [ Classed_ "updated" ]
+        { enter: [ Classed "new" ]
+        , exit: [ Classed "exit" ] -- NB remove is implicit, only needed on custom exit
+        , update: [ Classed "updated" ]
         }
     }
 
   -- | Just for yuks, style like a spreadsheet with alternating colors
   let
     oddrows = rows `filter` "nth-child(odd)"
-    _ = foldAttributes oddrows [ BackgroundColor_ "light-gray", Color_ "white" ]
+    _ = foldAttributes oddrows [ BackgroundColor "light-gray", Color "white" ]
 
   -- | Insert the cells
   items <- visualize
@@ -41,13 +41,13 @@ matrix2table = do
     , where: rows
     , key: IdentityKey
     , attributes:
-        { enter: [ Classed_ "cell" ]
+        { enter: [ Classed "cell" ]
         , exit: []
         , update: []
         }
     }
 
-  let _ = foldAttributes items [ Text \d _ -> d ]
+  let _ = foldAttributes items [ Text_ \d _ -> d ]
 
   pure unit
 
