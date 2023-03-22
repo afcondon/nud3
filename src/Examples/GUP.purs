@@ -28,35 +28,23 @@ config gupGroup letters keyFunction transition_ =
           , Y 0.0
           , FontSize 24.0
           , FontFamily "monospace"
-          , Transition
-              { transition_
-              , name: "TODO" -- get the name from the transition_
-              , attrs: [ Y 200.0 
-                       , X_ \_ i -> toNumber (i * 24 + 50)
-              ]
-              }
+          , Transition transition_ [ Y 200.0, X_ \_ i -> toNumber (i * 24 + 50) ]
           ]
       , exit:
           [ Classed "exit"
           , Fill "brown"
-          , TransitionThenRemove
-              { transition_
-              , name: "TODO" -- get the name from the transition_
-              , attrs: [ X_ \_ i -> toNumber (i * 48 + 50)
-                       , Y 400.0
-                       , Opacity 0.000001
-                       , FontSize 96.0 ]
-              }
+          , TransitionThenRemove transition_ 
+              [ X_ \_ i -> toNumber (i * 48 + 50)
+              , Y 400.0
+              , Opacity 0.000001
+              , FontSize 96.0 
+              ]
           ]
       , update:
           [ Classed "update"
           , Fill "gray"
           , Y 200.0
-          , Transition
-              { transition_
-              , name: "TODO" -- get the name from the transition_
-              , attrs: [ X_ \_ i -> toNumber (i * 24 + 50) ]
-              }
+          , Transition transition_ [ X_ \_ i -> toNumber (i * 24 + 50) ]
           ]
       }
   }

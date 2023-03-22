@@ -1,7 +1,4 @@
 import { selectAll } from "d3-selection";
-import { easeCubic } from "d3-ease";
-
-export function easeCubic_(d) { return easeCubic(d) } // is there an easier way to do this?
 
 // ------------------ Selection ------------------
 // The following two functions break out two of the many ways that d3.selectAll can be called
@@ -85,39 +82,5 @@ export function createNewTransition_(name) {
   t.end().then(() => console.log("transition ended for t: ", t._id));
   t.on("interrupt", () => console.log("transition interrupted for t: ", t._id));
   return t
-}
-
-export function transitionDelayFixed_(transition) {
-  return (amount) => {
-    console.log("adding a fixed delay of " + amount + " to transition " + transition._id + "");
-    return transition.delay(amount)
-  }
-}
-export function transitionDelayLambda_(transition) {
-  // return (f) => transition.delay(f)
-  return (f) => {
-    console.log("adding a lambda delay to transition " + transition._id + "");
-    return transition.delay(stagger)
-  }
-}
-function stagger(d,i,nodes) {
-  console.log("staggering transition for d: ", d, " i: ", i, " nodes: ", nodes);
-  return i * 100
-}
-export function transitionDurationFixed_(transition) {
-  return (amount) => {
-    console.log("adding a fixed duration of " + amount + " to transition " + transition._id + "");
-    return transition.duration(amount)
-  }
-}
-export function transitionDurationLambda_(transition) {
-  return (f) => {
-    console.log("adding a lambda duration to transition " + transition._id + "");
-    return transition.duration(f)
-  }
-}
-export function transitionEaseFunction(transition) {
-  return (f) => transition
-  // return (f) => transition.ease(f()) // TODO find out how to export the underlying function instead of wrapping it
 }
 

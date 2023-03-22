@@ -13,7 +13,6 @@ module Nud3.FFI
   , appendElement_
   , completeJoin_
   , createNewTransition_
-  , easeCubic_
   , getGroups_
   , getName_
   , getParents_
@@ -25,11 +24,6 @@ module Nud3.FFI
   , prepareJoin_
   , selectManyWithFunction_
   , selectManyWithString_
-  , transitionDelayFixed_
-  , transitionDelayLambda_
-  , transitionDurationFixed_
-  , transitionDurationLambda_
-  , transitionEaseFunction
   , uncurryKeyFunction
   , useInheritedData_
   )
@@ -87,11 +81,3 @@ foreign import orderSelection_ :: Selection_ -> Selection_
 
 -- | functions for transitions here
 foreign import createNewTransition_ :: String -> Transition_
-
-foreign import transitionDelayFixed_ :: Transition_ -> Int -> Transition_
-foreign import transitionDelayLambda_ :: forall d. Transition_ -> (d -> Int -> Int) -> Transition_
-foreign import transitionDurationFixed_ :: Transition_ -> Int -> Transition_
-foreign import transitionDurationLambda_ :: forall d. Transition_ -> (d -> Int -> Int) -> Transition_
-foreign import transitionEaseFunction :: Transition_ -> (Number -> Number) -> Transition_
-
-foreign import easeCubic_ :: Number -> Number
