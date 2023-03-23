@@ -22,7 +22,7 @@ runUpdate :: Selection_ -> Effect Unit
 runUpdate letters = launchAff_ $ forever do
   letterData <- liftEffect $ getLetters
   _ <- liftEffect $ generalUpdatePatternDraw letters (fromCharArray letterData)
-  delay (Milliseconds 1800.0)
+  delay (Milliseconds 5000.0)
   where
     -- | choose a string of random letters (no duplicates), ordered alphabetically
     getLetters :: Effect (Array Char)

@@ -27,15 +27,6 @@ exportAttributeSetter_ = unsafeCoerce
 exportAttributeSetterUncurried_ :: forall d t. AttributeSetter d t -> AttributeSetter_
 exportAttributeSetterUncurried_ f = unsafeCoerce $ uncurry_ f
 
--- -- | handling transitions is a bit special: D3 makes a distinction between
--- -- | selections and transition but the latter is a subset of the former
--- -- | in order to do a join we need to get back the original selection, not the transition
--- -- | this is usually done in d3 by wrapping the transition in a .call() but that doesn't 
--- -- | really work with the DSL we have here
--- -- | We keep track of Transition_ and Selection_ in the types of our FFI calls but use
--- -- | unsafeCoerce in our attribute folding function(s)
--- foldAttributesT :: forall d. Transition_ -> Array (Attribute d) -> Transition_
--- foldAttributesT t as = unsafeCoerce $ foldAttributes (unsafeCoerce t) as
 
 foldAttributes :: forall d. Selection_ -> Array (Attribute d) -> Selection_
 foldAttributes s as = foldl addAttribute s as
@@ -43,15 +34,20 @@ foldAttributes s as = foldl addAttribute s as
   -- | we special case on some attributes - Text, InnerHTML, Transition
   addAttribute :: Selection_ -> Attribute d -> Selection_
   addAttribute s = case _ of
-    (BeginTransition t) -> do
+    (BeginTransition t attrs) -> do
       -- a bit of sleight of hand here, st is a transition but we treat it as a selection because 
       -- transitions are a subclass of selections and we are going to add attributes to the selection
       -- apply the attrs to the transition, then retrieve the selection
-      addTransitionToSelection_ s t
+      let st = addTransitionToSelection_ s t
+      retrieveSelection_ $ foldAttributes st attrs
 
     Delay_ f -> transitionDelay_ s (exportAttributeSetterUncurried_ f) -- requires that we're in a selection-transition, will move to Attribute_ later
     Duration_ f -> transitionDuration_ s (exportAttributeSetterUncurried_ f) -- requires that we're in a selection-transition, will move to Attribute_ later
     RemoveElements -> removeElements_ s -- requires that we're in a selection-transition, will move to Attribute_ later
+    FollowOnTransition attrs -> do
+      let st = followOnTransition_ s -- requires that we're in a selection-transition, will move to Attribute_ later
+          tt = foldAttributes st attrs
+      retrieveSelection_ tt
 
     -- | Text and InnerHTML are special cases because they are not attributes in the DOM sense
     -- | We are deliberately eliding this distinction in the DSL
@@ -61,7 +57,6 @@ foldAttributes s as = foldl addAttribute s as
     attr@(InnerHTML _) -> addAttribute_ s (getKeyFromAttribute attr) (getValueFromAttribute attr)
     attr@(InnerHTML_ _) -> addAttribute_ s (getKeyFromAttribute attr) (getValueFromAttribute attr)
     -- | style and opacity are special cases because they are not attributes in the DOM sense
-    FollowOnTransition -> followOnTransition_ s -- requires that we're in a selection-transition, will move to Attribute_ later
     attr@(Opacity _) -> addStyle_ s "opacity" (getValueFromAttribute attr)
     attr@(Opacity_ _) -> addStyle_ s "opacity" (getValueFromAttribute attr)
     attr@(Style _) -> addStyle_ s (getKeyFromAttribute attr) (getValueFromAttribute attr)
@@ -136,10 +131,10 @@ data Attribute d
   | Text String
   | TextAnchor String
   -- | attributes specific to transitions
-  | BeginTransition Transition_ -- TODO do we need an EndTransition too? nicer if we can avoid it
+  | BeginTransition Transition_ (Array (Attribute d))
   | Delay_ (TransitionAttributeSetter d) -- a function to set the delay per datum
   | Duration_ (TransitionAttributeSetter d)
-  | FollowOnTransition -- make a new transition that follows on from this one
+  | FollowOnTransition (Array (Attribute d)) -- make a new transition that follows on from this one
   | RemoveElements -- TODO could finalize transition here and/or add Don'tRemove for those rare cases where we want to keep the element
 
   | Width Number
@@ -219,10 +214,10 @@ getValueFromAttribute = case _ of
   Y2 v -> exportAttributeSetter_ v
   -- | transition and their attributes are different and we never actually getValueFromAttribute 
   -- | from them like this but we have to typecheck here
-  BeginTransition t -> exportAttributeSetter_ unit
+  BeginTransition t _ -> exportAttributeSetter_ unit
   Delay_ f -> exportAttributeSetter_ unit
   Duration_ f -> exportAttributeSetter_ unit
-  FollowOnTransition -> exportAttributeSetter_ unit
+  FollowOnTransition _ -> exportAttributeSetter_ unit
   RemoveElements -> exportAttributeSetter_ unit
 
   -- | finally the lambda setters
@@ -300,10 +295,10 @@ getKeyFromAttribute = case _ of
   TextAnchor _ -> "text-anchor"
   -- | transition attributes are different and we never actually getKeyFromAttribute 
   -- | from them like this but we have to typecheck here
-  BeginTransition _ -> "transition begins here" -- special case
+  BeginTransition _ _ -> "transition begins here" -- special case
   Delay_ _ -> "custom transition delay"
   Duration_ _ -> "custom transition duration"
-  FollowOnTransition -> "follow-on transition begins here"
+  FollowOnTransition _ -> "follow-on transition begins here"
   RemoveElements -> "remove elements"
 
   Width_ _ -> "width"
@@ -345,10 +340,10 @@ instance showAttribute :: Show (Attribute d) where
   show (Text v) = "\n\t\tText_" <> " set directly to " <> v
   show (TextAnchor v) = "\n\t\tTextAnchor_" <> " set directly to " <> v
 
-  show (BeginTransition t) = "\n\t\tTransition started"
+  show (BeginTransition t v) = "\n\t\tTransition started " <> show v 
   show (Delay_ _) = "Delay lambda"
   show (Duration_ _) = "Duration lambda"
-  show FollowOnTransition = "FollowOnTransition"
+  show (FollowOnTransition v) = "FollowOnTransition" <> show v
   show RemoveElements = "Remove elements"
 
   show (Width v) = "\n\t\tWidth_" <> " set directly to " <> show v

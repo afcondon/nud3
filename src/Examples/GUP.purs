@@ -28,29 +28,34 @@ config gupGroup letters keyFunction t_ =
           , Y 0.0
           , FontSize 24.0
           , FontFamily "monospace"
-          , BeginTransition t_ 
-          , Delay_ \_ i -> i * 20
-          , Y 200.0
-          , X_ \_ i -> toNumber (i * 24 + 50)
+          , BeginTransition t_ [
+              Delay_ \_ i -> i * 20
+            , Y 200.0
+            , X_ \_ i -> toNumber (i * 24 + 50)
+            ]
           ]
       , exit:
           [ Classed "exit"
           , Fill "brown"
-          , BeginTransition t_ 
-          , Delay_ \_ i -> i * 20
-          , Y 400.0
-          , Opacity 0.000001
-          , FontSize 96.0
-          , Delay_ \_ i -> i * 20
-          , X_ \_ i -> toNumber (i * 48 + 50)
-          , RemoveElements
+          , BeginTransition t_ [
+              Delay_ \_ i -> i * 20
+            , Y 400.0
+            , Opacity 0.000001
+            , FontSize 96.0
+            , Delay_ \_ i -> i * 20
+            , X_ \_ i -> toNumber (i * 48 + 50)
+            , RemoveElements
+            ]
           ]
       , update:
           [ Classed "update"
           , Fill "gray"
           , Y 200.0
-          , BeginTransition t_ 
-          , X_ \_ i -> toNumber (i * 24 + 50)
+          , BeginTransition t_ [ 
+              X_ \_ i -> toNumber (i * 24 + 50)
+            , FollowOnTransition [ Fill "blue" ]
+            , FollowOnTransition [ Fill "red" ]
+            ]
           ]
       }
   }

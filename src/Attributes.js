@@ -1,4 +1,5 @@
 import { easeCubic } from "d3-ease";
+import { Transition } from "d3-transition";
 
 export function easeCubic_(d) { return easeCubic(d) } // is there an easier way to do this?
 
@@ -7,6 +8,8 @@ export function uncurry_(f) {
     return f(datum)(index)
   }
 }
+
+let referenceTransition = null;
 
 export function addAttribute_(selection) {
   return (name) => (value) =>
@@ -23,7 +26,7 @@ export function addTransitionToSelection_(selection) {
   return (t) => {
     console.log('addTransitionToSelection_ ', t._id);
     let st = selection.transition(t);
-    st._mode = "transition";
+    referenceTransition = st;
     return st
   }
 }
@@ -42,14 +45,16 @@ export function transitionInitEaseFunction(transition) {
 
 // assert to prevent calling transition functions on a selection
 function assertTransitionIsActive(selection) {
-  if (selection._mode !== "transition") {
+  let foo = Object.getPrototypeOf(selection);
+  let bar = Transition.prototype;
+  if (foo !== bar) {
     throw new Error("transition is not active")
   }
 }
 export function retrieveSelection_(transition) {
-  assertTransitionIsActive(transition);
+  // we don't have to assert that the transition is active here because
+  // selection.selection() will work on a selection as well
   let s = transition.selection();
-  s._mode = "selection"; // REVIEW possibly better to just delete the _mode property?
   return s;
 }
 export function transitionDelay_(transition) {
@@ -62,10 +67,8 @@ export function transitionDuration_(transition) {
 }
 export function followOnTransition_(transition) {
   assertTransitionIsActive
-  console.log('followOnTransition ', t._id);
   let tt = transition.transition();
-  tt._mode = "transition";
-  return transition.transition()
+  return tt
 }
 // remove() can be called with any selection, in practice called only
 // as part of a list of transition attributes, ie for exit nodes
