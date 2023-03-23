@@ -28,7 +28,7 @@ config gupGroup letters keyFunction t_ =
           , Y 0.0
           , FontSize 24.0
           , FontFamily "monospace"
-          , Transition t_ [] [ Y 200.0, X_ \_ i -> toNumber (i * 24 + 50) ]
+          , Transition t_ [ Delay_ \_ i -> i * 20 ] [ Y 200.0, X_ \_ i -> toNumber (i * 24 + 50) ]
           ]
       , exit:
           [ Classed "exit"

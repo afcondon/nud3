@@ -27,25 +27,37 @@ exportAttributeSetter_ = unsafeCoerce
 exportAttributeSetterUncurried_ :: forall d t. AttributeSetter d t -> AttributeSetter_
 exportAttributeSetterUncurried_ f = unsafeCoerce $ uncurry_ f
 
+-- | handling transitions is a bit special: D3 makes a distinction between
+-- | selections and transition but the latter is a subset of the former
+-- | in order to do a join we need to get back the original selection, not the transition
+-- | this is usually done in d3 by wrapping the transition in a .call() but that doesn't 
+-- | really work with the DSL we have here
+-- | We keep track of Transition_ and Selection_ in the types of our FFI calls but use
+-- | unsafeCoerce in our attribute folding function(s)
+foldAttributesT :: forall d. Transition_ -> Array (Attribute d) -> Transition_
+foldAttributesT t as = unsafeCoerce $ foldAttributes (unsafeCoerce t) as
+
 foldAttributes :: forall d. Selection_ -> Array (Attribute d) -> Selection_
 foldAttributes s as = foldl addAttribute s as
   where
   -- | we special case on some attributes - Text, InnerHTML, Transition
-  addAttribute :: forall d. Selection_ -> Attribute d -> Selection_
+  addAttribute :: Selection_ -> Attribute d -> Selection_
   addAttribute s = case _ of
-    -- | handling transitions is a bit special: D3 makes a distinction between
-    -- | selections and transition but the latter is a subset of the former
-    -- | in order to do a join we need to get back the original selection, not the transition
-    -- | this is usually done in d3 by wrapping the transition in a .call() but that doesn't 
-    -- | really work with the DSL we have here
-    (Transition t tattrs sattrs) ->
+    (Transition t tattrs sattrs) -> do
       -- a bit of sleight of hand here, st is a transition but we treat it as a selection because 
       -- transitions are a subclass of selections and we are going to add attributes to the selection
       -- apply the attrs to the transition, then retrieve the selection
-      retrieveSelection_ $ foldAttributes (addTransitionToSelection_ s t) sattrs
+      let t1 = addTransitionToSelection_ s t
+          t2 = foldTransitionAttributes t1 tattrs
+          t3 = foldAttributesT t2 sattrs
+      retrieveSelection_ t3
     (TransitionThenRemove t tattrs sattrs) -> do
       -- apply the attrs to the transition, then remove the element, then retrieve the selection
-      retrieveSelection_ $ removeElement_ $ foldAttributes (addTransitionToSelection_ s t) sattrs
+      let t1 = addTransitionToSelection_ s t -- now we have a transition
+          t2 = foldTransitionAttributes t1 tattrs -- to which we add the transition attributes
+          t3 = foldAttributesT t2 sattrs -- and then 
+          r = removeElement_ t3 -- finally we mark the element for removal
+      retrieveSelection_ r -- and recover the selection so that it can be chained
     -- | Text and InnerHTML are special cases because they are not attributes in the DOM sense
     -- | We are deliberately eliding this distinction in the DSL
     attr@(Text _) -> addText_ s (getValueFromAttribute attr)
@@ -73,6 +85,10 @@ exportTransitionAttributeSetter_ = unsafeCoerce
 exportTransitionAttributeSetterUncurried_ :: forall d. TransitionAttributeSetter d -> TransitionAttributeSetter_
 exportTransitionAttributeSetterUncurried_ f = unsafeCoerce $ uncurry_ f
 
+-- | TODO there are actually two types of transition attributes when it comes down to it
+-- | static transition attributes do not require there to be an underlying selection yet
+-- | dynamic transition attributes will blow up if there is no underlying selection
+-- | we should probably have two types of transition attributes TODO 
 data TransitionAttribute d = 
     TransitionName String -- optional name for the transition
   | Delay Int
@@ -82,21 +98,22 @@ data TransitionAttribute d =
   | Duration_ (TransitionAttributeSetter d) 
 
 
+addTransitionAttribute :: forall d. Transition_ -> TransitionAttribute d -> Transition_ 
+addTransitionAttribute t = 
+  case _ of
+    Delay d -> transitionDelay_ t d
+    Duration d -> transitionDuration_ t d
+    Easing e -> transitionEaseFunction t e
+    Delay_ f -> transitionDelay_ t (exportAttributeSetterUncurried_ f)
+    Duration_ f -> transitionDuration_ t (exportAttributeSetterUncurried_ f)
+    TransitionName _ -> t -- NB we're not setting the name here, we've already set it in createTransition
+
+foldTransitionAttributes :: forall d. Transition_ -> Array (TransitionAttribute d) -> Transition_
+foldTransitionAttributes t as = foldl addTransitionAttribute t as
+
 createTransition :: forall d. Array (TransitionAttribute d) -> Transition_
 createTransition config = do
   let
-    addTransitionAttribute :: Transition_ -> TransitionAttribute d -> Transition_ 
-    addTransitionAttribute t = 
-      case _ of
-        Delay d -> transitionDelay_ t d
-        Duration d -> transitionDuration_ t d
-        Easing e -> transitionEaseFunction t e
-        Delay_ f -> transitionDelay_ t f
-        Duration_ f -> transitionDuration_ t f
-        TransitionName _ -> t -- NB we're not setting the name here, we've already set it in createTransition
-
-    foldTransitionAttributes :: Transition_ -> Array (TransitionAttribute d) -> Transition_
-    foldTransitionAttributes t as = foldl addTransitionAttribute t as
     getTransitionName :: Array (TransitionAttribute d) -> String
     getTransitionName attrs = foldl go "" attrs
       where
@@ -368,11 +385,10 @@ instance showAttribute :: Show (Attribute d) where
 foreign import addAttribute_ :: forall attr. Selection_ -> String -> attr -> Selection_
 foreign import addText_ :: forall d. Selection_ -> d -> Selection_
 foreign import addStyle_ :: forall d. Selection_ -> String -> d -> Selection_
-foreign import addTransitionToSelection_ :: Selection_ -> Transition_ -> Selection_
+foreign import addTransitionToSelection_ :: Selection_ -> Transition_ -> Transition_
 -- | we're actually retrieving a selection from a transition here but it's not worth exposing that in the types
-foreign import retrieveSelection_ :: Selection_ -> Selection_
--- | no attempt will be made to manage named transitions in contrast to D3
-foreign import removeElement_ :: Selection_ -> Selection_
+foreign import retrieveSelection_ :: Transition_ -> Selection_
+foreign import removeElement_ :: Transition_ -> Transition_
 foreign import uncurry_ :: forall d t. AttributeSetter d t -> AttributeSetter_
 
 foreign import transitionDelay_ :: forall attr. Transition_ -> attr -> Transition_
