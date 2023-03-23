@@ -22,14 +22,12 @@ module Nud3.FFI
   , prepareJoin_
   , selectManyWithFunction_
   , selectManyWithString_
-  , uncurryKeyFunction
+  , uncurryKeyFunction_
   , useInheritedData_
   )
   where
 
-import Nud3.Types (D3SelectorFunction, KeyFunction(..), KeyFunctionType, KeyFunction_, Selection_, Transition_)
-import Prelude (Unit)
-import Web.DOM as DOM
+import Nud3.Types (D3SelectorFunction, KeyFunctionType, KeyFunction_, Selection_, Transition_)
 
 foreign import getName_ :: Selection_ -> String
 
@@ -49,14 +47,6 @@ foreign import insertElement_ :: String -> String -> Selection_ -> Selection_
 foreign import prepareJoin_ :: Selection_ -> String -> Selection_
 foreign import identityKey_ :: KeyFunction_
 foreign import idKey_ :: KeyFunction_
--- | uncurryKeyFunction_ is needed to convert key functions that are provided as PureScript lambdas in the FFI
--- | this might be a performance bottleneck for very large selections / data sets but most of the time it's
--- | likely that the following two built-in key functions will be used (identityKey_ and idKey_)
--- | could add further "canned" key functions here if they are needed too, or custom FFI. 
-uncurryKeyFunction :: forall d i. KeyFunction d i -> KeyFunction_
-uncurryKeyFunction (KeyFunction f) = uncurryKeyFunction_ f
-uncurryKeyFunction IdentityKey = identityKey_
-uncurryKeyFunction HasIdField = idKey_
 
 foreign import uncurryKeyFunction_ :: forall d i. KeyFunctionType d i -> KeyFunction_
 foreign import useInheritedData_ :: Selection_ -> KeyFunction_ -> Selection_

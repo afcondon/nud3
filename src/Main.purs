@@ -28,13 +28,13 @@ runUpdate letters = launchAff_ $ forever do
     getLetters :: Effect (Array Char)
     getLetters = do
       let 
-        letters = toCharArray "abcdefghijklmnopqrstuvwxyz"
+        alphabet = toCharArray "abcdefghijklmnopqrstuvwxyz"
         coinToss :: Char -> Effect (Maybe Char)
         coinToss c = do
           n <- random
           pure $ if n > 0.6 then Just c else Nothing
       
-      choices <- sequence $ coinToss <$> letters -- make 40% of letters Nothing
+      choices <- sequence $ coinToss <$> alphabet -- make 40% of letters Nothing
       pure $ catMaybes choices -- remove the Nothings
 
 

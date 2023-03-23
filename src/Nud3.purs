@@ -21,7 +21,6 @@ import Prelude
 
 import Data.Generic.Rep (class Generic)
 import Data.Show.Generic (genericShow)
-import Debug as Debug
 import Effect (Effect)
 import Effect.Unsafe (unsafePerformEffect)
 import Nud3.Attributes (Attribute, foldAttributes)
@@ -118,17 +117,19 @@ addElement s = case _ of
 -- | visualize replaces the (config.where).selectAll(config.what).data(config.using).append(config.what) 
 -- | chain in d3 with a single function
 -- | there are some major simplifications here vis-a-vis the D3 selection.join
--- | we are only supporting simple lists of attributes not an update function
--- | for the enter, exit and update selections. Not clear yet how much of an impact this
--- | actually will have, but we'll see when we try to add transitions and other things
--- | that are not simple attributes. It may be that there's a wholly different API approach
--- | available for those things anyway. 
 visualize :: forall d i. JoinConfig d i -> Effect Selection_
 visualize config = do
   -- FFI.prepareJoin uses underlying call to selection.selectAll(element) 
-  let prepped = FFI.prepareJoin_ config.where (getElementName config.what) 
-  -- both branches here use underlying call to selection.data(data, key)
-  let keyFunction = FFI.uncurryKeyFunction config.key
+  let prepped = FFI.prepareJoin_ config.where (getElementName config.what)
+  -- we get a "javascript consumable" function from our keyFunction ADT
+  -- if a lambda has been provided, then we have uncurried it already
+  -- could add further "canned" key functions here if they are needed too, or custom FFI. 
+  let keyFunction = 
+        case config.key of
+          IdentityKey -> FFI.identityKey_
+          HasIdField -> FFI.idKey_
+          (KeyFunction f) -> FFI.uncurryKeyFunction_ f
+  -- both branches here use the same underlying call to selection.data(data, key)
   let hasData = case config.using of
               InheritData -> FFI.useInheritedData_ prepped keyFunction
               NewData ds -> FFI.addData_ prepped ds keyFunction
