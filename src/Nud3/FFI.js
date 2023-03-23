@@ -78,21 +78,3 @@ export function createNewTransition_(name) {
   t.on("interrupt", () => console.log("transition interrupted for t: ", t._id));
   return t
 }
-
-// ------------------ Transition Mode ------------------
-// enterTransition_ :: Selection_ -> Selection_
-export function enterTransition_(selection) {
-  selection._mode = "transition";
-  return selection
-}
-// exitTransition_ :: Selection_ -> Selection_
-export function exitTransition_(selection) {
-  selection._mode = "transition";
-  return selection
-}
-// transitionIsActive :: Selection_ -> Boolean
-export function transitionIsActive(selection) {
-  if (selection._mode === "transition") {
-    return true
-  }
-}

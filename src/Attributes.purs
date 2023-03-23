@@ -12,8 +12,8 @@ import Unsafe.Coerce (unsafeCoerce)
 -- | Setters in JS/D3 can be either functions or values - as long as we have
 -- | type-safety in the construction of the Attributes we can just coerce here
 -- | before sending to the FFI
-foreign import data AttributeSetter_ :: Type 
-foreign import data TransitionAttributeSetter_ :: Type 
+foreign import data AttributeSetter_ :: Type
+foreign import data TransitionAttributeSetter_ :: Type
 
 -- | Attribute Setter is the type of functions that can be used to set attributes on elements
 -- | using functions that take the data and index as arguments
@@ -22,7 +22,7 @@ foreign import data TransitionAttributeSetter_ :: Type
 type AttributeSetter d t = d -> Int -> t
 
 exportAttributeSetter_ :: forall d. d -> AttributeSetter_
-exportAttributeSetter_ = unsafeCoerce 
+exportAttributeSetter_ = unsafeCoerce
 
 exportAttributeSetterUncurried_ :: forall d t. AttributeSetter d t -> AttributeSetter_
 exportAttributeSetterUncurried_ f = unsafeCoerce $ uncurry_ f
@@ -47,9 +47,10 @@ foldAttributes s as = foldl addAttribute s as
       -- a bit of sleight of hand here, st is a transition but we treat it as a selection because 
       -- transitions are a subclass of selections and we are going to add attributes to the selection
       -- apply the attrs to the transition, then retrieve the selection
-      let t1 = addTransitionToSelection_ s t
-          t2 = foldTransitionAttributes t1 tattrs
-          t3 = foldAttributesT t2 sattrs
+      let
+        t1 = addTransitionToSelection_ s t
+        t2 = foldTransitionAttributes t1 tattrs
+        t3 = foldAttributesT t2 sattrs
       retrieveSelection_ t3
     (TransitionAttr tattr) -> unsafeCoerce $ addTransitionAttribute (unsafeCoerce s) tattr -- require that we're in a transition for this to work
     -- | Text and InnerHTML are special cases because they are not attributes in the DOM sense
@@ -74,7 +75,7 @@ foldAttributes s as = foldl addAttribute s as
 type TransitionAttributeSetter d = d -> Int -> Int -- maybe this will have to revert to two type arguments later
 
 exportTransitionAttributeSetter_ :: forall d. d -> TransitionAttributeSetter_
-exportTransitionAttributeSetter_ = unsafeCoerce 
+exportTransitionAttributeSetter_ = unsafeCoerce
 
 exportTransitionAttributeSetterUncurried_ :: forall d. TransitionAttributeSetter d -> TransitionAttributeSetter_
 exportTransitionAttributeSetterUncurried_ f = unsafeCoerce $ uncurry_ f
@@ -83,28 +84,29 @@ exportTransitionAttributeSetterUncurried_ f = unsafeCoerce $ uncurry_ f
 -- | static transition attributes do not require there to be an underlying selection yet
 -- | dynamic transition attributes will blow up if there is no underlying selection
 -- | we should probably have two types of transition attributes TODO 
-data TransitionAttribute d = 
-    TransitionName String -- optional name for the transition
+data TransitionAttribute d
+  = TransitionName String -- optional name for the transition
   | Delay Int
   | Duration Int
   | Easing (Number -> Number)
+  
   | Delay_ (TransitionAttributeSetter d) -- a function to set the delay per datum
   | Duration_ (TransitionAttributeSetter d)
-  | Remove 
   | FollowOnTransition -- make a new transition that follows on from this one
+  | Remove
 
-
-addTransitionAttribute :: forall d. Transition_ -> TransitionAttribute d -> Transition_ 
-addTransitionAttribute t = 
+addTransitionAttribute :: forall d. Transition_ -> TransitionAttribute d -> Transition_
+addTransitionAttribute t =
   case _ of
-    Delay d -> transitionDelay_ t d
-    Duration d -> transitionDuration_ t d
-    Easing e -> transitionEaseFunction t e
-    Delay_ f -> transitionDelay_ t (exportAttributeSetterUncurried_ f)
-    Duration_ f -> transitionDuration_ t (exportAttributeSetterUncurried_ f)
+    Delay d -> transitionInitDelay_ t d
+    Duration d -> transitionInitDuration_ t d
+    Easing e -> transitionInitEaseFunction t e
     TransitionName _ -> t -- NB we're not setting the name here, we've already set it in createTransition
-    FollowOnTransition -> followOnTransition_ t
-    Remove -> removeElement_ t
+
+    Delay_ f -> transitionDelay_ t (exportAttributeSetterUncurried_ f) -- requires that we're in a selection-transition, will move to Attribute_ later
+    Duration_ f -> transitionDuration_ t (exportAttributeSetterUncurried_ f) -- requires that we're in a selection-transition, will move to Attribute_ later
+    FollowOnTransition -> followOnTransition_ t -- requires that we're in a selection-transition, will move to Attribute_ later
+    Remove -> removeElement_ t -- requires that we're in a selection-transition, will move to Attribute_ later
 
 foldTransitionAttributes :: forall d. Transition_ -> Array (TransitionAttribute d) -> Transition_
 foldTransitionAttributes t as = foldl addTransitionAttribute t as
@@ -121,8 +123,8 @@ createTransition config = do
     t = FFI.createNewTransition_ $ getTransitionName config
   foldTransitionAttributes t config
 
-data Attribute d = 
-    BackgroundColor String
+data Attribute d
+  = BackgroundColor String
   | Color String
   | Classed String
   | CX Number
@@ -193,7 +195,7 @@ instance showTransitionAttribute :: Show (TransitionAttribute d) where
 
 -- | Boilerplate function to get the key from an Attribute
 getValueFromAttribute :: forall d. Attribute d -> AttributeSetter_
-getValueFromAttribute = case _ of 
+getValueFromAttribute = case _ of
   --| first the direct value setters
   BackgroundColor v -> exportAttributeSetter_ v
   Color v -> exportAttributeSetter_ v
@@ -216,7 +218,7 @@ getValueFromAttribute = case _ of
   Text v -> exportAttributeSetter_ v
   TextAnchor v -> exportAttributeSetter_ v
   Width v -> exportAttributeSetter_ v
-  ViewBox x y w h -> exportAttributeSetter_ [x, y, w, h]
+  ViewBox x y w h -> exportAttributeSetter_ [ x, y, w, h ]
   X v -> exportAttributeSetter_ v
   Y v -> exportAttributeSetter_ v
   X1 v -> exportAttributeSetter_ v
@@ -259,7 +261,7 @@ getValueFromAttribute = case _ of
 
 -- | Boilerplate function to get the key from an Attribute
 getKeyFromAttribute :: forall d. Attribute d -> String
-getKeyFromAttribute = case _ of 
+getKeyFromAttribute = case _ of
   BackgroundColor_ _ -> "background-color"
   BackgroundColor _ -> "background-color"
   Color_ _ -> "color"
@@ -342,8 +344,8 @@ instance showAttribute :: Show (Attribute d) where
   show (Style v) = "\n\t\tStyle_" <> " set directly to " <> v
   show (Text v) = "\n\t\tText_" <> " set directly to " <> v
   show (TextAnchor v) = "\n\t\tTextAnchor_" <> " set directly to " <> v
-  show (Transition t tattrs sattrs) = "\n\t\tTransition with following attrs: "  <> show tattrs <> show sattrs
-  show (TransitionAttr tattr) = "\n\t\tTransitionAttr: "  <> show tattr
+  show (Transition t tattrs sattrs) = "\n\t\tTransition with following attrs: " <> show tattrs <> show sattrs
+  show (TransitionAttr tattr) = "\n\t\tTransitionAttr: " <> show tattr
   show (Width v) = "\n\t\tWidth_" <> " set directly to " <> show v
   show (ViewBox x y w h) = "\n\t\tViewBox" <> " set directly to " <> show x <> " " <> show y <> " " <> show w <> " " <> show h
   show (X v) = "\n\t\tX_" <> " set directly to " <> show v
@@ -392,8 +394,10 @@ foreign import retrieveSelection_ :: Transition_ -> Selection_
 foreign import removeElement_ :: Transition_ -> Transition_
 foreign import uncurry_ :: forall d t. AttributeSetter d t -> AttributeSetter_
 
+foreign import transitionInitDelay_ :: forall attr. Transition_ -> attr -> Transition_
+foreign import transitionInitDuration_ :: forall attr. Transition_ -> attr -> Transition_
+foreign import transitionInitEaseFunction :: Transition_ -> (Number -> Number) -> Transition_
 foreign import transitionDelay_ :: forall attr. Transition_ -> attr -> Transition_
 foreign import transitionDuration_ :: forall attr. Transition_ -> attr -> Transition_
-foreign import transitionEaseFunction :: Transition_ -> (Number -> Number) -> Transition_
 
 foreign import easeCubic_ :: Number -> Number
