@@ -28,23 +28,23 @@ config gupGroup letters keyFunction transition_ =
           , Y 0.0
           , FontSize 24.0
           , FontFamily "monospace"
-          , Transition transition_ [ Y 200.0, X_ \_ i -> toNumber (i * 24 + 50) ]
+          , Transition transition_ [ Y 200.0] -- , X_ \_ i -> toNumber (i * 24 + 50) ]
           ]
       , exit:
           [ Classed "exit"
           , Fill "brown"
           , TransitionThenRemove transition_ 
-              [ X_ \_ i -> toNumber (i * 48 + 50)
-              , Y 400.0
+              [ Y 400.0
               , Opacity 0.000001
               , FontSize 96.0 
+              -- , X_ \_ i -> toNumber (i * 48 + 50)
               ]
           ]
       , update:
           [ Classed "update"
           , Fill "gray"
           , Y 200.0
-          , Transition transition_ [ X_ \_ i -> toNumber (i * 24 + 50) ]
+          -- , Transition transition_ [ X_ \_ i -> toNumber (i * 24 + 50) ]
           ]
       }
   }
@@ -83,5 +83,5 @@ generalUpdatePatternDraw selection letterdata = do
     createTransition [ Duration 1000, Delay_ \_ i -> i * 20 ]
     -- (newTransition "foo" 1000 500)
 -- visualize $ config selection letters identityKeyFunction (newTransition "foo" 1000 500)
--- TODO would definitely be nicer to use record update rather than function parameters here:
+-- HER-14 TODO would definitely be nicer to use record update rather than function parameters here:
 -- _ <- revisualize $ config { using = NewData letterdata2 }

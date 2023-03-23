@@ -8,7 +8,6 @@ module Nud3
   , Selector(..)
   , UpdateSelection
   , addElement
-  , addElementXXX
   , filter
   , getElementName
   , select
@@ -24,6 +23,7 @@ import Data.Generic.Rep (class Generic)
 import Data.Show.Generic (genericShow)
 import Debug as Debug
 import Effect (Effect)
+import Effect.Unsafe (unsafePerformEffect)
 import Nud3.Attributes (Attribute, foldAttributes)
 import Nud3.FFI as FFI
 import Nud3.Types (KeyFunction(..), Selection_)
@@ -42,13 +42,6 @@ type UpdateSelection = {
   , update :: Array NodeList -- directly equivalent to the "groups" in a regular selection
   , parents :: Array DOM.Node
   }
-
--- | morally equivalent to a d3 selection, use Selection_ instead
--- type Selection = { 
---     groups :: Array NodeList
---   , name :: String -- all selections will have a name in this implementation
---   , parents :: Array DOM.Node
---   }
 
 showSelection :: Selection_ -> String
 showSelection s = "Selection named: " <> FFI.getName_ s
@@ -76,7 +69,7 @@ showJoin join = "Join details: { \n" <>
   "\n\texit attrs: " <> show join.attributes.exit
 
 data DataSource d = 
-   InheritData -- NB this will fail if there is no data attached to the parent (TODO DSL should protect against this)
+   InheritData -- HER-12 NB this will fail if there is no data attached to the parent (TODO DSL should protect against this)
  | NewData (Array d)
 
 instance showDataSource :: (Show d) => Show (DataSource d) where
@@ -102,7 +95,7 @@ derive instance genericElement :: Generic Element _
 instance showElement :: Show Element where
   show = genericShow
 
-data AddElement = Append Element | Insert Element String -- TODO this String should be a "BeforeSelector"
+data AddElement = Append Element | Insert Element String -- HER-11 TODO this String should be a "BeforeSelector"
 derive instance genericAddElement :: Generic AddElement _
 instance showAddElement :: Show AddElement where
   show = genericShow
@@ -110,14 +103,15 @@ instance showAddElement :: Show AddElement where
 -- | DSL functions below this line
 
 select :: Selector -> Selection_
-select (SelectorString s) = Debug.trace ("select with string: " <> s) \_ -> FFI.selectManyWithString_ s
-select (SelectorFunction f) = Debug.trace "select with function" \_ -> unsafeCoerce $ FFI.selectManyWithFunction_ (unsafeCoerce f)
+select = case _ of
+  (SelectorString s) -> FFI.selectManyWithString_ s
+  (SelectorFunction f) -> unsafeCoerce $ FFI.selectManyWithFunction_ (unsafeCoerce f)
 
 addElement :: Selection_ -> AddElement -> Effect Selection_
 addElement s = case _ of
   Append (SVG tag) -> pure $ FFI.appendElement_ tag s
   Append (HTML tag) -> pure $ FFI.appendElement_ tag s
--- TODO for insert handle other "before selectors" (and function) instead of fixing it to ":first-child"
+-- HER-11 TODO for insert handle other "before selectors" (and function) instead of fixing it to ":first-child"
   Insert (SVG tag) selector -> pure $ FFI.insertElement_ tag selector s
   Insert (HTML tag) selector -> pure $ FFI.insertElement_ tag selector s
 
@@ -147,17 +141,11 @@ visualize config = do
 
 -- | ********* Tempororary unsafe code in this section  *********
 -- This code is here just to keep the Effect Selection out of the completeJoin_ function
--- It duplicates the DSL (exported) API for Append / Insert Elements but with the Effect removed
 -- This is clearly wrong but it's a temporary hack to get things working
 addElementXXX :: Selection_ -> AddElement -> Selection_
-addElementXXX s = case _ of
-  Append (SVG tag) -> FFI.appendElement_ tag s
-  Append (HTML tag) -> FFI.appendElement_ tag s
--- TODO for insert handle other "before selectors" (and function) instead of fixing it to ":first-child"
-  Insert (SVG tag) selector -> FFI.insertElement_ tag selector s
-  Insert (HTML tag) selector -> FFI.insertElement_ tag selector s
+addElementXXX s e = unsafePerformEffect $ addElement s e
 -- | ********* Tempororary unsafe code in this section  *********
     
 filter :: Selection_ -> String -> Selection_
-filter s _ = s -- TODO  
+filter s _ = s -- HER-13 TODO  
 

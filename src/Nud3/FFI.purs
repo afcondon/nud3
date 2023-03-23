@@ -13,9 +13,7 @@ module Nud3.FFI
   , appendElement_
   , completeJoin_
   , createNewTransition_
-  , getGroups_
   , getName_
-  , getParents_
   , idKey_
   , identityKey_
   , insertElement_
@@ -33,8 +31,6 @@ import Nud3.Types (D3SelectorFunction, KeyFunction(..), KeyFunctionType, KeyFunc
 import Prelude (Unit)
 import Web.DOM as DOM
 
-foreign import getGroups_ :: Selection_ -> Array DOM.NodeList
-foreign import getParents_ :: Selection_ -> Array DOM.Node
 foreign import getName_ :: Selection_ -> String
 
 -- foreign import selectFirstWithString_ :: String -> Selection_

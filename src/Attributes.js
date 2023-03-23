@@ -38,7 +38,7 @@ export function transitionDuration_(transition) {
 }
 export function transitionEaseFunction(transition) {
   return (f) => transition
-  // return (f) => transition.ease(f()) // TODO find out how to export the underlying function instead of wrapping it
+  // return (f) => transition.ease(f()) // HER-17 TODO find out how to export the underlying function instead of wrapping it
 }
 
 

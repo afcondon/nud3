@@ -13,12 +13,7 @@ export function selectManyWithFunction_(selectorFn) {
   // return new Selection([array(selectorFn)], root) // root = [null]
 }
 
-// TODO probably try to NOT expose these and keep them completely opaque
-// or else find a way to expose this stuff in PureScript instead
-export function getGroups_(selection) { return selection._groups }
-export function getParents_(selection) { return selection._parents }
 export function getName_(selection) { return selection._name }
-
 export function appendElement_(name) {
   return (selection) =>
     selection.append(name)

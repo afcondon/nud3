@@ -51,7 +51,7 @@ foldAttributes s as = foldl addAttribute s as
     -- | We are deliberately eliding this distinction in the DSL
     attr@(Text _) -> addText_ s (getValueFromAttribute attr)
     attr@(Text_ _) -> addText_ s (getValueFromAttribute attr)
-    -- | innerHTML still TODO need to add addInnerHTML_ etc
+    -- | HER-18 innerHTML still TODO need to add addInnerHTML_ etc
     attr@(InnerHTML _) -> addAttribute_ s (getKeyFromAttribute attr) (getValueFromAttribute attr)
     attr@(InnerHTML_ _) -> addAttribute_ s (getKeyFromAttribute attr) (getValueFromAttribute attr)
     -- | style and opacity are special cases because they are not attributes in the DOM sense

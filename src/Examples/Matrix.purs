@@ -15,7 +15,7 @@ matrix2table = do
   let root = select (SelectorString "div#matrix")
   -- | Insert the table
   table <- addElement root $ Append $ HTML "table"
-  let tableWithAttrs = foldAttributes table [ Classed "matrix", Width 300.0, Height 300.0, BackgroundColor "#AAA" ] -- TODO: return this to being effectful here
+  let tableWithAttrs = foldAttributes table [ Classed "matrix", Width 300.0, Height 300.0, BackgroundColor "#AAA" ] -- HER-15 TODO: return this to being effectful here
   -- | Insert the rows
   rows <- visualize
     { what: Append (HTML "tr")
@@ -24,7 +24,7 @@ matrix2table = do
     , key: IdentityKey
     , attributes:
         { enter: [ Classed "new" ]
-        , exit: [ Classed "exit" ] -- NB remove is implicit, only needed on custom exit
+        , exit: [ Classed "exit" ]
         , update: [ Classed "updated" ]
         }
     }
