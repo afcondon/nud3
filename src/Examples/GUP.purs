@@ -15,7 +15,7 @@ import Nud3.Types (KeyFunction(..), Selection_, Transition_)
 import Prelude (bind, ($), (*), (+))
 
 config :: forall i. Selection_ -> Array Char -> KeyFunction Char i -> Transition_ -> JoinConfig Char i
-config gupGroup letters keyFunction transition_ =
+config gupGroup letters keyFunction t_ =
   { what: Append (SVG "text")
   , using: NewData letters
   , where: gupGroup
@@ -28,23 +28,23 @@ config gupGroup letters keyFunction transition_ =
           , Y 0.0
           , FontSize 24.0
           , FontFamily "monospace"
-          , Transition transition_ [ Y 200.0] -- , X_ \_ i -> toNumber (i * 24 + 50) ]
+          , Transition t_ [ Y 200.0, X_ \_ i -> toNumber (i * 24 + 50) ]
           ]
       , exit:
           [ Classed "exit"
           , Fill "brown"
-          , TransitionThenRemove transition_ 
+          , TransitionThenRemove t_ 
               [ Y 400.0
               , Opacity 0.000001
               , FontSize 96.0 
-              -- , X_ \_ i -> toNumber (i * 48 + 50)
+              , X_ \_ i -> toNumber (i * 48 + 50)
               ]
           ]
       , update:
           [ Classed "update"
           , Fill "gray"
           , Y 200.0
-          -- , Transition transition_ [ X_ \_ i -> toNumber (i * 24 + 50) ]
+          , Transition t_ [ X_ \_ i -> toNumber (i * 24 + 50) ]
           ]
       }
   }
@@ -80,7 +80,8 @@ generalUpdatePatternDraw :: Selection_ -> String -> Effect Selection_
 generalUpdatePatternDraw selection letterdata = do
   let letters = toCharArray letterdata
   visualize $ config selection letters IdentityKey $
-    createTransition [ Duration 1000, Delay_ \_ i -> i * 20 ]
+    createTransition [ TransitionName "foo", Duration 1000 ]
+    -- createTransition [ TransitionName "foo", Duration 1000, Delay_ \_ i -> i * 20 ]
     -- (newTransition "foo" 1000 500)
 -- visualize $ config selection letters identityKeyFunction (newTransition "foo" 1000 500)
 -- HER-14 TODO would definitely be nicer to use record update rather than function parameters here:

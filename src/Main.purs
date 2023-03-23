@@ -45,9 +45,10 @@ main = do
   -- drawTree 
   -- drawForceLayout
   
+  -- get the initial selection for GUP example
+  letters <- generalUpdatePatternSetup
   -- | the "General Update Pattern" runs in Aff, so it's tidier to run it in a separate function
   -- | we create the selection and then pass it to the update function which loops forever
-  letters <- generalUpdatePatternSetup
   runUpdate letters
 
   liftEffect $ log "🍝"

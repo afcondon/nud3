@@ -2,8 +2,7 @@ module Nud3.Attributes where
 
 import Prelude
 
-import Data.Array (find, foldl)
-import Data.Maybe (Maybe(..))
+import Data.Array (foldl)
 import Nud3.FFI as FFI
 import Nud3.Types (Selection_, Transition_)
 import Unsafe.Coerce (unsafeCoerce)
@@ -86,7 +85,7 @@ data TransitionAttribute d =
 createTransition :: forall d. Array (TransitionAttribute d) -> Transition_
 createTransition config = do
   let
-    addTransitionAttribute :: forall d. Transition_ -> TransitionAttribute d -> Transition_ 
+    addTransitionAttribute :: Transition_ -> TransitionAttribute d -> Transition_ 
     addTransitionAttribute t = 
       case _ of
         Delay d -> transitionDelay_ t d
@@ -96,7 +95,7 @@ createTransition config = do
         Duration_ f -> transitionDuration_ t f
         TransitionName _ -> t -- NB we're not setting the name here, we've already set it in createTransition
 
-    foldTransitionAttributes :: forall d. Transition_ -> Array (TransitionAttribute d) -> Transition_
+    foldTransitionAttributes :: Transition_ -> Array (TransitionAttribute d) -> Transition_
     foldTransitionAttributes t as = foldl addTransitionAttribute t as
     getTransitionName :: Array (TransitionAttribute d) -> String
     getTransitionName attrs = foldl go "" attrs
