@@ -33,11 +33,12 @@ config gupGroup letters keyFunction t_ =
       , exit:
           [ Classed "exit"
           , Fill "brown"
-          , TransitionThenRemove t_ 
-              [ Delay_ \_ i -> i * 20 ]
+          , Transition t_ 
+              [ Delay_ \_ i -> i * 20, Remove ]
               [ Y 400.0
               , Opacity 0.000001
-              , FontSize 96.0 
+              , FontSize 96.0
+              , TransitionAttr (Delay_ \_ i -> i * 20)
               , X_ \_ i -> toNumber (i * 48 + 50)
               ]
           ]

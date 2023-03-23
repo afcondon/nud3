@@ -51,13 +51,7 @@ foldAttributes s as = foldl addAttribute s as
           t2 = foldTransitionAttributes t1 tattrs
           t3 = foldAttributesT t2 sattrs
       retrieveSelection_ t3
-    (TransitionThenRemove t tattrs sattrs) -> do
-      -- apply the attrs to the transition, then remove the element, then retrieve the selection
-      let t1 = addTransitionToSelection_ s t -- now we have a transition
-          t2 = foldTransitionAttributes t1 tattrs -- to which we add the transition attributes
-          t3 = foldAttributesT t2 sattrs -- and then 
-          r = removeElement_ t3 -- finally we mark the element for removal
-      retrieveSelection_ r -- and recover the selection so that it can be chained
+    (TransitionAttr tattr) -> unsafeCoerce $ addTransitionAttribute (unsafeCoerce s) tattr -- require that we're in a transition for this to work
     -- | Text and InnerHTML are special cases because they are not attributes in the DOM sense
     -- | We are deliberately eliding this distinction in the DSL
     attr@(Text _) -> addText_ s (getValueFromAttribute attr)
@@ -95,7 +89,9 @@ data TransitionAttribute d =
   | Duration Int
   | Easing (Number -> Number)
   | Delay_ (TransitionAttributeSetter d) -- a function to set the delay per datum
-  | Duration_ (TransitionAttributeSetter d) 
+  | Duration_ (TransitionAttributeSetter d)
+  | Remove 
+  | FollowOnTransition -- make a new transition that follows on from this one
 
 
 addTransitionAttribute :: forall d. Transition_ -> TransitionAttribute d -> Transition_ 
@@ -107,6 +103,8 @@ addTransitionAttribute t =
     Delay_ f -> transitionDelay_ t (exportAttributeSetterUncurried_ f)
     Duration_ f -> transitionDuration_ t (exportAttributeSetterUncurried_ f)
     TransitionName _ -> t -- NB we're not setting the name here, we've already set it in createTransition
+    FollowOnTransition -> followOnTransition_ t
+    Remove -> removeElement_ t
 
 foldTransitionAttributes :: forall d. Transition_ -> Array (TransitionAttribute d) -> Transition_
 foldTransitionAttributes t as = foldl addTransitionAttribute t as
@@ -145,7 +143,7 @@ data Attribute d =
   | Text String
   | TextAnchor String
   | Transition Transition_ (Array (TransitionAttribute d)) (Array (Attribute d))
-  | TransitionThenRemove Transition_ (Array (TransitionAttribute d)) (Array (Attribute d))
+  | TransitionAttr (TransitionAttribute d)
   | Width Number
   | ViewBox Int Int Int Int
   | X Number
@@ -190,6 +188,8 @@ instance showTransitionAttribute :: Show (TransitionAttribute d) where
   show (Easing _) = "Easing"
   show (Delay_ _) = "Delay lambda"
   show (Duration_ _) = "Duration lambda"
+  show FollowOnTransition = "FollowOnTransition"
+  show Remove = "Remove"
 
 -- | Boilerplate function to get the key from an Attribute
 getValueFromAttribute :: forall d. Attribute d -> AttributeSetter_
@@ -223,10 +223,10 @@ getValueFromAttribute = case _ of
   X2 v -> exportAttributeSetter_ v
   Y1 v -> exportAttributeSetter_ v
   Y2 v -> exportAttributeSetter_ v
-  -- | transition attributes are different and we never actually getValueFromAttribute 
+  -- | transition and their attributes are different and we never actually getValueFromAttribute 
   -- | from them like this but we have to typecheck here
   Transition t tattrs sattrs -> exportAttributeSetter_ t
-  TransitionThenRemove t tattrs sattrs -> exportAttributeSetter_ t
+  TransitionAttr tattr -> exportAttributeSetter_ tattr
   -- | finally the lambda setters
   -- | setter functions are different because they should be uncurried
   BackgroundColor_ f -> exportAttributeSetterUncurried_ f
@@ -303,7 +303,7 @@ getKeyFromAttribute = case _ of
   -- | transition attributes are different and we never actually getKeyFromAttribute 
   -- | from them like this but we have to typecheck here
   Transition _ _ _ -> "transition" -- special case
-  TransitionThenRemove _ _ _ -> "transition with removal afterwards" -- special case
+  TransitionAttr _ -> "transition-only attribute" -- special case
   Width_ _ -> "width"
   Width _ -> "width"
   ViewBox _ _ _ _ -> "viewBox"
@@ -343,7 +343,7 @@ instance showAttribute :: Show (Attribute d) where
   show (Text v) = "\n\t\tText_" <> " set directly to " <> v
   show (TextAnchor v) = "\n\t\tTextAnchor_" <> " set directly to " <> v
   show (Transition t tattrs sattrs) = "\n\t\tTransition with following attrs: "  <> show tattrs <> show sattrs
-  show (TransitionThenRemove t tattrs sattrs) = "\n\t\tTransition and remove, with following attrs: " <> show tattrs <> show sattrs
+  show (TransitionAttr tattr) = "\n\t\tTransitionAttr: "  <> show tattr
   show (Width v) = "\n\t\tWidth_" <> " set directly to " <> show v
   show (ViewBox x y w h) = "\n\t\tViewBox" <> " set directly to " <> show x <> " " <> show y <> " " <> show w <> " " <> show h
   show (X v) = "\n\t\tX_" <> " set directly to " <> show v
@@ -386,6 +386,7 @@ foreign import addAttribute_ :: forall attr. Selection_ -> String -> attr -> Sel
 foreign import addText_ :: forall d. Selection_ -> d -> Selection_
 foreign import addStyle_ :: forall d. Selection_ -> String -> d -> Selection_
 foreign import addTransitionToSelection_ :: Selection_ -> Transition_ -> Transition_
+foreign import followOnTransition_ :: Transition_ -> Transition_
 -- | we're actually retrieving a selection from a transition here but it's not worth exposing that in the types
 foreign import retrieveSelection_ :: Transition_ -> Selection_
 foreign import removeElement_ :: Transition_ -> Transition_

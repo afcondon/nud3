@@ -67,3 +67,8 @@ foreign import orderSelection_ :: Selection_ -> Selection_
 
 -- | functions for transitions here
 foreign import createNewTransition_ :: String -> Transition_
+
+
+foreign import enterTransition_ :: Selection_ -> Selection_
+foreign import exitTransition_ :: Selection_ -> Selection_
+foreign import transitionIsActive :: Selection_ -> Boolean

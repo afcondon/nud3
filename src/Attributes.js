@@ -41,6 +41,10 @@ export function transitionEaseFunction(transition) {
   // return (f) => transition.ease(f()) // HER-17 TODO find out how to export the underlying function instead of wrapping it
 }
 
+export function followOnTransition_(transition) {
+    console.log('followOnTransition ', t._id);
+    return transition.transition() 
+}
 
 // can be called with any selection, in practice called only
 // as part of a list of transition attributes, ie for exit nodes
