@@ -69,7 +69,7 @@ export function followOnTransition_(transition) {
 }
 // remove() can be called with any selection, in practice called only
 // as part of a list of transition attributes, ie for exit nodes
-export function removeElement_(transition) {
+export function removeElements_(transition) {
   assertTransitionIsActive(transition);
   return transition.remove()
 }

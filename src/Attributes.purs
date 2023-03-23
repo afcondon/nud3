@@ -27,15 +27,15 @@ exportAttributeSetter_ = unsafeCoerce
 exportAttributeSetterUncurried_ :: forall d t. AttributeSetter d t -> AttributeSetter_
 exportAttributeSetterUncurried_ f = unsafeCoerce $ uncurry_ f
 
--- | handling transitions is a bit special: D3 makes a distinction between
--- | selections and transition but the latter is a subset of the former
--- | in order to do a join we need to get back the original selection, not the transition
--- | this is usually done in d3 by wrapping the transition in a .call() but that doesn't 
--- | really work with the DSL we have here
--- | We keep track of Transition_ and Selection_ in the types of our FFI calls but use
--- | unsafeCoerce in our attribute folding function(s)
-foldAttributesT :: forall d. Transition_ -> Array (Attribute d) -> Transition_
-foldAttributesT t as = unsafeCoerce $ foldAttributes (unsafeCoerce t) as
+-- -- | handling transitions is a bit special: D3 makes a distinction between
+-- -- | selections and transition but the latter is a subset of the former
+-- -- | in order to do a join we need to get back the original selection, not the transition
+-- -- | this is usually done in d3 by wrapping the transition in a .call() but that doesn't 
+-- -- | really work with the DSL we have here
+-- -- | We keep track of Transition_ and Selection_ in the types of our FFI calls but use
+-- -- | unsafeCoerce in our attribute folding function(s)
+-- foldAttributesT :: forall d. Transition_ -> Array (Attribute d) -> Transition_
+-- foldAttributesT t as = unsafeCoerce $ foldAttributes (unsafeCoerce t) as
 
 foldAttributes :: forall d. Selection_ -> Array (Attribute d) -> Selection_
 foldAttributes s as = foldl addAttribute s as
@@ -43,16 +43,16 @@ foldAttributes s as = foldl addAttribute s as
   -- | we special case on some attributes - Text, InnerHTML, Transition
   addAttribute :: Selection_ -> Attribute d -> Selection_
   addAttribute s = case _ of
-    (Transition t tattrs sattrs) -> do
+    (BeginTransition t) -> do
       -- a bit of sleight of hand here, st is a transition but we treat it as a selection because 
       -- transitions are a subclass of selections and we are going to add attributes to the selection
       -- apply the attrs to the transition, then retrieve the selection
-      let
-        t1 = addTransitionToSelection_ s t
-        t2 = foldTransitionAttributes t1 tattrs
-        t3 = foldAttributesT t2 sattrs
-      retrieveSelection_ t3
-    (TransitionAttr tattr) -> unsafeCoerce $ addTransitionAttribute (unsafeCoerce s) tattr -- require that we're in a transition for this to work
+      addTransitionToSelection_ s t
+
+    Delay_ f -> transitionDelay_ s (exportAttributeSetterUncurried_ f) -- requires that we're in a selection-transition, will move to Attribute_ later
+    Duration_ f -> transitionDuration_ s (exportAttributeSetterUncurried_ f) -- requires that we're in a selection-transition, will move to Attribute_ later
+    RemoveElements -> removeElements_ s -- requires that we're in a selection-transition, will move to Attribute_ later
+
     -- | Text and InnerHTML are special cases because they are not attributes in the DOM sense
     -- | We are deliberately eliding this distinction in the DSL
     attr@(Text _) -> addText_ s (getValueFromAttribute attr)
@@ -61,6 +61,7 @@ foldAttributes s as = foldl addAttribute s as
     attr@(InnerHTML _) -> addAttribute_ s (getKeyFromAttribute attr) (getValueFromAttribute attr)
     attr@(InnerHTML_ _) -> addAttribute_ s (getKeyFromAttribute attr) (getValueFromAttribute attr)
     -- | style and opacity are special cases because they are not attributes in the DOM sense
+    FollowOnTransition -> followOnTransition_ s -- requires that we're in a selection-transition, will move to Attribute_ later
     attr@(Opacity _) -> addStyle_ s "opacity" (getValueFromAttribute attr)
     attr@(Opacity_ _) -> addStyle_ s "opacity" (getValueFromAttribute attr)
     attr@(Style _) -> addStyle_ s (getKeyFromAttribute attr) (getValueFromAttribute attr)
@@ -89,11 +90,6 @@ data TransitionAttribute d
   | Delay Int
   | Duration Int
   | Easing (Number -> Number)
-  
-  | Delay_ (TransitionAttributeSetter d) -- a function to set the delay per datum
-  | Duration_ (TransitionAttributeSetter d)
-  | FollowOnTransition -- make a new transition that follows on from this one
-  | Remove
 
 addTransitionAttribute :: forall d. Transition_ -> TransitionAttribute d -> Transition_
 addTransitionAttribute t =
@@ -102,11 +98,6 @@ addTransitionAttribute t =
     Duration d -> transitionInitDuration_ t d
     Easing e -> transitionInitEaseFunction t e
     TransitionName _ -> t -- NB we're not setting the name here, we've already set it in createTransition
-
-    Delay_ f -> transitionDelay_ t (exportAttributeSetterUncurried_ f) -- requires that we're in a selection-transition, will move to Attribute_ later
-    Duration_ f -> transitionDuration_ t (exportAttributeSetterUncurried_ f) -- requires that we're in a selection-transition, will move to Attribute_ later
-    FollowOnTransition -> followOnTransition_ t -- requires that we're in a selection-transition, will move to Attribute_ later
-    Remove -> removeElement_ t -- requires that we're in a selection-transition, will move to Attribute_ later
 
 foldTransitionAttributes :: forall d. Transition_ -> Array (TransitionAttribute d) -> Transition_
 foldTransitionAttributes t as = foldl addTransitionAttribute t as
@@ -144,8 +135,13 @@ data Attribute d
   | Style String
   | Text String
   | TextAnchor String
-  | Transition Transition_ (Array (TransitionAttribute d)) (Array (Attribute d))
-  | TransitionAttr (TransitionAttribute d)
+  -- | attributes specific to transitions
+  | BeginTransition Transition_ -- TODO do we need an EndTransition too? nicer if we can avoid it
+  | Delay_ (TransitionAttributeSetter d) -- a function to set the delay per datum
+  | Duration_ (TransitionAttributeSetter d)
+  | FollowOnTransition -- make a new transition that follows on from this one
+  | RemoveElements -- TODO could finalize transition here and/or add Don'tRemove for those rare cases where we want to keep the element
+
   | Width Number
   | ViewBox Int Int Int Int
   | X Number
@@ -188,10 +184,6 @@ instance showTransitionAttribute :: Show (TransitionAttribute d) where
   show (Delay d) = "Delay " <> show d
   show (Duration d) = "Duration " <> show d
   show (Easing _) = "Easing"
-  show (Delay_ _) = "Delay lambda"
-  show (Duration_ _) = "Duration lambda"
-  show FollowOnTransition = "FollowOnTransition"
-  show Remove = "Remove"
 
 -- | Boilerplate function to get the key from an Attribute
 getValueFromAttribute :: forall d. Attribute d -> AttributeSetter_
@@ -227,8 +219,12 @@ getValueFromAttribute = case _ of
   Y2 v -> exportAttributeSetter_ v
   -- | transition and their attributes are different and we never actually getValueFromAttribute 
   -- | from them like this but we have to typecheck here
-  Transition t tattrs sattrs -> exportAttributeSetter_ t
-  TransitionAttr tattr -> exportAttributeSetter_ tattr
+  BeginTransition t -> exportAttributeSetter_ unit
+  Delay_ f -> exportAttributeSetter_ unit
+  Duration_ f -> exportAttributeSetter_ unit
+  FollowOnTransition -> exportAttributeSetter_ unit
+  RemoveElements -> exportAttributeSetter_ unit
+
   -- | finally the lambda setters
   -- | setter functions are different because they should be uncurried
   BackgroundColor_ f -> exportAttributeSetterUncurried_ f
@@ -304,8 +300,12 @@ getKeyFromAttribute = case _ of
   TextAnchor _ -> "text-anchor"
   -- | transition attributes are different and we never actually getKeyFromAttribute 
   -- | from them like this but we have to typecheck here
-  Transition _ _ _ -> "transition" -- special case
-  TransitionAttr _ -> "transition-only attribute" -- special case
+  BeginTransition _ -> "transition begins here" -- special case
+  Delay_ _ -> "custom transition delay"
+  Duration_ _ -> "custom transition duration"
+  FollowOnTransition -> "follow-on transition begins here"
+  RemoveElements -> "remove elements"
+
   Width_ _ -> "width"
   Width _ -> "width"
   ViewBox _ _ _ _ -> "viewBox"
@@ -344,8 +344,13 @@ instance showAttribute :: Show (Attribute d) where
   show (Style v) = "\n\t\tStyle_" <> " set directly to " <> v
   show (Text v) = "\n\t\tText_" <> " set directly to " <> v
   show (TextAnchor v) = "\n\t\tTextAnchor_" <> " set directly to " <> v
-  show (Transition t tattrs sattrs) = "\n\t\tTransition with following attrs: " <> show tattrs <> show sattrs
-  show (TransitionAttr tattr) = "\n\t\tTransitionAttr: " <> show tattr
+
+  show (BeginTransition t) = "\n\t\tTransition started"
+  show (Delay_ _) = "Delay lambda"
+  show (Duration_ _) = "Duration lambda"
+  show FollowOnTransition = "FollowOnTransition"
+  show RemoveElements = "Remove elements"
+
   show (Width v) = "\n\t\tWidth_" <> " set directly to " <> show v
   show (ViewBox x y w h) = "\n\t\tViewBox" <> " set directly to " <> show x <> " " <> show y <> " " <> show w <> " " <> show h
   show (X v) = "\n\t\tX_" <> " set directly to " <> show v
@@ -387,17 +392,17 @@ instance showAttribute :: Show (Attribute d) where
 foreign import addAttribute_ :: forall attr. Selection_ -> String -> attr -> Selection_
 foreign import addText_ :: forall d. Selection_ -> d -> Selection_
 foreign import addStyle_ :: forall d. Selection_ -> String -> d -> Selection_
-foreign import addTransitionToSelection_ :: Selection_ -> Transition_ -> Transition_
-foreign import followOnTransition_ :: Transition_ -> Transition_
+foreign import addTransitionToSelection_ :: Selection_ -> Transition_ -> Selection_ -- returns a selection with _mode = Transition
 -- | we're actually retrieving a selection from a transition here but it's not worth exposing that in the types
-foreign import retrieveSelection_ :: Transition_ -> Selection_
-foreign import removeElement_ :: Transition_ -> Transition_
 foreign import uncurry_ :: forall d t. AttributeSetter d t -> AttributeSetter_
 
 foreign import transitionInitDelay_ :: forall attr. Transition_ -> attr -> Transition_
 foreign import transitionInitDuration_ :: forall attr. Transition_ -> attr -> Transition_
 foreign import transitionInitEaseFunction :: Transition_ -> (Number -> Number) -> Transition_
-foreign import transitionDelay_ :: forall attr. Transition_ -> attr -> Transition_
-foreign import transitionDuration_ :: forall attr. Transition_ -> attr -> Transition_
+foreign import transitionDelay_ :: forall attr. Selection_ -> attr -> Selection_ -- only works on transitions, ie _mode = Transition
+foreign import transitionDuration_ :: forall attr. Selection_ -> attr -> Selection_ -- only works on transitions, ie _mode = Transition
+foreign import followOnTransition_ :: Selection_ -> Selection_ -- only works on transitions, ie _mode = Transition
+foreign import retrieveSelection_ :: Selection_ -> Selection_ -- only works on transitions, ie _mode = Transition
+foreign import removeElements_ :: Selection_ -> Selection_ -- only works on transitions, ie _mode = Transition
 
 foreign import easeCubic_ :: Number -> Number
