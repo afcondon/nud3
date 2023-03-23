@@ -38,14 +38,14 @@ foldAttributes s as = foldl addAttribute s as
     -- | in order to do a join we need to get back the original selection, not the transition
     -- | this is usually done in d3 by wrapping the transition in a .call() but that doesn't 
     -- | really work with the DSL we have here
-    (Transition t attrs) ->
+    (Transition t tattrs sattrs) ->
       -- a bit of sleight of hand here, st is a transition but we treat it as a selection because 
       -- transitions are a subclass of selections and we are going to add attributes to the selection
       -- apply the attrs to the transition, then retrieve the selection
-      retrieveSelection_ $ foldAttributes (addTransitionToSelection_ s t) attrs
-    (TransitionThenRemove t attrs) -> do
+      retrieveSelection_ $ foldAttributes (addTransitionToSelection_ s t) sattrs
+    (TransitionThenRemove t tattrs sattrs) -> do
       -- apply the attrs to the transition, then remove the element, then retrieve the selection
-      retrieveSelection_ $ removeElement_ $ foldAttributes (addTransitionToSelection_ s t) attrs
+      retrieveSelection_ $ removeElement_ $ foldAttributes (addTransitionToSelection_ s t) sattrs
     -- | Text and InnerHTML are special cases because they are not attributes in the DOM sense
     -- | We are deliberately eliding this distinction in the DSL
     attr@(Text _) -> addText_ s (getValueFromAttribute attr)
@@ -127,8 +127,8 @@ data Attribute d =
   | Style String
   | Text String
   | TextAnchor String
-  | Transition Transition_ (Array (Attribute d))
-  | TransitionThenRemove Transition_ (Array (Attribute d))
+  | Transition Transition_ (Array (TransitionAttribute d)) (Array (Attribute d))
+  | TransitionThenRemove Transition_ (Array (TransitionAttribute d)) (Array (Attribute d))
   | Width Number
   | ViewBox Int Int Int Int
   | X Number
@@ -208,8 +208,8 @@ getValueFromAttribute = case _ of
   Y2 v -> exportAttributeSetter_ v
   -- | transition attributes are different and we never actually getValueFromAttribute 
   -- | from them like this but we have to typecheck here
-  Transition t attrs -> exportAttributeSetter_ t
-  TransitionThenRemove t attrs -> exportAttributeSetter_ t
+  Transition t tattrs sattrs -> exportAttributeSetter_ t
+  TransitionThenRemove t tattrs sattrs -> exportAttributeSetter_ t
   -- | finally the lambda setters
   -- | setter functions are different because they should be uncurried
   BackgroundColor_ f -> exportAttributeSetterUncurried_ f
@@ -285,8 +285,8 @@ getKeyFromAttribute = case _ of
   TextAnchor _ -> "text-anchor"
   -- | transition attributes are different and we never actually getKeyFromAttribute 
   -- | from them like this but we have to typecheck here
-  Transition _ _ -> "transition" -- special case
-  TransitionThenRemove _ _ -> "transition with removal afterwards" -- special case
+  Transition _ _ _ -> "transition" -- special case
+  TransitionThenRemove _ _ _ -> "transition with removal afterwards" -- special case
   Width_ _ -> "width"
   Width _ -> "width"
   ViewBox _ _ _ _ -> "viewBox"
@@ -325,8 +325,8 @@ instance showAttribute :: Show (Attribute d) where
   show (Style v) = "\n\t\tStyle_" <> " set directly to " <> v
   show (Text v) = "\n\t\tText_" <> " set directly to " <> v
   show (TextAnchor v) = "\n\t\tTextAnchor_" <> " set directly to " <> v
-  show (Transition t attrs) = "\n\t\tTransition with following attrs: "  <> show attrs
-  show (TransitionThenRemove t attrs) = "\n\t\tTransition and remove, with following attrs: " <> show attrs
+  show (Transition t tattrs sattrs) = "\n\t\tTransition with following attrs: "  <> show tattrs <> show sattrs
+  show (TransitionThenRemove t tattrs sattrs) = "\n\t\tTransition and remove, with following attrs: " <> show tattrs <> show sattrs
   show (Width v) = "\n\t\tWidth_" <> " set directly to " <> show v
   show (ViewBox x y w h) = "\n\t\tViewBox" <> " set directly to " <> show x <> " " <> show y <> " " <> show w <> " " <> show h
   show (X v) = "\n\t\tX_" <> " set directly to " <> show v

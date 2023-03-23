@@ -28,12 +28,13 @@ config gupGroup letters keyFunction t_ =
           , Y 0.0
           , FontSize 24.0
           , FontFamily "monospace"
-          , Transition t_ [ Y 200.0, X_ \_ i -> toNumber (i * 24 + 50) ]
+          , Transition t_ [] [ Y 200.0, X_ \_ i -> toNumber (i * 24 + 50) ]
           ]
       , exit:
           [ Classed "exit"
           , Fill "brown"
           , TransitionThenRemove t_ 
+              [ Delay_ \_ i -> i * 20 ]
               [ Y 400.0
               , Opacity 0.000001
               , FontSize 96.0 
@@ -44,7 +45,7 @@ config gupGroup letters keyFunction t_ =
           [ Classed "update"
           , Fill "gray"
           , Y 200.0
-          , Transition t_ [ X_ \_ i -> toNumber (i * 24 + 50) ]
+          , Transition t_ [ ] [ X_ \_ i -> toNumber (i * 24 + 50) ]
           ]
       }
   }
