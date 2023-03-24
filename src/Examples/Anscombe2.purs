@@ -54,28 +54,35 @@ circlePlotUpdateCompound parent points = do
     { what: Append (SVG "circle")
     , "data": NewData points
     , parent
-    , key: IdentityKey -- customKeyFunction
+    , key: customKeyFunction
     , instructions: 
       Compound {
-          enter: [ Fill_ \d i -> 
-                case d.set of
-                  "I" -> "red"
-                  "II" -> "blue"
-                  "III" -> "green"
-                  "IV" -> "yellow"
-                  _ -> "black"
-            , StrokeColor "black"
-            , StrokeWidth 1.0
-            , CX_ \d i -> d.x * 10.0
-            , CY_ \d i -> d.y * 10.0
-            , Radius 2.0
-            , Classed_ \d _ -> d.set
-            ]
-        , update: [ BeginTransition pointTransition [ CX_ \d i -> d.x * 10.0 , CY_ \d i -> d.y * 10.0 ] ]
-        , exit: [ BeginTransition pointTransition [RemoveElements ] ]
+          enter: [ fillFunction
+                  , StrokeColor "black"
+                  , StrokeWidth 1.0
+                  , CX_ \d i -> d.x * 10.0
+                  , CY_ \d i -> d.y * 10.0
+                  , Radius 2.0
+                  , Classed_ \d _ -> d.set
+                  ]
+        , update: [ CX_ \d i -> d.x * 10.0
+                  , CY_ \d i -> d.y * 10.0 
+                  , fillFunction
+                  ]
+        , exit: [ ]
       }
     }
   pure unit
+
+fillFunction :: Attribute Point
+fillFunction =
+  Fill_ \d i -> 
+    case d.set of
+      "I" -> "red"
+      "II" -> "blue"
+      "III" -> "green"
+      "IV" -> "yellow"
+      _ -> "black"
 
 pointTransition :: Transition_
 pointTransition = createTransition [ TransitionName "foo", Duration 1000 ]
