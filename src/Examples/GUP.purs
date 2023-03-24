@@ -72,6 +72,13 @@ generalUpdatePatternSetup = do
       ]
   addElement styled $ Append $ SVG "g"
 
+generalUpdatePatternDraw :: Selection_ -> String -> Effect Selection_
+generalUpdatePatternDraw selection letterdata = do
+  let letters = toCharArray letterdata
+  visualize $ datajoin selection letters IdentityKey $
+    createTransition [ TransitionName "foo", Duration 1000 ]
+
+-- | Key functions (unused)
 crazyKeyFunction :: KeyFunction Char String
 crazyKeyFunction =
   let
@@ -90,13 +97,3 @@ otherKeyFunction =
   in
     KeyFunction keyFn
 
-generalUpdatePatternDraw :: Selection_ -> String -> Effect Selection_
-generalUpdatePatternDraw selection letterdata = do
-  let letters = toCharArray letterdata
-  visualize $ datajoin selection letters IdentityKey $
-    createTransition [ TransitionName "foo", Duration 1000 ]
--- createTransition [ TransitionName "foo", Duration 1000, Delay_ \_ i -> i * 20 ]
--- (newTransition "foo" 1000 500)
--- visualize $ config selection letters identityKeyFunction (newTransition "foo" 1000 500)
--- HER-14 TODO would definitely be nicer to use record update rather than function parameters here:
--- _ <- revisualize $ config { using = NewData letterdata2 }

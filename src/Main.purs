@@ -13,9 +13,10 @@ import Effect.Aff (Milliseconds(..), delay, launchAff_)
 import Effect.Class (liftEffect)
 import Effect.Console (log)
 import Effect.Random (random)
+import Examples.Anscombe1 (circlePlot)
+import Examples.Anscombe2 (anscombeData, circlePlotInit, circlePlotUpdate, subset)
 import Examples.GUP (generalUpdatePatternDraw, generalUpdatePatternSetup)
 import Examples.Matrix (matrix2table)
-import Examples.Anscombe1 (circlePlot)
 import Examples.ThreeLittleCircles (threeLittleCircles)
 import Nud3.Types (Selection_)
 
@@ -43,7 +44,9 @@ main :: Effect Unit
 main = do
   -- matrix2table
   -- threeLittleCircles
-  circlePlot
+  -- circlePlot
+  circles <- circlePlotInit
+  circlePlotUpdate circles (subset "I" anscombeData)
   -- drawTree 
   -- drawForceLayout
   
