@@ -47,8 +47,8 @@ showSelection s = "Selection named: " <> FFI.getName_ s
 
 type JoinConfig d i = { 
     what :: AddElement
-  , where :: Selection_
-  , using :: DataSource d
+  , parent :: Selection_
+  , "data" :: DataSource d
   , key :: KeyFunction d i 
   , attributes :: {
       enter :: ElementConfig d
@@ -60,8 +60,8 @@ type JoinConfig d i = {
 showJoin :: forall d i. (Show d) => JoinConfig d i -> String
 showJoin join = "Join details: { \n" <>
   "\twhat: " <> show join.what <>
-  "\n\twhere: " <> showSelection join.where <>
-  "\n\tusing: " <> show join.using <>
+  "\n\tparent: " <> showSelection join.parent <>
+  "\n\tdata: " <> show join."data" <>
   "\n\tkey: (function)" <>
   "\n\tenter attrs: " <> show join.attributes.enter <>
   "\n\tupdate attrs:" <> show join.attributes.update <>
@@ -120,7 +120,7 @@ addElement s = case _ of
 visualize :: forall d i. JoinConfig d i -> Effect Selection_
 visualize config = do
   -- FFI.prepareJoin uses underlying call to selection.selectAll(element) 
-  let prepped = FFI.prepareJoin_ config.where (getElementName config.what)
+  let prepped = FFI.prepareJoin_ config.parent (getElementName config.what)
   -- we get a "javascript consumable" function from our keyFunction ADT
   -- if a lambda has been provided, then we have uncurried it already
   -- could add further "canned" key functions here if they are needed too, or custom FFI. 
@@ -130,7 +130,7 @@ visualize config = do
           HasIdField -> FFI.idKey_
           (KeyFunction f) -> FFI.uncurryKeyFunction_ f
   -- both branches here use the same underlying call to selection.data(data, key)
-  let hasData = case config.using of
+  let hasData = case config."data" of
               InheritData -> FFI.useInheritedData_ prepped keyFunction
               NewData ds -> FFI.addData_ prepped ds keyFunction
   -- FFI.completeJoin_ provides functions for each of the three selections: enter, update and exit

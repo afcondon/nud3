@@ -14,11 +14,11 @@ import Nud3.FFI as FFI
 import Nud3.Types (KeyFunction(..), Selection_, Transition_)
 import Prelude (bind, ($), (*), (+))
 
-config :: forall i. Selection_ -> Array Char -> KeyFunction Char i -> Transition_ -> JoinConfig Char i
-config gupGroup letters keyFunction t_ =
+datajoin :: forall i. Selection_ -> Array Char -> KeyFunction Char i -> Transition_ -> JoinConfig Char i
+datajoin gupGroup letters keyFunction t_ =
   { what: Append (SVG "text")
-  , using: NewData letters
-  , where: gupGroup
+  , "data": NewData letters
+  , parent: gupGroup
   , key: keyFunction
   , attributes:
       { enter:
@@ -90,7 +90,7 @@ otherKeyFunction =
 generalUpdatePatternDraw :: Selection_ -> String -> Effect Selection_
 generalUpdatePatternDraw selection letterdata = do
   let letters = toCharArray letterdata
-  visualize $ config selection letters IdentityKey $
+  visualize $ datajoin selection letters IdentityKey $
     createTransition [ TransitionName "foo", Duration 1000 ]
     -- createTransition [ TransitionName "foo", Duration 1000, Delay_ \_ i -> i * 20 ]
     -- (newTransition "foo" 1000 500)

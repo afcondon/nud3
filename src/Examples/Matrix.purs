@@ -19,8 +19,8 @@ matrix2table = do
   -- | Insert the rows
   rows <- visualize
     { what: Append (HTML "tr")
-    , where: tableWithAttrs
-    , using: NewData matrix
+    , parent: tableWithAttrs
+    , "data": NewData matrix
     , key: IdentityKey
     , attributes:
         { enter: [ Classed "new" ]
@@ -37,8 +37,8 @@ matrix2table = do
   -- | Insert the cells
   items <- visualize
     { what: Append (HTML "td")
-    , using: InheritData :: DataSource (Array Int) -- need to give the type to ensure Show instance for debugging, no other reason
-    , where: rows
+    , "data": InheritData :: DataSource (Array Int) -- need to give the type to ensure Show instance for debugging, no other reason
+    , parent: rows
     , key: IdentityKey
     , attributes:
         { enter: [ Classed "cell" ]

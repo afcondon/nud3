@@ -52,8 +52,8 @@ drawTree tree = do
 
   node <- visualize
     { what: Append (SVG "g")
-    , using: NewData $ VizTree.getNodes layoutTreeData -- could use newtype and unwrap here perhaps
-    , where: nodesGroup
+    , "data": NewData $ VizTree.getNodes layoutTreeData -- could use newtype and unwrap here perhaps
+    , parent: nodesGroup
     , key: IdentityKey
     , attributes:
         { enter: [] -- group for each circle and its label 
@@ -81,8 +81,8 @@ drawTree tree = do
 
   individualLink <- visualize
     { what: Append (SVG "path")
-    , using: NewData $ VizTree.getNodes layoutTreeData
-    , where: linksGroup
+    , "data": NewData $ VizTree.getNodes layoutTreeData
+    , parent: linksGroup
     , key: IdentityKey
     , attributes:
         { enter:
