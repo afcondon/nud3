@@ -55,7 +55,7 @@ drawTree tree = do
     , "data": NewData $ VizTree.getNodes layoutTreeData -- could use newtype and unwrap here perhaps
     , parent: nodesGroup
     , key: IdentityKey
-    , attributes:
+    , instructions: Compound
         { enter: [] -- group for each circle and its label 
         , exit: [] -- remove is the default
         , update: []
@@ -84,16 +84,12 @@ drawTree tree = do
     , "data": NewData $ VizTree.getNodes layoutTreeData
     , parent: linksGroup
     , key: IdentityKey
-    , attributes:
-        { enter:
-            [ StrokeWidth 1.5
-            , StrokeColor "orange"
-            , StrokeOpacity 0.4
-            , Fill "none"
-            ]
-        , exit: [] -- remove is the default
-        , update: []
-        }
+    , instructions: Simple
+        [ StrokeWidth 1.5
+        , StrokeColor "orange"
+        , StrokeOpacity 0.4
+        , Fill "none"
+        ]
     }
   pure unit
 

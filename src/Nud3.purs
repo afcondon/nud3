@@ -2,7 +2,7 @@ module Nud3
   ( AddElement(..)
   , DataSource(..)
   , Element(..)
-  , ElementConfig
+  , Instructions(..)
   , JoinConfig
   , NodeList
   , Selector(..)
@@ -50,22 +50,27 @@ type JoinConfig d i = {
   , parent :: Selection_
   , "data" :: DataSource d
   , key :: KeyFunction d i 
-  , attributes :: {
-      enter :: ElementConfig d
-    , update :: ElementConfig d
-    , exit :: ElementConfig d
+  , instructions :: Instructions d
   }
-  }
+data Instructions d = 
+    Simple (Array (Attribute d))
+  | Compound {
+      enter :: Array (Attribute d)
+    , update :: Array (Attribute d)
+    , exit :: Array (Attribute d)
+  } 
 
+instance showInstructions :: (Show d) => Show (Instructions d) where
+  show (Simple attrs) = show attrs
+  show (Compound attrs) = "enter: " <> show attrs.enter <> ", update: " <> show attrs.update <> ", exit: " <> show attrs.exit
+  
 showJoin :: forall d i. (Show d) => JoinConfig d i -> String
 showJoin join = "Join details: { \n" <>
   "\twhat: " <> show join.what <>
   "\n\tparent: " <> showSelection join.parent <>
   "\n\tdata: " <> show join."data" <>
   "\n\tkey: (function)" <>
-  "\n\tenter attrs: " <> show join.attributes.enter <>
-  "\n\tupdate attrs:" <> show join.attributes.update <>
-  "\n\texit attrs: " <> show join.attributes.exit
+  "\n\tinstructcions: " <> show join.instructions
 
 data DataSource d = 
    InheritData -- HER-12 NB this will fail if there is no data attached to the parent (TODO DSL should protect against this)
@@ -78,8 +83,6 @@ else
 instance showDataSourceSimple :: Show (DataSource Unit) where
   show InheritData = "data is inherited from parent"
   show (NewData _) = "data is new, but no show instance exists to show it"
-
-type ElementConfig d = Array (Attribute d)
 
 getElementName :: AddElement -> String
 getElementName (Append (SVG tag)) = tag
@@ -134,10 +137,16 @@ visualize config = do
               InheritData -> FFI.useInheritedData_ prepped keyFunction
               NewData ds -> FFI.addData_ prepped ds keyFunction
   -- FFI.completeJoin_ provides functions for each of the three selections: enter, update and exit
-  pure $ FFI.completeJoin_ hasData {
-      enterFn: \enter -> foldAttributes (addElementXXX enter config.what) config.attributes.enter
-    , updateFn: \update -> foldAttributes update config.attributes.update
-    , exitFn: \exit ->  foldAttributes exit config.attributes.exit
+  case config.instructions of
+    Compound attrs -> pure $ FFI.completeJoin_ hasData {
+      enterFn: \enter -> foldAttributes (addElementXXX enter config.what) attrs.enter
+    , updateFn: \update -> foldAttributes update attrs.update
+    , exitFn: \exit ->  foldAttributes exit attrs.exit
+    }
+    Simple attrs -> pure $ FFI.completeJoin_ hasData {
+        enterFn: \enter -> foldAttributes (addElementXXX enter config.what) attrs
+      , updateFn: \update -> update
+      , exitFn: \exit ->  exit
     }
 
 -- | ********* Tempororary unsafe code in this section  *********

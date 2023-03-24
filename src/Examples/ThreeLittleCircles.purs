@@ -28,7 +28,7 @@ threeLittleCircles = do
     , "data": NewData [ 32, 57, 293 ]
     , parent: circleGroup
     , key: IdentityKey
-    , attributes:
+    , instructions: Compound
         { enter:
             [ Fill "green"
             , CX_ \_ i -> toNumber (i * 30)

@@ -22,7 +22,7 @@ matrix2table = do
     , parent: tableWithAttrs
     , "data": NewData matrix
     , key: IdentityKey
-    , attributes:
+    , instructions: Compound
         { enter: [ Classed "new" ]
         , exit: [ Classed "exit" ]
         , update: [ Classed "updated" ]
@@ -40,11 +40,7 @@ matrix2table = do
     , "data": InheritData :: DataSource (Array Int) -- need to give the type to ensure Show instance for debugging, no other reason
     , parent: rows
     , key: IdentityKey
-    , attributes:
-        { enter: [ Classed "cell" ]
-        , exit: []
-        , update: []
-        }
+    , instructions: Simple [ Classed "cell" ]
     }
 
   let _ = foldAttributes items [ Text_ \d _ -> d ]

@@ -24,8 +24,7 @@ module Nud3.FFI
   , selectManyWithString_
   , uncurryKeyFunction_
   , useInheritedData_
-  )
-  where
+  ) where
 
 import Nud3.Types (D3SelectorFunction, KeyFunctionType, KeyFunction_, Selection_, Transition_)
 

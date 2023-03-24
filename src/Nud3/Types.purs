@@ -36,8 +36,8 @@ type UpdateSelection =
 -- the key function in D3 returns a STRING always, but that seems unnecessarily restrictive in PureScript
 -- so we'll maintain a type parameter for the key function type
 -- data KeyFunction :: forall k1 k2. k1 -> k2 -> Type
-data KeyFunction d i = 
-    IdentityKey
+data KeyFunction d i
+  = IdentityKey
   | HasIdField -- if there's a way to constrain this, ie forall r. (HasIdField r) => r -> i, that would be great
   | KeyFunction (KeyFunctionType d i)
 

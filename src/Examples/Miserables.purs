@@ -77,14 +77,7 @@ drawForceLayout width height model = do
     , "data": NewData simNodes
     , parent: nodesGroup
     , key: IdentityKey
-    , attributes:
-        { enter:
-            [ Radius 5.0
-            , Fill_ \d _ -> colorByGroup d.group
-            ]
-        , exit: [] -- Remove is the default, no need for other attrs here
-        , update: []
-        }
+    , instructions: Simple [ Radius 5.0, Fill_ \d _ -> colorByGroup d.group ]
     }
 
   links <- visualize
@@ -92,16 +85,12 @@ drawForceLayout width height model = do
     , "data": NewData simLinks
     , parent: linksGroup
     , key: IdentityKey
-    , attributes:
-        { enter:
-            [ StrokeWidth 1.5
-            , StrokeColor "#555"
-            , StrokeOpacity 0.4
-            , Fill "none"
-            ]
-        , exit: [] -- Remove is the default, no need for other attrs here
-        , update: []
-        }
+    , instructions: Simple
+        [ StrokeWidth 1.5
+        , StrokeColor "#555"
+        , StrokeOpacity 0.4
+        , Fill "none"
+        ]
     }
 
   pure unit
