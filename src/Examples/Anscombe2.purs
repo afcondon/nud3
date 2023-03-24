@@ -4,9 +4,9 @@ import Nud3
 
 import Data.Array as Array
 import Effect (Effect)
-import Nud3.Attributes (Attribute(..), foldAttributes)
-import Nud3.Types (KeyFunction(..), Selection_)
-import Prelude (Unit, bind, negate, pure, unit, ($), (*), (==), (/))
+import Nud3.Attributes (Attribute(..), TransitionAttribute(..), createTransition, foldAttributes)
+import Nud3.Types (KeyFunction(..), Selection_, Transition_)
+import Prelude (Unit, bind, negate, pure, unit, (-), ($), (*), (==), (/))
 
 circlePlotInit :: Effect Selection_
 circlePlotInit = do
@@ -23,13 +23,13 @@ circlePlotInit = do
   circleGroup <- addElement svg $ Append $ SVG "g"
   pure circleGroup
 
-circlePlotUpdate :: Selection_ -> Array Point -> Effect Unit
-circlePlotUpdate parent points = do
+circlePlotUpdateSimple :: Selection_ -> Array Point -> Effect Unit
+circlePlotUpdateSimple parent points = do
   circles <- visualize
     { what: Append (SVG "circle")
     , "data": NewData points
     , parent
-    , key: KeyFunction \d _ _-> d.id
+    , key: IdentityKey
     , instructions: 
       Simple [ Fill_ \d i -> 
                 case d.set of
@@ -47,6 +47,49 @@ circlePlotUpdate parent points = do
             ]
     }
   pure unit
+
+circlePlotUpdateCompound :: Selection_ -> Array Point -> Effect Unit
+circlePlotUpdateCompound parent points = do
+  circles <- visualize
+    { what: Append (SVG "circle")
+    , "data": NewData points
+    , parent
+    , key: KeyFunction customKeyFunction
+    , instructions: 
+      Compound {
+          enter: [ Fill_ \d i -> 
+                case d.set of
+                  "I" -> "red"
+                  "II" -> "blue"
+                  "III" -> "green"
+                  "IV" -> "yellow"
+                  _ -> "black"
+            , StrokeColor "black"
+            , StrokeWidth 1.0
+            , CX_ \d i -> d.x * 10.0
+            , CY_ \d i -> d.y * 10.0
+            , Radius 2.0
+            , Classed "enter"
+            ]
+        , update: [ BeginTransition pointTransition [ CX_ \d i -> d.x * 10.0 , CY_ \d i -> d.y * 10.0 ] ]
+        , exit: [ ]
+      }
+    }
+  pure unit
+
+pointTransition :: Transition_
+pointTransition = createTransition [ TransitionName "foo", Duration 1000 ]
+
+-- customKeyFunction :: KeyFunction Point Int
+customKeyFunction ::  Point -> Int -> NodeList -> Int
+customKeyFunction point index nodes =
+  let offset = 
+        case point.set of
+          "II" -> 11
+          "III" -> 22
+          "IV" -> 33
+          _ -> 0
+  in point.id - offset -- just force the ids of each set to start at 0
 
 type Point = { x :: Number, y :: Number, set :: String, id :: Int }
 

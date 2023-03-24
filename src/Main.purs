@@ -9,19 +9,19 @@ import Data.Maybe (Maybe(..))
 import Data.String.CodeUnits (fromCharArray, toCharArray)
 import Data.Traversable (sequence)
 import Effect (Effect)
-import Effect.Aff (Milliseconds(..), delay, launchAff_)
+import Effect.Aff (Milliseconds(..), delay, launchAff, launchAff_)
 import Effect.Class (liftEffect)
 import Effect.Console (log)
 import Effect.Random (random)
 import Examples.Anscombe1 (circlePlot)
-import Examples.Anscombe2 (anscombeData, circlePlotInit, circlePlotUpdate, subset)
+import Examples.Anscombe2 (anscombeData, circlePlotInit, circlePlotUpdateCompound, subset)
 import Examples.GUP (generalUpdatePatternDraw, generalUpdatePatternSetup)
 import Examples.Matrix (matrix2table)
 import Examples.ThreeLittleCircles (threeLittleCircles)
 import Nud3.Types (Selection_)
 
-runUpdate :: Selection_ -> Effect Unit
-runUpdate letters = launchAff_ $ forever do
+lettersUpdate :: Selection_ -> Effect Unit
+lettersUpdate letters = launchAff_ $ forever do
   letterData <- liftEffect $ getLetters
   _ <- liftEffect $ generalUpdatePatternDraw letters (fromCharArray letterData)
   delay (Milliseconds 5000.0)
@@ -39,6 +39,16 @@ runUpdate letters = launchAff_ $ forever do
       choices <- sequence $ coinToss <$> alphabet -- make 40% of letters Nothing
       pure $ catMaybes choices -- remove the Nothings
 
+anscombeUpdate :: Selection_ -> Effect Unit
+anscombeUpdate selection = launchAff_ $ forever do
+  liftEffect $ circlePlotUpdateCompound selection (subset "I" anscombeData)
+  delay (Milliseconds 1000.0)
+  liftEffect $ circlePlotUpdateCompound selection (subset "II" anscombeData)
+  delay (Milliseconds 1000.0)
+  liftEffect $ circlePlotUpdateCompound selection (subset "III" anscombeData)
+  delay (Milliseconds 1000.0)
+  liftEffect $ circlePlotUpdateCompound selection (subset "IV" anscombeData)
+  
 
 main :: Effect Unit
 main = do
@@ -46,7 +56,7 @@ main = do
   -- threeLittleCircles
   -- circlePlot
   circles <- circlePlotInit
-  circlePlotUpdate circles (subset "I" anscombeData)
+  anscombeUpdate circles
   -- drawTree 
   -- drawForceLayout
   
@@ -54,7 +64,7 @@ main = do
   -- letters <- generalUpdatePatternSetup
   -- | the "General Update Pattern" runs in Aff, so it's tidier to run it in a separate function
   -- | we create the selection and then pass it to the update function which loops forever
-  -- runUpdate letters
+  -- lettersUpdate letters
 
   log "🍝"
 
