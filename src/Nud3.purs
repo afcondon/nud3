@@ -149,8 +149,8 @@ visualize config = do
     }
     Simple attrs -> pure $ FFI.completeJoin_ hasData {
         enterFn: \enter -> foldAttributes (addElementXXX enter config.what) attrs
-      , updateFn: \update -> update
-      , exitFn: \exit ->  exit
+      , updateFn: \update -> update -- TODO should this be null instead of identity?
+      , exitFn: \exit ->  exit -- TODO should this be null instead of identity?
     }
 
 -- | ********* Tempororary unsafe code in this section  *********

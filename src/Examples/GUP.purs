@@ -15,10 +15,10 @@ import Nud3.Types (KeyFunction(..), Selection_, Transition_)
 import Prelude (bind, ($), (*), (+))
 
 datajoin :: forall i. Selection_ -> Array Char -> KeyFunction Char i -> Transition_ -> JoinConfig Char i
-datajoin gupGroup letters keyFunction t_ =
+datajoin parent letters keyFunction t_ =
   { what: Append (SVG "text")
   , "data": NewData letters
-  , parent: gupGroup
+  , parent
   , key: keyFunction
   , instructions: Compound
       { enter:
@@ -80,20 +80,13 @@ generalUpdatePatternDraw selection letterdata = do
 
 -- | Key functions (unused)
 crazyKeyFunction :: KeyFunction Char String
-crazyKeyFunction =
-  let
-    keyFn :: Char -> String
-    keyFn 'a' = "b"
-    keyFn 'b' = "a"
-    keyFn d = singleton d
-  in
-    KeyFunction1 keyFn
+crazyKeyFunction = KeyFunction1 \c -> 
+  case c of
+    'a' -> "b"
+    'b' -> "a"
+    d -> singleton d
+      
 
 otherKeyFunction :: KeyFunction Char Int
-otherKeyFunction =
-  let
-    keyFn :: Char -> Int
-    keyFn d = toCharCode d
-  in
-    KeyFunction1 keyFn
+otherKeyFunction = KeyFunction1 toCharCode
 

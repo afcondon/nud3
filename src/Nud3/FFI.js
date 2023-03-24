@@ -36,15 +36,21 @@ export function prepareJoin_(selection) {
 // makeKeyFunction_ :: KeyFunction -> KeyFunction
 // NB also, we're ignoring the performance implications of this for really large selections
 // (but key functions could easily be added in FFI files to optimize for specific use cases)
-export function makeKeyFunction1_ (f) { return f }
-export function makeKeyFunction2_ (f) {
-  return (d,i,nodes) => f(d)(i)
+export function makeKeyFunction1_ (f) { 
+  let f2 = f()(); // remove the two constraints before passing to d3
+  return f2 
+} 
+export function makeKeyFunction2_ (f) { // TODO untested - remove the two constraints before passing to d3
+  let f2 = f()(); // remove the two constraints before passing to d3
+  return (d,i,nodes) => f2(d)(i)
 }
-export function makeKeyFunction3_ (f) {
-  return (d,i,nodes) => f(d)(i)(nodes)
+export function makeKeyFunction3_ (f) { // TODO untested - remove the two constraints before passing to d3
+  let f2 = f()();// remove the two constraints before passing to d3
+  return (d,i,nodes) => f2(d)(i)(nodes)
 }
 export function makeKeyFunction4_ (f) {
-  return (d,i,nodes) => f(d)(i)(nodes)(this) // TODO untested
+  let f2 = f()();// remove the two constraints before passing to d3
+  return (d,i,nodes) => f2(d)(i)(nodes)(this) // TODO untested - remove the two constraints before passing to d3
 }
 export function identityKey_ (d) { return d}
 export function idKey_ (d) { return d.id }
@@ -55,10 +61,14 @@ export function useInheritedData_(selection) {
 }
 // addData_ :: Selection_ -> Array d -> KeyFn -> Selection_
 export function addData_(selection) {
-  return (data) => (keyFn) => selection.data(data, keyFn)
+  return (data) => (keyFn) => {
+    console.log("adding data: ", data);
+    return selection.data(data, keyFn)
+  }
 }
 
-export function completeJoin_(selection) { // NB the order of the functions arguments is important: enter, update, exit
+export function completeJoin_(selection) { 
+  // NB the order of the functions arguments is important: enter, update, exit
   // update and exit are optional - but enter is not
   // also exit is more optional than update, which is just terrible
   return (fns) => selection.join(fns.enterFn, fns.updateFn, fns.exitFn)

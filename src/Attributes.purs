@@ -105,7 +105,7 @@ createTransition config = do
       where
       go name attr = case attr of
         TransitionName name -> name
-        _ -> ""
+        _ -> name
     t = FFI.createNewTransition_ $ getTransitionName config
   foldTransitionAttributes t config
 

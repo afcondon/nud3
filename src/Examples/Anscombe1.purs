@@ -11,7 +11,7 @@ import Prelude (Unit, bind, negate, pure, unit, ($), (*), (/))
 -- | draw anscombe's data as circles
 circlePlot :: Effect Unit
 circlePlot = do
-  let root = select (SelectorString "div#circles")
+  let root = select (SelectorString "div#anscombe")
 
   svg <- addElement root $ Append $ SVG "svg"
   let

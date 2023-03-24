@@ -10,7 +10,7 @@ import Prelude (Unit, bind, negate, pure, unit, (-), ($), (*), (==), (/))
 
 circlePlotInit :: Effect Selection_
 circlePlotInit = do
-  let root = select (SelectorString "div#circles")
+  let root = select (SelectorString "div#anscombe")
 
   svg <- addElement root $ Append $ SVG "svg"
   let
@@ -29,7 +29,7 @@ circlePlotUpdateSimple parent points = do
     { what: Append (SVG "circle")
     , "data": NewData points
     , parent
-    , key: IdentityKey
+    , key: IdentityKey -- customKeyFunction
     , instructions: 
       Simple [ Fill_ \d i -> 
                 case d.set of
@@ -54,7 +54,7 @@ circlePlotUpdateCompound parent points = do
     { what: Append (SVG "circle")
     , "data": NewData points
     , parent
-    , key: KeyFunction3 customKeyFunction
+    , key: IdentityKey -- customKeyFunction
     , instructions: 
       Compound {
           enter: [ Fill_ \d i -> 
@@ -69,10 +69,10 @@ circlePlotUpdateCompound parent points = do
             , CX_ \d i -> d.x * 10.0
             , CY_ \d i -> d.y * 10.0
             , Radius 2.0
-            , Classed "enter"
+            , Classed_ \d _ -> d.set
             ]
         , update: [ BeginTransition pointTransition [ CX_ \d i -> d.x * 10.0 , CY_ \d i -> d.y * 10.0 ] ]
-        , exit: [ ]
+        , exit: [ BeginTransition pointTransition [RemoveElements ] ]
       }
     }
   pure unit
@@ -80,16 +80,13 @@ circlePlotUpdateCompound parent points = do
 pointTransition :: Transition_
 pointTransition = createTransition [ TransitionName "foo", Duration 1000 ]
 
--- customKeyFunction :: KeyFunction Point Int
-customKeyFunction ::  Point -> Int -> NodeList -> Int
-customKeyFunction point index nodes =
-  let offset = 
-        case point.set of
-          "II" -> 11
-          "III" -> 22
-          "IV" -> 33
-          _ -> 0
-  in point.id - offset -- just force the ids of each set to start at 0
+customKeyFunction ::  KeyFunction Point Int
+customKeyFunction = KeyFunction1 $ \point ->
+  case point.set of
+    "II" -> point.id - 11
+    "III" -> point.id - 22
+    "IV" -> point.id - 33
+    _ -> point.id
 
 type Point = { x :: Number, y :: Number, set :: String, id :: Int }
 

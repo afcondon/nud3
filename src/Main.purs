@@ -9,15 +9,12 @@ import Data.Maybe (Maybe(..))
 import Data.String.CodeUnits (fromCharArray, toCharArray)
 import Data.Traversable (sequence)
 import Effect (Effect)
-import Effect.Aff (Milliseconds(..), delay, launchAff, launchAff_)
+import Effect.Aff (Milliseconds(..), delay, launchAff_)
 import Effect.Class (liftEffect)
 import Effect.Console (log)
 import Effect.Random (random)
-import Examples.Anscombe1 (circlePlot)
-import Examples.Anscombe2 (anscombeData, circlePlotInit, circlePlotUpdateCompound, subset)
-import Examples.GUP (generalUpdatePatternDraw, generalUpdatePatternSetup)
-import Examples.Matrix (matrix2table)
-import Examples.ThreeLittleCircles (threeLittleCircles)
+import Examples.Anscombe2 (anscombeData, circlePlotInit, circlePlotUpdateCompound, circlePlotUpdateSimple, subset)
+import Examples.GUP (generalUpdatePatternDraw)
 import Nud3.Types (Selection_)
 
 lettersUpdate :: Selection_ -> Effect Unit
@@ -40,13 +37,14 @@ lettersUpdate letters = launchAff_ $ forever do
       pure $ catMaybes choices -- remove the Nothings
 
 anscombeUpdate :: Selection_ -> Effect Unit
-anscombeUpdate selection = launchAff_ $ forever do
+anscombeUpdate selection = launchAff_ $ do
+  delay (Milliseconds 2000.0)
   liftEffect $ circlePlotUpdateCompound selection (subset "I" anscombeData)
-  delay (Milliseconds 1000.0)
+  delay (Milliseconds 2000.0)
   liftEffect $ circlePlotUpdateCompound selection (subset "II" anscombeData)
-  delay (Milliseconds 1000.0)
+  delay (Milliseconds 2000.0)
   liftEffect $ circlePlotUpdateCompound selection (subset "III" anscombeData)
-  delay (Milliseconds 1000.0)
+  delay (Milliseconds 2000.0)
   liftEffect $ circlePlotUpdateCompound selection (subset "IV" anscombeData)
   
 

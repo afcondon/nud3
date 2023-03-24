@@ -46,7 +46,7 @@ export function transitionInitEaseFunction(transition) {
 // assert to prevent calling transition functions on a selection
 function assertTransitionIsActive(selection) {
   let foo = Object.getPrototypeOf(selection);
-  let bar = Transition.prototype;
+  let bar = Transition.prototype; // TODO this is not workable longterm because Transaction is not exported in the unmodified d3
   if (foo !== bar) {
     throw new Error("transition is not active")
   }
