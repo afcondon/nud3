@@ -15,6 +15,7 @@ import Effect.Console (log)
 import Effect.Random (random)
 import Examples.GUP (generalUpdatePatternDraw, generalUpdatePatternSetup)
 import Examples.Matrix (matrix2table)
+import Examples.Anscombe1 (circlePlot)
 import Examples.ThreeLittleCircles (threeLittleCircles)
 import Nud3.Types (Selection_)
 
@@ -40,16 +41,17 @@ runUpdate letters = launchAff_ $ forever do
 
 main :: Effect Unit
 main = do
-  matrix2table
-  threeLittleCircles
+  -- matrix2table
+  -- threeLittleCircles
+  circlePlot
   -- drawTree 
   -- drawForceLayout
   
   -- get the initial selection for GUP example
-  letters <- generalUpdatePatternSetup
+  -- letters <- generalUpdatePatternSetup
   -- | the "General Update Pattern" runs in Aff, so it's tidier to run it in a separate function
   -- | we create the selection and then pass it to the update function which loops forever
-  runUpdate letters
+  -- runUpdate letters
 
-  liftEffect $ log "🍝"
+  log "🍝"
 
