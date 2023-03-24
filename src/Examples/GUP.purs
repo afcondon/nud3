@@ -82,18 +82,18 @@ generalUpdatePatternDraw selection letterdata = do
 crazyKeyFunction :: KeyFunction Char String
 crazyKeyFunction =
   let
-    keyFn :: Char -> Int -> NodeList -> String
-    keyFn 'a' _ _ = "b"
-    keyFn 'b' _ _ = "a"
-    keyFn d _ _ = singleton d
+    keyFn :: Char -> String
+    keyFn 'a' = "b"
+    keyFn 'b' = "a"
+    keyFn d = singleton d
   in
-    KeyFunction keyFn
+    KeyFunction1 keyFn
 
 otherKeyFunction :: KeyFunction Char Int
 otherKeyFunction =
   let
-    keyFn :: Char -> Int -> NodeList -> Int
-    keyFn d _ _ = toCharCode d
+    keyFn :: Char -> Int
+    keyFn d = toCharCode d
   in
-    KeyFunction keyFn
+    KeyFunction1 keyFn
 

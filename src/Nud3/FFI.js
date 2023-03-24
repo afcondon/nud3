@@ -33,12 +33,18 @@ export function prepareJoin_(selection) {
   }
 }
 
-// uncurryKeyFunction_ :: KeyFunction -> KeyFunction
-// NB we're ignoring the 'this' argument for now, could add it later
+// makeKeyFunction_ :: KeyFunction -> KeyFunction
 // NB also, we're ignoring the performance implications of this for really large selections
 // (but key functions could easily be added in FFI files to optimize for specific use cases)
-export function uncurryKeyFunction_ (f) {
+export function makeKeyFunction1_ (f) { return f }
+export function makeKeyFunction2_ (f) {
+  return (d,i,nodes) => f(d)(i)
+}
+export function makeKeyFunction3_ (f) {
   return (d,i,nodes) => f(d)(i)(nodes)
+}
+export function makeKeyFunction4_ (f) {
+  return (d,i,nodes) => f(d)(i)(nodes)(this) // TODO untested
 }
 export function identityKey_ (d) { return d}
 export function idKey_ (d) { return d.id }

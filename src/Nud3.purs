@@ -24,6 +24,7 @@ import Data.Show.Generic (genericShow)
 import Effect (Effect)
 import Effect.Unsafe (unsafePerformEffect)
 import Nud3.Attributes (Attribute, foldAttributes)
+import Nud3.FFI 
 import Nud3.FFI as FFI
 import Nud3.Types (KeyFunction(..), Selection_)
 import Unsafe.Coerce (unsafeCoerce)
@@ -131,7 +132,10 @@ visualize config = do
         case config.key of
           IdentityKey -> FFI.identityKey_
           HasIdField -> FFI.idKey_
-          (KeyFunction f) -> FFI.uncurryKeyFunction_ f
+          (KeyFunction1 f) -> makeKeyFunction1_ f
+          (KeyFunction2 f) -> makeKeyFunction2_ f
+          (KeyFunction3 f) -> makeKeyFunction3_ f
+          (KeyFunction4 f) -> makeKeyFunction4_ f
   -- both branches here use the same underlying call to selection.data(data, key)
   let hasData = case config."data" of
               InheritData -> FFI.useInheritedData_ prepped keyFunction

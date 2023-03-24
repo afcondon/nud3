@@ -22,11 +22,14 @@ module Nud3.FFI
   , prepareJoin_
   , selectManyWithFunction_
   , selectManyWithString_
-  , uncurryKeyFunction_
+  , makeKeyFunction1_
+  , makeKeyFunction2_
+  , makeKeyFunction3_
+  , makeKeyFunction4_
   , useInheritedData_
   ) where
 
-import Nud3.Types (D3SelectorFunction, KeyFunctionType, KeyFunction_, Selection_, Transition_)
+import Nud3.Types
 
 foreign import getName_ :: Selection_ -> String
 
@@ -47,7 +50,10 @@ foreign import prepareJoin_ :: Selection_ -> String -> Selection_
 foreign import identityKey_ :: KeyFunction_
 foreign import idKey_ :: KeyFunction_
 
-foreign import uncurryKeyFunction_ :: forall d i. KeyFunctionType d i -> KeyFunction_
+foreign import makeKeyFunction1_ :: forall d i. KeyFunctionType1 d i -> KeyFunction_
+foreign import makeKeyFunction2_ :: forall d i. KeyFunctionType2 d i -> KeyFunction_
+foreign import makeKeyFunction3_ :: forall d i. KeyFunctionType3 d i -> KeyFunction_
+foreign import makeKeyFunction4_ :: forall d i. KeyFunctionType4 d i -> KeyFunction_
 foreign import useInheritedData_ :: Selection_ -> KeyFunction_ -> Selection_
 foreign import addData_ :: forall d. Selection_ -> Array d -> KeyFunction_ -> Selection_
 

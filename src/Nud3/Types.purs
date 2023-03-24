@@ -1,4 +1,19 @@
-module Nud3.Types where
+module Nud3.Types
+  ( D3SelectorFunction
+  , KeyFunction(..)
+  , KeyFunctionType1
+  , KeyFunctionType2
+  , KeyFunctionType3
+  , KeyFunctionType4
+  , KeyFunction_
+  , NodeList
+  , Selection_
+  , Selector(..)
+  , ThisPtr_
+  , Transition_
+  , UpdateSelection
+  )
+  where
 
 import Prelude
 
@@ -8,6 +23,7 @@ import Web.DOM (Node) as DOM
 foreign import data Selection_ :: Type -- opaque and mutable data 
 foreign import data Transition_ :: Type -- opaque and mutable data 
 foreign import data KeyFunction_ :: Type -- opaque type for key functions in JavaScript
+foreign import data ThisPtr_ :: Type -- opaque type for "this" in JavaScript, hopefully we never need this one!
 foreign import data D3SelectorFunction :: Type
 
 data Selector
@@ -39,7 +55,13 @@ type UpdateSelection =
 data KeyFunction d i
   = IdentityKey
   | HasIdField -- if there's a way to constrain this, ie forall r. (HasIdField r) => r -> i, that would be great
-  | KeyFunction (KeyFunctionType d i)
+  | KeyFunction1 (KeyFunctionType1 d i)
+  | KeyFunction2 (KeyFunctionType2 d i)
+  | KeyFunction3 (KeyFunctionType3 d i)
+  | KeyFunction4 (KeyFunctionType4 d i)
 
-type KeyFunctionType d i = ((Ord i) => (Ord d) => d -> Int -> NodeList -> i)
+type KeyFunctionType1 d i = ((Ord i) => (Ord d) => d -> i)
+type KeyFunctionType2 d i = ((Ord i) => (Ord d) => d -> Int -> i)
+type KeyFunctionType3 d i = ((Ord i) => (Ord d) => d -> Int -> NodeList -> i)
+type KeyFunctionType4 d i = ((Ord i) => (Ord d) => d -> Int -> NodeList -> ThisPtr_ -> i)
 

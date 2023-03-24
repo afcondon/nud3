@@ -27,7 +27,7 @@ circlePlot = do
     { what: Append (SVG "circle")
     , "data": NewData anscombeData
     , parent: circleGroup
-    , key: KeyFunction \d _ _-> d.id
+    , key: KeyFunction1 \d -> d.id
     , instructions: 
       Simple [ Fill_ \d i -> 
                 case d.set of

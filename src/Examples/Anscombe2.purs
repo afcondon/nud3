@@ -54,7 +54,7 @@ circlePlotUpdateCompound parent points = do
     { what: Append (SVG "circle")
     , "data": NewData points
     , parent
-    , key: KeyFunction customKeyFunction
+    , key: KeyFunction3 customKeyFunction
     , instructions: 
       Compound {
           enter: [ Fill_ \d i -> 
