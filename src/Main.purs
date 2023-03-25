@@ -37,8 +37,7 @@ lettersUpdate letters = launchAff_ $ forever do
       pure $ catMaybes choices -- remove the Nothings
 
 anscombeUpdate :: Selection_ -> Effect Unit
-anscombeUpdate selection = launchAff_ $ do
-  delay (Milliseconds 2000.0)
+anscombeUpdate selection = launchAff_ $ forever do
   liftEffect $ circlePlotUpdateCompound selection (subset "I" anscombeData)
   delay (Milliseconds 2000.0)
   liftEffect $ circlePlotUpdateCompound selection (subset "II" anscombeData)
@@ -46,6 +45,7 @@ anscombeUpdate selection = launchAff_ $ do
   liftEffect $ circlePlotUpdateCompound selection (subset "III" anscombeData)
   delay (Milliseconds 2000.0)
   liftEffect $ circlePlotUpdateCompound selection (subset "IV" anscombeData)
+  delay (Milliseconds 2000.0)
   
 
 main :: Effect Unit

@@ -85,6 +85,9 @@ data TransitionAttribute d
   | Delay Int
   | Duration Int
   | Easing (Number -> Number)
+  | On
+  | End
+  | Each
 
 addTransitionAttribute :: forall d. Transition_ -> TransitionAttribute d -> Transition_
 addTransitionAttribute t =
@@ -92,13 +95,20 @@ addTransitionAttribute t =
     Delay d -> transitionInitDelay_ t d
     Duration d -> transitionInitDuration_ t d
     Easing e -> transitionInitEaseFunction t e
+    On -> transitionOn_ t unit -- TODO
+    End -> transitionEnd_ t unit -- TODO
+    Each -> transitionEach_ t unit -- TODO
     TransitionName _ -> t -- NB we're not setting the name here, we've already set it in createTransition
 
 foldTransitionAttributes :: forall d. Transition_ -> Array (TransitionAttribute d) -> Transition_
 foldTransitionAttributes t as = foldl addTransitionAttribute t as
 
+-- | haven't fully understood how this needs to work when multiple selections that use the "same" transition yet
+-- | in the Anscombe example we give a 'unit' parameter to ensure a fresh transition for each "re-use"
+-- | but this doesn't seem like it should be necessary. 
+-- | TODO definitely needs to be fixed, unit param is a hack
 createTransition :: forall d. Array (TransitionAttribute d) -> Transition_
-createTransition config = do
+createTransition params = do
   let
     getTransitionName :: Array (TransitionAttribute d) -> String
     getTransitionName attrs = foldl go "" attrs
@@ -106,8 +116,8 @@ createTransition config = do
       go name attr = case attr of
         TransitionName name -> name
         _ -> name
-    t = FFI.createNewTransition_ $ getTransitionName config
-  foldTransitionAttributes t config
+    t = FFI.createNewTransition_ $ getTransitionName params
+  foldTransitionAttributes t params
 
 data Attribute d
   = BackgroundColor String
@@ -179,6 +189,9 @@ instance showTransitionAttribute :: Show (TransitionAttribute d) where
   show (Delay d) = "Delay " <> show d
   show (Duration d) = "Duration " <> show d
   show (Easing _) = "Easing"
+  show On = "On"
+  show End = "End"
+  show Each = "Each"
 
 -- | Boilerplate function to get the key from an Attribute
 getValueFromAttribute :: forall d. Attribute d -> AttributeSetter_
@@ -392,6 +405,9 @@ foreign import addTransitionToSelection_ :: Selection_ -> Transition_ -> Selecti
 foreign import uncurry_ :: forall d t. AttributeSetter d t -> AttributeSetter_
 
 foreign import transitionInitDelay_ :: forall attr. Transition_ -> attr -> Transition_
+foreign import transitionOn_ :: forall attr. Transition_ -> attr -> Transition_
+foreign import transitionEnd_ :: forall attr. Transition_ -> attr -> Transition_
+foreign import transitionEach_ :: forall attr. Transition_ -> attr -> Transition_
 foreign import transitionInitDuration_ :: forall attr. Transition_ -> attr -> Transition_
 foreign import transitionInitEaseFunction :: Transition_ -> (Number -> Number) -> Transition_
 foreign import transitionDelay_ :: forall attr. Selection_ -> attr -> Selection_ -- only works on transitions, ie _mode = Transition

@@ -15,9 +15,9 @@ circlePlotInit = do
   svg <- addElement root $ Append $ SVG "svg"
   let
     _ = foldAttributes svg
-      [ Width 650.0
-      , Height 650.0
-      , ViewBox (-100) (-100) 300 300
+      [ Width 1000.0
+      , Height 1000.0
+      , ViewBox 0 0 1000 1000
       , Classed "d3svg circles"
       ]
   circleGroup <- addElement svg $ Append $ SVG "g"
@@ -57,17 +57,24 @@ circlePlotUpdateCompound parent points = do
     , key: customKeyFunction
     , instructions: 
       Compound {
-          enter: [ fillFunction
-                  , StrokeColor "black"
-                  , StrokeWidth 1.0
-                  , CX_ \d i -> d.x * 10.0
-                  , CY_ \d i -> d.y * 10.0
-                  , Radius 2.0
-                  , Classed_ \d _ -> d.set
-                  ]
-        , update: [ CX_ \d i -> d.x * 10.0
-                  , CY_ \d i -> d.y * 10.0 
+          enter: [  Classed_ \d _ -> d.set
                   , fillFunction
+                  , StrokeColor "black"
+                  , StrokeWidth 2.0
+                  , CX_ \d i -> d.x * 50.0
+                  , CY_ \d i -> d.y * 50.0
+                  , Radius 1.0
+                  , BeginTransition (pointTransition unit) [
+                        Delay_ \_ i -> i * 20
+                      , Radius 10.0
+                    ]
+                  ]
+        , update: [ Classed "updated"
+                  , fillFunction
+                  , BeginTransition (pointTransition unit) [
+                        CX_ \d i -> d.x * 50.0
+                      , CY_ \d i -> d.y * 50.0 
+                    ]
                   ]
         , exit: [ ]
       }
@@ -84,8 +91,9 @@ fillFunction =
       "IV" -> "yellow"
       _ -> "black"
 
-pointTransition :: Transition_
-pointTransition = createTransition [ TransitionName "foo", Duration 1000 ]
+pointTransition :: Unit -> Transition_
+-- pointTransition _ = createTransition [ TransitionName "foo", Duration 1000 ]
+pointTransition _ = createTransition [ Duration 1000 ]
 
 customKeyFunction ::  KeyFunction Point Int
 customKeyFunction = KeyFunction1 $ \point ->
