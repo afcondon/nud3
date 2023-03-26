@@ -1,8 +1,10 @@
-module Nud3.Attributes where
+module Nud3.Attributes
+  where
 
 import Prelude
 
 import Data.Array (foldl)
+import Data.Int (floor, fromNumber)
 import Nud3.FFI as FFI
 import Nud3.Types (Selection_, Transition_)
 import Unsafe.Coerce (unsafeCoerce)
@@ -26,7 +28,6 @@ exportAttributeSetter_ = unsafeCoerce
 
 exportAttributeSetterUncurried_ :: forall d t. AttributeSetter d t -> AttributeSetter_
 exportAttributeSetterUncurried_ f = unsafeCoerce $ uncurry_ f
-
 
 foldAttributes :: forall d. Selection_ -> Array (Attribute d) -> Selection_
 foldAttributes s as = foldl addAttribute s as
@@ -76,10 +77,21 @@ exportTransitionAttributeSetter_ = unsafeCoerce
 exportTransitionAttributeSetterUncurried_ :: forall d. TransitionAttributeSetter d -> TransitionAttributeSetter_
 exportTransitionAttributeSetterUncurried_ f = unsafeCoerce $ uncurry_ f
 
+
+viewBoxFromNumbers :: forall d. Number -> Number -> Number -> Number -> Attribute d
+viewBoxFromNumbers x y w h = ViewBox xi yi wi hi
+  where
+    xi = floor x
+    yi = floor y
+    wi = floor w
+    hi = floor h
+
 -- | TODO there are actually two types of transition attributes when it comes down to it
 -- | static transition attributes do not require there to be an underlying selection yet
 -- | dynamic transition attributes will blow up if there is no underlying selection
 -- | we should probably have two types of transition attributes TODO 
+
+data TransitionAttribute :: forall k. k -> Type
 data TransitionAttribute d
   = TransitionName String -- optional name for the transition
   | Delay Int
@@ -119,6 +131,27 @@ createTransition params = do
     t = FFI.createNewTransition_ $ getTransitionName params
   foldTransitionAttributes t params
 
+data AlignAspectRatio_X = XMin | XMid | XMax
+instance Show AlignAspectRatio_X where
+  show XMin = "xMin"
+  show XMid = "xMid"
+  show XMax = "xMax"
+data AlignAspectRatio_Y = YMin | YMid | YMax
+instance Show AlignAspectRatio_Y where -- YES!!! the Y is capitalized, where the x is not!!!!
+  show YMin = "YMin"
+  show YMid = "YMid"
+  show YMax = "YMax"
+data AspectRatioPreserve = Meet | Slice | None
+instance Show AspectRatioPreserve where
+  show Meet  = "meet"
+  show Slice = "slice"
+  show None  = "none"
+data AspectRatioSpec = AspectRatio AlignAspectRatio_X AlignAspectRatio_Y AspectRatioPreserve
+
+instance Show AspectRatioSpec where
+  show (AspectRatio x y None) =  "none"
+  show (AspectRatio x y p)    =  show x <> show y <> " " <> show p
+
 data Attribute d
   = BackgroundColor String
   | Color String
@@ -134,6 +167,7 @@ data Attribute d
   | InnerHTML String
   | Opacity Number
   | Path String
+  | PreserveAspectRatio String
   | Radius Number
   | StrokeColor String
   | StrokeOpacity Number
@@ -141,6 +175,8 @@ data Attribute d
   | Style String
   | Text String
   | TextAnchor String
+  | Transform String
+
   -- | attributes specific to transitions
   | BeginTransition Transition_ (Array (Attribute d))
   | Delay_ (TransitionAttributeSetter d) -- a function to set the delay per datum
@@ -170,6 +206,7 @@ data Attribute d
   | InnerHTML_ (AttributeSetter d String)
   | Opacity_ (AttributeSetter d Number)
   | Path_ (AttributeSetter d String)
+  | PreserveAspectRatio_ (AttributeSetter d String)
   | Radius_ (AttributeSetter d Number)
   | StrokeColor_ (AttributeSetter d String)
   | StrokeOpacity_ (AttributeSetter d Number)
@@ -177,6 +214,7 @@ data Attribute d
   | Style_ (AttributeSetter d String)
   | Text_ (AttributeSetter d String)
   | TextAnchor_ (AttributeSetter d String)
+  | Transform_ (AttributeSetter d String)
   | Width_ (AttributeSetter d Number)
   | X_ (AttributeSetter d Number)
   | Y_ (AttributeSetter d Number)
@@ -213,6 +251,7 @@ getValueFromAttribute = case _ of
   InnerHTML v -> exportAttributeSetter_ v
   Opacity v -> exportAttributeSetter_ v
   Path v -> exportAttributeSetter_ v
+  PreserveAspectRatio v -> exportAttributeSetter_ v
   Radius v -> exportAttributeSetter_ v
   StrokeColor v -> exportAttributeSetter_ v
   StrokeOpacity v -> exportAttributeSetter_ v
@@ -220,6 +259,7 @@ getValueFromAttribute = case _ of
   Style v -> exportAttributeSetter_ v
   Text v -> exportAttributeSetter_ v
   TextAnchor v -> exportAttributeSetter_ v
+  Transform v -> exportAttributeSetter_ v
   Width v -> exportAttributeSetter_ v
   ViewBox x y w h -> exportAttributeSetter_ [ x, y, w, h ]
   X v -> exportAttributeSetter_ v
@@ -253,12 +293,14 @@ getValueFromAttribute = case _ of
   Radius_ f -> exportAttributeSetterUncurried_ f
   Opacity_ f -> exportAttributeSetterUncurried_ f
   Path_ f -> exportAttributeSetterUncurried_ f
+  PreserveAspectRatio_ f -> exportAttributeSetterUncurried_ f
   StrokeColor_ f -> exportAttributeSetterUncurried_ f
   StrokeOpacity_ f -> exportAttributeSetterUncurried_ f
   StrokeWidth_ f -> exportAttributeSetterUncurried_ f
   Style_ f -> exportAttributeSetterUncurried_ f
   Text_ f -> exportAttributeSetterUncurried_ f
   TextAnchor_ f -> exportAttributeSetterUncurried_ f
+  Transform_ f -> exportAttributeSetterUncurried_ f
   Width_ f -> exportAttributeSetterUncurried_ f
   X_ f -> exportAttributeSetterUncurried_ f
   Y_ f -> exportAttributeSetterUncurried_ f
@@ -298,6 +340,8 @@ getKeyFromAttribute = case _ of
   Opacity _ -> "opacity"
   Path_ _ -> "path" -- TODO element path with attribute d
   Path _ -> "path" -- TODO element path with attribute d
+  PreserveAspectRatio_ _ -> "preserveAspectRatio"
+  PreserveAspectRatio _ -> "preserveAspectRatio"
   Radius_ _ -> "r"
   Radius _ -> "r"
   StrokeColor_ _ -> "stroke"
@@ -312,6 +356,8 @@ getKeyFromAttribute = case _ of
   Text _ -> "text"
   TextAnchor_ _ -> "text-anchor"
   TextAnchor _ -> "text-anchor"
+  Transform _ -> "transform"
+  Transform_ _ -> "transform"
   -- | transition attributes are different and we never actually getKeyFromAttribute 
   -- | from them like this but we have to typecheck here
   BeginTransition _ _ -> "transition begins here" -- special case
@@ -352,6 +398,7 @@ instance showAttribute :: Show (Attribute d) where
   show (InnerHTML v) = "\n\t\tInnerHTML_" <> " set directly to " <> v
   show (Opacity v) = "\n\tOpacity_" <> " set directly to " <> show v
   show (Path v) = "\n\t\tPath_" <> " set directly to " <> v
+  show (PreserveAspectRatio v) = "\n\t\tPreserveAspectRatio_" <> " set directly to " <> v
   show (Radius v) = "\n\t\tRadius_" <> " set directly to " <> show v
   show (StrokeColor v) = "\n\t\tStrokeColor_" <> " set directly to " <> v
   show (StrokeOpacity v) = "\n\t\tStrokeOpacity_" <> " set directly to " <> show v
@@ -359,6 +406,7 @@ instance showAttribute :: Show (Attribute d) where
   show (Style v) = "\n\t\tStyle_" <> " set directly to " <> v
   show (Text v) = "\n\t\tText_" <> " set directly to " <> v
   show (TextAnchor v) = "\n\t\tTextAnchor_" <> " set directly to " <> v
+  show (Transform v) = "\n\t\tTransform_" <> " set directly to " <> v
 
   show (BeginTransition t v) = "\n\t\tTransition started " <> show v 
   show (Delay_ _) = "Delay lambda"
@@ -389,12 +437,14 @@ instance showAttribute :: Show (Attribute d) where
   show (Radius_ _) = "\n\t\tRadius set by function"
   show (Opacity_ _) = "\n\t\tOpacity set by function"
   show (Path_ _) = "\n\t\tPath set by function"
+  show (PreserveAspectRatio_ _) = "\n\t\tPreserveAspectRatio set by function"
   show (StrokeColor_ _) = "\n\t\tStrokeColor set by function"
   show (StrokeOpacity_ _) = "\n\t\tStrokeOpacity set by function"
   show (StrokeWidth_ _) = "\n\t\tStrokeWidth set by function"
   show (Style_ _) = "\n\t\tStyle set by function"
   show (Text_ _) = "\n\t\tText set by function"
   show (TextAnchor_ _) = "\n\t\tTextAnchor set by function"
+  show (Transform_ _) = "\n\t\tTransform set by function"
   show (Width_ _) = "\n\t\tWidth set by function"
   show (X_ _) = "\n\t\tX set by function"
   show (Y_ _) = "\n\t\tY set by function"
