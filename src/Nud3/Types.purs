@@ -12,8 +12,7 @@ module Nud3.Types
   , ThisPtr_
   , Transition_
   , UpdateSelection
-  )
-  where
+  ) where
 
 import Prelude
 
@@ -61,7 +60,7 @@ data KeyFunction d i
   | KeyFunction4 (KeyFunctionType4 d i)
 
 -- | two constraints, two dictionaries to be removed to make it work as a javascript function 
-type KeyFunctionType1 d i = ((Ord i) => (Ord d) => d -> i) 
+type KeyFunctionType1 d i = ((Ord i) => (Ord d) => d -> i)
 type KeyFunctionType2 d i = ((Ord i) => (Ord d) => d -> Int -> i)
 type KeyFunctionType3 d i = ((Ord i) => (Ord d) => d -> Int -> NodeList -> i)
 type KeyFunctionType4 d i = ((Ord i) => (Ord d) => d -> Int -> NodeList -> ThisPtr_ -> i)

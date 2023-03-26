@@ -99,7 +99,6 @@ drawTree tree = do
     }
   pure unit
 
-
 -- | ------------------------ Tree Data ------------------------
 -- | get the data from a JSON file using AffJax
 -- | ------------------------ Tree Data ------------------------
@@ -112,7 +111,7 @@ getTreeAndDrawIt = launchAff_ do
     (E.Left err) -> pure unit
     (E.Right (treeJSON :: TreeJson_)) -> do
       model <- liftAff $ makeModel TidyTree Vertical treeJSON
-      
+
       tree <- liftEffect $ drawTree model
       -- tree <- liftAff $ Tree.drawTree model "div.svg-container"
       pure unit

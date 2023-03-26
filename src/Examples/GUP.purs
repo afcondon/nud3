@@ -80,12 +80,11 @@ generalUpdatePatternDraw selection letterdata = do
 
 -- | Key functions (unused)
 crazyKeyFunction :: KeyFunction Char String
-crazyKeyFunction = KeyFunction1 \c -> 
+crazyKeyFunction = KeyFunction1 \c ->
   case c of
     'a' -> "b"
     'b' -> "a"
     d -> singleton d
-      
 
 otherKeyFunction :: KeyFunction Char Int
 otherKeyFunction = KeyFunction1 toCharCode
