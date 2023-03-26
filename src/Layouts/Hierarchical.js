@@ -1,4 +1,5 @@
 import { tree, cluster } from "d3-hierarchy";
+import { linkHorizontal, linkVertical, linkRadial } from "d3-shape";
 
 export function getClusterLayoutFn_() { return cluster() }
 export function getTreeLayoutFn_() { return tree() }
@@ -7,16 +8,13 @@ export function getTreeLayoutFn_() { return tree() }
 export function find_(tree) { return filter => tree.find(filter) }
 export function sharesParent_(a) { return b => a.parent == b.parent }
 
-export const linkHorizontal_ = d3
-  .linkHorizontal()
+export const linkHorizontal_ = linkHorizontal()
   .x(d => d.y)
   .y(d => d.x)
-export const linkHorizontal2_ = d3
-  .linkHorizontal()
+export const linkHorizontal2_ = linkHorizontal()
   .x(d => d.x)
   .y(d => d.y)
-export const linkVertical_ = d3
-  .linkVertical()
+export const linkVertical_ = linkVertical()
   .x(d => d.x)
   .y(d => d.y)
 export function linkClusterHorizontal_(levelSpacing) {
@@ -35,8 +33,7 @@ export function linkClusterVertical_(levelSpacing) {
 }
 export function linkRadial_(angleFn) {
   return radiusFn =>
-    d3
-      .linkRadial()
+    linkRadial()
       .angle(angleFn)
       .radius(radiusFn)
 }
