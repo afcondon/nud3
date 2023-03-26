@@ -15,6 +15,7 @@ import Effect.Console (log)
 import Effect.Random (random)
 import Examples.Anscombe2 (anscombeData, circlePlotInit, circlePlotUpdateCompound, circlePlotUpdateSimple, subset)
 import Examples.GUP (generalUpdatePatternDraw)
+import Examples.Tree (drawTree, getTreeAndDrawIt)
 import Nud3.Types (Selection_)
 
 lettersUpdate :: Selection_ -> Effect Unit
@@ -53,9 +54,9 @@ main = do
   -- matrix2table
   -- threeLittleCircles
   -- circlePlot
-  circles <- circlePlotInit
-  anscombeUpdate circles
-  -- drawTree 
+  -- circles <- circlePlotInit
+  -- anscombeUpdate circles
+  _ <- getTreeAndDrawIt 
   -- drawForceLayout
   
   -- get the initial selection for GUP example

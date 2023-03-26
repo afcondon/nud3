@@ -8,7 +8,7 @@
     "initps": "spago init",
     "build": "spago build",
     "run": "spago run",
-    "install": "spago install web-dom debug aff random",
+    "install": "spago install web-dom debug random affjax-web nullable",
     "tidy": "purs-tidy format-in-place src/**/*.purs",
     "bundle": "spago bundle --module Main --outfile dist/bundle.js",
     "version": "spago --version"
@@ -27,6 +27,7 @@
   "devDependencies": {
     "d3-dispatch": "^3.0.1",
     "d3-ease": "^3.0.1",
+    "d3-hierarchy": "^3.1.2",
     "d3-selection": "^3.0.0",
     "d3-timer": "^3.0.1",
     "d3-transition": "^3.0.1",

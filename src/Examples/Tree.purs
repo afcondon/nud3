@@ -1,14 +1,20 @@
 module Examples.Tree where
 
 import Nud3
+import Nud3.Layouts.Hierarchical
 
+import Data.Either as E
 import Data.Number (pi)
 import Data.Tree (Tree)
 import Effect (Effect)
+import Effect.Aff (Aff, launchAff, launchAff_)
+import Effect.Aff.Class (liftAff)
+import Effect.Class (liftEffect)
 import Nud3.Attributes (Attribute(..), foldAttributes)
-import Nud3.Tree as VizTree
+import Nud3.Tree.JSON (TreeJson_, TreeLayout(..), TreeType(..), TreeModel, getTreeViaAJAX)
+import Nud3.Tree.JSON as VizTree
 import Nud3.Types (KeyFunction(..))
-import Prelude (class Show, Unit, bind, negate, pure, unit, ($), (<), (==))
+import Prelude (class Show, Unit, bind, discard, negate, pure, unit, ($), (<), (==))
 
 -- | Tree
 computeX :: VizTree.TreeLayout -> Boolean -> Number -> Number
@@ -31,12 +37,12 @@ computeTextAnchor layoutStyle hasChildren x =
       if hasChildren then "start"
       else "end"
 
-drawTree :: forall d. (Show d) => Tree d -> Effect Unit
+drawTree :: TreeModel -> Effect Unit
 drawTree tree = do
 
   let root = select (SelectorString "div#tree")
 
-  layoutTreeData <- VizTree.verticalLayout tree
+  -- layoutTreeData <- VizTree.verticalLayout tree
   svg <- addElement root $ Append $ SVG "svg"
   let
     _ = foldAttributes svg
@@ -52,7 +58,7 @@ drawTree tree = do
 
   node <- visualize
     { what: Append (SVG "g")
-    , "data": NewData $ VizTree.getNodes layoutTreeData -- could use newtype and unwrap here perhaps
+    , "data": NewData [] -- $ VizTree.getNodes layoutTreeData -- could use newtype and unwrap here perhaps
     , parent: nodesGroup
     , key: IdentityKey
     , instructions: Compound
@@ -81,7 +87,7 @@ drawTree tree = do
 
   individualLink <- visualize
     { what: Append (SVG "path")
-    , "data": NewData $ VizTree.getNodes layoutTreeData
+    , "data": NewData [] -- $ VizTree.getNodes layoutTreeData
     , parent: linksGroup
     , key: IdentityKey
     , instructions: Simple
@@ -93,3 +99,21 @@ drawTree tree = do
     }
   pure unit
 
+
+-- | ------------------------ Tree Data ------------------------
+-- | get the data from a JSON file using AffJax
+-- | ------------------------ Tree Data ------------------------
+
+getTreeAndDrawIt :: Effect Unit
+getTreeAndDrawIt = launchAff_ do
+  treeJSON <- getTreeViaAJAX "./data/flare-2.json"
+
+  case treeJSON of
+    (E.Left err) -> pure unit
+    (E.Right (treeJSON :: TreeJson_)) -> do
+      model <- liftAff $ makeModel TidyTree Vertical treeJSON
+      
+      tree <- liftEffect $ drawTree model
+      -- tree <- liftAff $ Tree.drawTree model "div.svg-container"
+      pure unit
+  pure unit

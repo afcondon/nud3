@@ -1,9 +1,12 @@
 package:
   dependencies:
     - aff
+    - affjax
+    - affjax-web
     - console
     - debug
     - effect
+    - nullable
     - prelude
     - random
     - web-dom

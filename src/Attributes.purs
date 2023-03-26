@@ -133,6 +133,7 @@ data Attribute d
   | Height Number
   | InnerHTML String
   | Opacity Number
+  | Path String
   | Radius Number
   | StrokeColor String
   | StrokeOpacity Number
@@ -168,6 +169,7 @@ data Attribute d
   | Height_ (AttributeSetter d Number)
   | InnerHTML_ (AttributeSetter d String)
   | Opacity_ (AttributeSetter d Number)
+  | Path_ (AttributeSetter d String)
   | Radius_ (AttributeSetter d Number)
   | StrokeColor_ (AttributeSetter d String)
   | StrokeOpacity_ (AttributeSetter d Number)
@@ -210,6 +212,7 @@ getValueFromAttribute = case _ of
   Height v -> exportAttributeSetter_ v
   InnerHTML v -> exportAttributeSetter_ v
   Opacity v -> exportAttributeSetter_ v
+  Path v -> exportAttributeSetter_ v
   Radius v -> exportAttributeSetter_ v
   StrokeColor v -> exportAttributeSetter_ v
   StrokeOpacity v -> exportAttributeSetter_ v
@@ -249,6 +252,7 @@ getValueFromAttribute = case _ of
   InnerHTML_ f -> exportAttributeSetterUncurried_ f
   Radius_ f -> exportAttributeSetterUncurried_ f
   Opacity_ f -> exportAttributeSetterUncurried_ f
+  Path_ f -> exportAttributeSetterUncurried_ f
   StrokeColor_ f -> exportAttributeSetterUncurried_ f
   StrokeOpacity_ f -> exportAttributeSetterUncurried_ f
   StrokeWidth_ f -> exportAttributeSetterUncurried_ f
@@ -292,6 +296,8 @@ getKeyFromAttribute = case _ of
   InnerHTML _ -> "html"
   Opacity_ _ -> "opacity"
   Opacity _ -> "opacity"
+  Path_ _ -> "path" -- TODO element path with attribute d
+  Path _ -> "path" -- TODO element path with attribute d
   Radius_ _ -> "r"
   Radius _ -> "r"
   StrokeColor_ _ -> "stroke"
@@ -345,6 +351,7 @@ instance showAttribute :: Show (Attribute d) where
   show (Height v) = "\n\t\tHeight_" <> " set directly to " <> show v
   show (InnerHTML v) = "\n\t\tInnerHTML_" <> " set directly to " <> v
   show (Opacity v) = "\n\tOpacity_" <> " set directly to " <> show v
+  show (Path v) = "\n\t\tPath_" <> " set directly to " <> v
   show (Radius v) = "\n\t\tRadius_" <> " set directly to " <> show v
   show (StrokeColor v) = "\n\t\tStrokeColor_" <> " set directly to " <> v
   show (StrokeOpacity v) = "\n\t\tStrokeOpacity_" <> " set directly to " <> show v
@@ -381,6 +388,7 @@ instance showAttribute :: Show (Attribute d) where
   show (InnerHTML_ _) = "\n\t\tInnerHTML set by function"
   show (Radius_ _) = "\n\t\tRadius set by function"
   show (Opacity_ _) = "\n\t\tOpacity set by function"
+  show (Path_ _) = "\n\t\tPath set by function"
   show (StrokeColor_ _) = "\n\t\tStrokeColor set by function"
   show (StrokeOpacity_ _) = "\n\t\tStrokeOpacity set by function"
   show (StrokeWidth_ _) = "\n\t\tStrokeWidth set by function"
