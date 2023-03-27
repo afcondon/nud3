@@ -48,7 +48,7 @@ radialSeparation = mkFn2
   )
 
 horizontalLink :: forall d. AttributeSetter d String
-horizontalLink d _ =  linkHorizontal_ d
+horizontalLink d _ = linkHorizontal_ d
 
 -- version for when the x and y point are already swapped
 -- should be default someday
@@ -59,7 +59,7 @@ verticalLink :: forall d. AttributeSetter d String
 verticalLink d _ = linkVertical_ d
 
 horizontalClusterLink :: forall d. Number -> AttributeSetter d String
-horizontalClusterLink yOffset = \d _ -> (linkClusterHorizontal_ yOffset d) 
+horizontalClusterLink yOffset = \d _ -> (linkClusterHorizontal_ yOffset d)
 
 verticalClusterLink :: forall d. Number -> AttributeSetter d String
 verticalClusterLink xOffset = \d _ -> (linkClusterVertical_ xOffset d)
@@ -70,11 +70,11 @@ radialLink angleFn radius_Fn = \d _ -> linkRadial_ angleFn radius_Fn d
 -- | stuff taken from D3.Tagless FFI
 -- the full API for hierarchical nodes:
 -- TODO these should all be operating on cooked tree type, however that is to be done
-foreign import descendants_     :: forall r. D3_TreeNode r -> Array (D3_TreeNode r)
-foreign import links_           :: forall d r1 r2. D3_TreeNode r1 -> Array (D3Link d r2)
-foreign import ancestors_       :: forall r. D3_TreeNode r -> Array (D3_TreeNode r)
-foreign import leaves_          :: forall r. D3_TreeNode r -> Array (D3_TreeNode r)
-foreign import path_            :: forall r. D3_TreeNode r -> D3_TreeNode r -> Array (D3_TreeNode r)
+foreign import descendants_ :: forall r. D3_TreeNode r -> Array (D3_TreeNode r)
+foreign import links_ :: forall d r1 r2. D3_TreeNode r1 -> Array (D3Link d r2)
+foreign import ancestors_ :: forall r. D3_TreeNode r -> Array (D3_TreeNode r)
+foreign import leaves_ :: forall r. D3_TreeNode r -> Array (D3_TreeNode r)
+foreign import path_ :: forall r. D3_TreeNode r -> D3_TreeNode r -> Array (D3_TreeNode r)
 foreign import find_ :: forall d r. D3_TreeNode r -> (d -> Boolean) -> Nullable (D3_TreeNode r)
 foreign import sharesParent_ :: forall r. (D3_TreeNode r) -> (D3_TreeNode r) -> Boolean
 
@@ -101,10 +101,10 @@ getLayout layout = do
 foreign import getTreeLayoutFn_ :: Unit -> TreeLayoutFn_
 foreign import getClusterLayoutFn_ :: Unit -> TreeLayoutFn_
 
-foreign import hierarchyFromJSON_       :: forall d. TreeJson_ -> D3_TreeNode d
+foreign import hierarchyFromJSON_ :: forall d. TreeJson_ -> D3_TreeNode d
 
-foreign import treeSetSeparation_     :: forall d. TreeLayoutFn_ -> (Fn2 (D3_TreeNode d) (D3_TreeNode d) Number) -> TreeLayoutFn_
-foreign import treeSetSize_           :: TreeLayoutFn_ -> Array Number -> TreeLayoutFn_
-foreign import treeSetNodeSize_       :: TreeLayoutFn_ -> Array Number -> TreeLayoutFn_
-foreign import runLayoutFn_           :: forall r. TreeLayoutFn_ -> D3_TreeNode r -> D3_TreeNode r
-foreign import treeMinMax_            :: forall d. D3_TreeNode d -> { xMin :: Number, xMax :: Number, yMin :: Number, yMax :: Number }
+foreign import treeSetSeparation_ :: forall d. TreeLayoutFn_ -> (Fn2 (D3_TreeNode d) (D3_TreeNode d) Number) -> TreeLayoutFn_
+foreign import treeSetSize_ :: TreeLayoutFn_ -> Array Number -> TreeLayoutFn_
+foreign import treeSetNodeSize_ :: TreeLayoutFn_ -> Array Number -> TreeLayoutFn_
+foreign import runLayoutFn_ :: forall r. TreeLayoutFn_ -> D3_TreeNode r -> D3_TreeNode r
+foreign import treeMinMax_ :: forall d. D3_TreeNode d -> { xMin :: Number, xMax :: Number, yMin :: Number, yMax :: Number }
