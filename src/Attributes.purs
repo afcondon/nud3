@@ -4,7 +4,7 @@ module Nud3.Attributes
 import Prelude
 
 import Data.Array (foldl)
-import Data.Int (floor, fromNumber)
+import Data.Int (floor)
 import Nud3.FFI as FFI
 import Nud3.Types (Selection_, Transition_)
 import Unsafe.Coerce (unsafeCoerce)

@@ -34,7 +34,7 @@ import Effect.Aff (Aff, launchAff, launchAff_)
 import Effect.Aff.Class (liftAff)
 import Effect.Class (liftEffect)
 import Nud3.Attributes (AlignAspectRatio_X(..), AlignAspectRatio_Y(..), AspectRatioPreserve(..), AspectRatioSpec(..), Attribute(..), foldAttributes, viewBoxFromNumbers)
-import Nud3.Node (D3Link, D3TreeRow, D3_SimulationNode, D3_VxyFxy, D3_XY, EmbeddedData, NodeID)
+import Nud3.Node (D3Link, D3TreeRow, D3_SimulationNode, D3_TreeNode, D3_VxyFxy, D3_XY, EmbeddedData, NodeID)
 import Nud3.Scales (d3SchemeCategory10N_)
 import Nud3.Tree.JSON (TreeJson_, TreeLayout(..), TreeType(..), TreeModel, getTreeViaAJAX)
 import Nud3.Tree.JSON as VizTree
@@ -114,8 +114,10 @@ drawTree model = do
       ]
   container <- addElement svg $ Append $ SVG "g"
   let _ = foldAttributes container [ FontFamily "sans-serif", FontSize 10.0 ]
-  linksGroup <- addElement svg $ Append $ SVG "g"
-  nodesGroup <- addElement svg $ Append $ SVG "g"
+  linksGroup <- addElement container $ Append $ SVG "g"
+  let _ = foldAttributes linksGroup [ Classed "links" ]
+  nodesGroup <- addElement container $ Append $ SVG "g"
+  let _ = foldAttributes nodesGroup [ Classed "nodes" ]
 
   node <- visualize
     { what: Append (SVG "g")
@@ -128,10 +130,11 @@ drawTree model = do
         , update: []
         }
     }
+  let _ = foldAttributes node config.nodeTransform
   circles <- addElement node $ Append $ SVG "circle"
   let
     _ = foldAttributes circles
-      [ Fill_ \d _ -> if d.hasChildren then "#999" else "#555"
+      [ Fill_ \d _ -> if d."data".hasChildren then "#999" else "#555"
       , Radius 2.5
       , StrokeColor "white"
       ]
@@ -140,10 +143,10 @@ drawTree model = do
   let
     _ = foldAttributes labels
       [ DY 0.31
-      , X_ \d _ -> computeX VizTree.Vertical d.hasChildren d.x
+      , X_ \d _ -> computeX VizTree.Vertical d."data".hasChildren d."data".x
       , Fill "red"
-      , Text_ \d _ -> d.name
-      , TextAnchor_ \d _ -> computeTextAnchor VizTree.Vertical d.hasChildren d.x
+      , Text_ \d _ -> d."data".name
+      , TextAnchor_ \d _ -> computeTextAnchor VizTree.Vertical d."data".hasChildren d.x
       ]
 
   individualLink <- visualize
@@ -174,7 +177,6 @@ getTreeAndDrawIt = launchAff_ do
       model <- liftAff $ makeModel TidyTree Vertical treeJSON
 
       tree <- liftEffect $ drawTree model
-      -- tree <- liftAff $ Tree.drawTree model "div.svg-container"
       pure unit
   pure unit
 
@@ -182,6 +184,41 @@ getTreeAndDrawIt = launchAff_ do
 -- | all the configuration for different tree types and layouts
 -- | ------------------------ Configure function from TaglessII ------------------------
 
+generateConfig :: forall t132 t195 t235 t253.
+  Tuple Number Number
+  -> { json :: TreeJson_
+     , treeLayout :: TreeLayout
+     , treeType :: TreeType
+     | t132
+     }
+     -> { color :: String
+        , laidOutRoot_ :: D3_TreeNode
+                            ( data :: { name :: String
+                                      }
+                            , x :: Number
+                            , y :: Number
+                            )
+        , layout :: TreeLayout
+        , linkPath :: Attribute
+                        { x :: Number
+                        , y :: Number
+                        | t235
+                        }
+        , nodeTransform :: Array
+                             (Attribute
+                                { x :: Number
+                                , y :: Number
+                                | t195
+                                }
+                             )
+        , spacing :: { interChild :: Number
+                     , interLevel :: Number
+                     }
+        , svg :: { height :: Number
+                 , width :: Number
+                 }
+        , viewbox :: Array (Attribute t253)
+        }
 generateConfig (Tuple width height ) model =
   { spacing, viewbox, linkPath, nodeTransform, color, layout: model.treeLayout, svg, laidOutRoot_ }
   where
