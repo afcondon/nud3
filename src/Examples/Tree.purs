@@ -36,7 +36,7 @@ import Effect.Class (liftEffect)
 import Nud3.Attributes (AlignAspectRatio_X(..), AlignAspectRatio_Y(..), AspectRatioPreserve(..), AspectRatioSpec(..), Attribute(..), AttributeSetter, foldAttributes, viewBoxFromNumbers)
 import Nud3.Node (D3Link, D3TreeRow, D3_SimulationNode, D3_TreeNode, D3_VxyFxy, D3_XY, EmbeddedData, NodeID)
 import Nud3.Scales (d3SchemeCategory10N_)
-import Nud3.Tree.JSON (TreeJson_, TreeLayout(..), TreeType(..), TreeModel, getTreeViaAJAX)
+import Nud3.Tree.JSON (TreeJson_, TreeLayout(..), TreeModel, TreeType(..), getTreeViaAJAX)
 import Nud3.Tree.JSON as VizTree
 import Nud3.Types (KeyFunction(..))
 import Type.Row (type (+))
@@ -178,9 +178,20 @@ getTreeAndDrawIt = launchAff_ do
   case treeJSON of
     (E.Left err) -> pure unit
     (E.Right (treeJSON :: TreeJson_)) -> do
-      model <- liftAff $ makeModel TidyTree Vertical treeJSON
+      model1 <- liftAff $ makeModel TidyTree Radial treeJSON
+      model2 <- liftAff $ makeModel Dendrogram Radial treeJSON
+      model3 <- liftAff $ makeModel TidyTree Vertical treeJSON
+      model4 <- liftAff $ makeModel Dendrogram Vertical treeJSON
+      model5 <- liftAff $ makeModel TidyTree Horizontal treeJSON
+      model6 <- liftAff $ makeModel Dendrogram Horizontal treeJSON
 
-      tree <- liftEffect $ drawTree model
+      _ <- liftEffect $ drawTree model1
+      _ <- liftEffect $ drawTree model2
+      _ <- liftEffect $ drawTree model3
+      _ <- liftEffect $ drawTree model4
+      _ <- liftEffect $ drawTree model5
+      _ <- liftEffect $ drawTree model6
+      
       pure unit
   pure unit
 
