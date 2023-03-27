@@ -89,7 +89,7 @@ computeTextAnchor layoutStyle hasChildren x =
       else "end"
 
 
-type TreeDrawConfig d = { 
+type TreeAttributes d = { 
     layout        :: TreeLayout
   , selector      :: Selector
   , linkPath      :: Attribute d -- has to be a Path attribute
@@ -105,16 +105,11 @@ drawTree :: forall d. TreeModel -> Effect Unit
 drawTree model = do
 
   let root = select (SelectorString "div#tree")
-      config = generateConfig (Tuple 1000.0 1000.0) model
+      config = treeConfigurator { width: 1000.0, height: 1000.0 } model
 
   svg <- addElement root $ Append $ SVG "svg"
-  let
-    _ = foldAttributes svg $
-      config.viewbox <> [ -- TODO put all these attributes into config.viewbox
-        Classed "tree"
-      , Width 650.0
-      , Height 650.0
-      ]
+  let _ = foldAttributes svg config.viewbox
+
   container <- addElement svg $ Append $ SVG "g"
   let _ = foldAttributes container [ FontFamily "sans-serif", FontSize 10.0 ]
   linksGroup <- addElement container $ Append $ SVG "g"
@@ -162,7 +157,7 @@ drawTree model = do
         , StrokeColor "orange"
         , StrokeOpacity 0.4
         , Fill "none"
-        , Path_ $ unsafeCoerce config.linkPath -- TODO hide coerce in the DSL
+        , Path_ $ unsafeCoerce config.linkPath -- TODO hide coerce in the DSL, this coerce is hiding wrong types in config 
         ]
     }
   pure unit
@@ -191,7 +186,7 @@ getTreeAndDrawIt = launchAff_ do
       _ <- liftEffect $ drawTree model4
       _ <- liftEffect $ drawTree model5
       _ <- liftEffect $ drawTree model6
-      
+
       pure unit
   pure unit
 
@@ -199,46 +194,11 @@ getTreeAndDrawIt = launchAff_ do
 -- | a generic configuration function that works for vertical, horizontal and radial trees
 -- | ------------------------ Configure function from TaglessII ------------------------
 
-generateConfig :: forall t132 t195 t235 t253.
-  Tuple Number Number
-  -> { json :: TreeJson_
-     , treeLayout :: TreeLayout
-     , treeType :: TreeType
-     | t132
-     }
-     -> { color :: String
-        , laidOutRoot_ :: D3_TreeNode
-                            ( data :: { name :: String
-                                      }
-                            , x :: Number
-                            , y :: Number
-                            )
-        , layout :: TreeLayout
-        , linkPath :: { x :: Number
-                      , y :: Number
-                      | t235
-                      }
-                      -> Int -> String
-        , nodeTransform :: Array
-                             (Attribute
-                                { x :: Number
-                                , y :: Number
-                                | t195
-                                }
-                             )
-        , spacing :: { interChild :: Number
-                     , interLevel :: Number
-                     }
-        , svg :: { height :: Number
-                 , width :: Number
-                 }
-        , viewbox :: Array (Attribute t253)
-        }
-generateConfig (Tuple width height ) model =
+-- treeConfigurator :: forall d. Tuple Number Number -> TreeModel -> TreeAttributes d
+-- | all the "magic numbers" in this function should be replaced by a config object
+treeConfigurator svg model =
   { spacing, viewbox, linkPath, nodeTransform, color, layout: model.treeLayout, svg, laidOutRoot_ }
   where
-    svg     = { width, height }
-
     root    = hierarchyFromJSON_ model.json
     numberOfLevels = (hNodeHeight_ root) + 1.0
     spacing =
@@ -267,20 +227,26 @@ generateConfig (Tuple width height ) model =
     radialRadius = yMax  -- on the radial tree the y is the distance from origin, ie yMax == radius
     radialExtent       = 2.0 * radialRadius
     pad n = n * 1.2
-    vtreeYOffset = (abs (height - yExtent)) / 2.0
+    vtreeYOffset = (abs (svg.height - yExtent)) / 2.0
     vtreeXOffset = xMin -- the left and right sides might be different so (xExtent / 2) would not necessarily be right
     htreeYOffset = xMin
 
     viewbox =
       case model.treeType, model.treeLayout of
         _, Vertical   -> [ viewBoxFromNumbers vtreeXOffset (-vtreeYOffset) (pad xExtent) (pad yExtent) -- 
-                         , PreserveAspectRatio $ show $ AspectRatio XMid YMid Meet ]
+                         , PreserveAspectRatio $ show $ AspectRatio XMid YMid Meet
+                         , Width svg.width
+                         , Height svg.height ]
         _, Horizontal -> [ viewBoxFromNumbers (-xExtent * 0.1) (pad htreeYOffset) (pad yExtent) (pad xExtent)
-                         , PreserveAspectRatio $ show $ AspectRatio XMin YMid Meet ] -- x and y are reversed in horizontal layouts
+                         , PreserveAspectRatio $ show $ AspectRatio XMin YMid Meet -- x and y are reversed in horizontal layouts
+                         , Width svg.width
+                         , Height svg.height ]
         _, Radial     -> [ viewBoxFromNumbers (-radialRadius * 1.2) (-radialRadius * 1.2)  (radialExtent * 1.2)    (radialExtent * 1.2)
-                         , PreserveAspectRatio $ show $ AspectRatio XMin YMin Meet ]
+                         , PreserveAspectRatio $ show $ AspectRatio XMin YMin Meet
+                         , Width svg.width
+                         , Height svg.height ]
       
-    linkPath =
+    linkPath = 
       case model.treeType, model.treeLayout of
         Dendrogram, Horizontal -> horizontalClusterLink spacing.interLevel
         Dendrogram, Vertical   -> verticalClusterLink   spacing.interLevel 
@@ -331,7 +297,7 @@ rotateRadialLabels d _ = -- TODO replace with nodeIsOnRHS
     else "0")
     <> ")"
 
--- onRHS :: TreeLayout -> TreeDatum_ -> Boolean
+onRHS :: forall r. TreeLayout -> { x :: Number | r } -> Boolean
 onRHS l d = l == Radial && (d.x >= pi)
 
 positionXYreflected :: forall r. { x :: Number, y :: Number | r } -> Int -> String  

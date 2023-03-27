@@ -22,6 +22,9 @@ export function addStyle_(selection) {
 export function addText_(selection) {
   return (text) => selection.text(text)
 }
+export function addTransform_ (selection) {
+  return (transforms) => selection.attr('transform', transforms)
+}
 export function addTransitionToSelection_(selection) {
   return (t) => {
     console.log('addTransitionToSelection_ ', t._id);

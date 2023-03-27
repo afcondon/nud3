@@ -29,6 +29,12 @@ exportAttributeSetter_ = unsafeCoerce
 exportAttributeSetterUncurried_ :: forall d t. AttributeSetter d t -> AttributeSetter_
 exportAttributeSetterUncurried_ f = unsafeCoerce $ uncurry_ f
 
+exportAttributeSetterMultiple_ :: forall d. Array (d -> AttributeSetter_)
+exportAttributeSetterMultiple_ = unsafeCoerce -- TODO
+
+exportAttributeSetterUncurriedMultiple_ :: forall d t. Array (AttributeSetter d t) -> AttributeSetter_
+exportAttributeSetterUncurriedMultiple_ f = unsafeCoerce $ uncurry_ f -- TODO
+
 foldAttributes :: forall d. Selection_ -> Array (Attribute d) -> Selection_
 foldAttributes s as = foldl addAttribute s as
   where
@@ -62,8 +68,12 @@ foldAttributes s as = foldl addAttribute s as
     attr@(Opacity_ _) -> addStyle_ s "opacity" (getValueFromAttribute attr)
     attr@(Style _) -> addStyle_ s (getKeyFromAttribute attr) (getValueFromAttribute attr)
     attr@(Style_ _) -> addStyle_ s (getKeyFromAttribute attr) (getValueFromAttribute attr)
+    -- | Transforms are also special in the individual transforms have to be concatenated together
+    attr@(Transform _) -> addTransform_ s (getValueFromAttribute attr)
+    attr@(Transform_ _) -> addTransform_ s (getValueFromAttribute attr)
     -- | regular attributes all handled the same way
     attr -> addAttribute_ s (getKeyFromAttribute attr) (getValueFromAttribute attr)
+
 
 -- | TransitionAttributeSetter is the type of functions that can be used to set attributes on transitions
 -- | using functions that take the data and index as arguments
@@ -214,7 +224,7 @@ data Attribute d
   | Style_ (AttributeSetter d String)
   | Text_ (AttributeSetter d String)
   | TextAnchor_ (AttributeSetter d String)
-  | Transform_ (AttributeSetter d String)
+  | Transform_ (Array (AttributeSetter d String)) -- there can be multiple transforms
   | Width_ (AttributeSetter d Number)
   | X_ (AttributeSetter d Number)
   | Y_ (AttributeSetter d Number)
@@ -300,7 +310,7 @@ getValueFromAttribute = case _ of
   Style_ f -> exportAttributeSetterUncurried_ f
   Text_ f -> exportAttributeSetterUncurried_ f
   TextAnchor_ f -> exportAttributeSetterUncurried_ f
-  Transform_ f -> exportAttributeSetterUncurried_ f
+  Transform_ f -> exportAttributeSetterUncurriedMultiple_ f -- TODO there can be multiple transforms
   Width_ f -> exportAttributeSetterUncurried_ f
   X_ f -> exportAttributeSetterUncurried_ f
   Y_ f -> exportAttributeSetterUncurried_ f
@@ -457,6 +467,7 @@ instance showAttribute :: Show (Attribute d) where
 -- | NB attr can be a value or a function
 foreign import addAttribute_ :: forall attr. Selection_ -> String -> attr -> Selection_
 foreign import addText_ :: forall d. Selection_ -> d -> Selection_
+foreign import addTransform_ :: forall d. Selection_ -> d -> Selection_
 foreign import addStyle_ :: forall d. Selection_ -> String -> d -> Selection_
 foreign import addTransitionToSelection_ :: Selection_ -> Transition_ -> Selection_ -- returns a selection with _mode = Transition
 -- | we're actually retrieving a selection from a transition here but it's not worth exposing that in the types
