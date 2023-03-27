@@ -8,6 +8,14 @@ export function uncurry_(f) {
     return f(datum)(index)
   }
 }
+// it would be nicer to do a more FP-ish solution here, but it seems overly specific to the use case
+// this function is intended to run multiple lambdas, each generating a string for a transform
+// and then gluing together the results with a space 
+export function uncurryMultipleForTransform_ (fs) {
+  return (datum, index) => {
+    return (fs.map(f => f(datum)(index))).join(' ')
+  }
+}
 
 let referenceTransition = null;
 

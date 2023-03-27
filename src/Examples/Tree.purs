@@ -128,7 +128,7 @@ drawTree model = do
         , update: []
         }
     }
-  let _ = foldAttributes node config.nodeTransform
+  let _ = foldAttributes node [config.nodeTransform]
   circles <- addElement node $ Append $ SVG "circle"
   let
     _ = foldAttributes circles
@@ -142,7 +142,7 @@ drawTree model = do
     _ = foldAttributes labels
       [ DY 0.31
       , X_ \d _ -> computeX VizTree.Vertical d."data".hasChildren d."data".x
-      , Fill "red"
+      , Fill_ \d _ -> if d."data".hasChildren then "#999" else "#555"      
       , Text_ \d _ -> d."data".name
       , TextAnchor_ \d _ -> computeTextAnchor VizTree.Vertical d."data".hasChildren d.x
       ]
@@ -154,7 +154,7 @@ drawTree model = do
     , key: IdentityKey
     , instructions: Simple
         [ StrokeWidth 1.5
-        , StrokeColor "orange"
+        , StrokeColor config.color
         , StrokeOpacity 0.4
         , Fill "none"
         , Path_ $ unsafeCoerce config.linkPath -- TODO hide coerce in the DSL, this coerce is hiding wrong types in config 
@@ -258,17 +258,17 @@ treeConfigurator svg model =
 
     nodeTransform =
       case model.treeType, model.treeLayout of
-        Dendrogram, Horizontal -> [ Transform_ positionXYreflected ]
-        Dendrogram, Vertical   -> [ Transform_ positionXY ]
-        Dendrogram, Radial     -> [ Transform_ radialRotateCommon
-                                  , Transform_ radialTranslate
-                                  , Transform_ rotateRadialLabels ]
+        Dendrogram, Horizontal -> Transform_ [ positionXYreflected ]
+        Dendrogram, Vertical   -> Transform_ [ positionXY ]
+        Dendrogram, Radial     -> Transform_ [ radialRotateCommon
+                                  , radialTranslate
+                                  , rotateRadialLabels ]
 
-        TidyTree, Horizontal   -> [ Transform_ positionXYreflected ]
-        TidyTree, Vertical     -> [ Transform_ positionXY ]
-        TidyTree, Radial       -> [ Transform_ radialRotateCommon
-                                  , Transform_ radialTranslate
-                                  , Transform_ rotateRadialLabels ]
+        TidyTree, Horizontal   -> Transform_ [ positionXYreflected ]
+        TidyTree, Vertical     -> Transform_ [ positionXY ]
+        TidyTree, Radial       -> Transform_ [ radialRotateCommon
+                                  , radialTranslate
+                                  , rotateRadialLabels ]
 
     color = d3SchemeCategory10N_ $
       case model.treeType, model.treeLayout of

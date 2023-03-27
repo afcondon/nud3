@@ -3,7 +3,7 @@ module Nud3.Attributes
 
 import Prelude
 
-import Data.Array (foldl)
+import Data.Array (foldl, intercalate)
 import Data.Int (floor)
 import Nud3.FFI as FFI
 import Nud3.Types (Selection_, Transition_)
@@ -29,11 +29,10 @@ exportAttributeSetter_ = unsafeCoerce
 exportAttributeSetterUncurried_ :: forall d t. AttributeSetter d t -> AttributeSetter_
 exportAttributeSetterUncurried_ f = unsafeCoerce $ uncurry_ f
 
-exportAttributeSetterMultiple_ :: forall d. Array (d -> AttributeSetter_)
-exportAttributeSetterMultiple_ = unsafeCoerce -- TODO
 
-exportAttributeSetterUncurriedMultiple_ :: forall d t. Array (AttributeSetter d t) -> AttributeSetter_
-exportAttributeSetterUncurriedMultiple_ f = unsafeCoerce $ uncurry_ f -- TODO
+exportAttributeSettersForTransform :: forall d t. Array (AttributeSetter d t) -> AttributeSetter_
+exportAttributeSettersForTransform fs = unsafeCoerce $ uncurryMultipleForTransform_ fs
+
 
 foldAttributes :: forall d. Selection_ -> Array (Attribute d) -> Selection_
 foldAttributes s as = foldl addAttribute s as
@@ -310,7 +309,7 @@ getValueFromAttribute = case _ of
   Style_ f -> exportAttributeSetterUncurried_ f
   Text_ f -> exportAttributeSetterUncurried_ f
   TextAnchor_ f -> exportAttributeSetterUncurried_ f
-  Transform_ f -> exportAttributeSetterUncurriedMultiple_ f -- TODO there can be multiple transforms
+  Transform_ fs -> exportAttributeSettersForTransform fs
   Width_ f -> exportAttributeSetterUncurried_ f
   X_ f -> exportAttributeSetterUncurried_ f
   Y_ f -> exportAttributeSetterUncurried_ f
@@ -472,6 +471,7 @@ foreign import addStyle_ :: forall d. Selection_ -> String -> d -> Selection_
 foreign import addTransitionToSelection_ :: Selection_ -> Transition_ -> Selection_ -- returns a selection with _mode = Transition
 -- | we're actually retrieving a selection from a transition here but it's not worth exposing that in the types
 foreign import uncurry_ :: forall d t. AttributeSetter d t -> AttributeSetter_
+foreign import uncurryMultipleForTransform_ :: forall d t. Array (AttributeSetter d t) -> Array AttributeSetter_
 
 foreign import transitionInitDelay_ :: forall attr. Transition_ -> attr -> Transition_
 foreign import transitionOn_ :: forall attr. Transition_ -> attr -> Transition_
