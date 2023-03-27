@@ -338,8 +338,8 @@ getKeyFromAttribute = case _ of
   InnerHTML _ -> "html"
   Opacity_ _ -> "opacity"
   Opacity _ -> "opacity"
-  Path_ _ -> "path" -- TODO element path with attribute d
-  Path _ -> "path" -- TODO element path with attribute d
+  Path_ _ -> "d" -- we use "Path" for readability but the attribute is really "d"
+  Path _ -> "d" -- we use "Path" for readability but the attribute is really "d"
   PreserveAspectRatio_ _ -> "preserveAspectRatio"
   PreserveAspectRatio _ -> "preserveAspectRatio"
   Radius_ _ -> "r"

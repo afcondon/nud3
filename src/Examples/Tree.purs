@@ -33,13 +33,14 @@ import Effect (Effect)
 import Effect.Aff (Aff, launchAff, launchAff_)
 import Effect.Aff.Class (liftAff)
 import Effect.Class (liftEffect)
-import Nud3.Attributes (AlignAspectRatio_X(..), AlignAspectRatio_Y(..), AspectRatioPreserve(..), AspectRatioSpec(..), Attribute(..), foldAttributes, viewBoxFromNumbers)
+import Nud3.Attributes (AlignAspectRatio_X(..), AlignAspectRatio_Y(..), AspectRatioPreserve(..), AspectRatioSpec(..), Attribute(..), AttributeSetter, foldAttributes, viewBoxFromNumbers)
 import Nud3.Node (D3Link, D3TreeRow, D3_SimulationNode, D3_TreeNode, D3_VxyFxy, D3_XY, EmbeddedData, NodeID)
 import Nud3.Scales (d3SchemeCategory10N_)
 import Nud3.Tree.JSON (TreeJson_, TreeLayout(..), TreeType(..), TreeModel, getTreeViaAJAX)
 import Nud3.Tree.JSON as VizTree
 import Nud3.Types (KeyFunction(..))
 import Type.Row (type (+))
+import Unsafe.Coerce (unsafeCoerce)
 
 
 -- Model data types specialized with inital data
@@ -59,8 +60,10 @@ type FlareRawModel = {
   , nodes :: Array FlareNodeData
 }
 
+-- Pre-swizzling the link target/source are some kind of key to the source/target nodes
+-- Post swizzling the link target/source are replaced by references to the actual records
 type FlareCookedModel = { 
-    links :: Array (D3Link NodeID FlareLinkData)
+    links :: Array (D3Link FlareSimRecord FlareLinkData)
   , nodes :: Array FlareNodeData
 }
 
@@ -106,9 +109,9 @@ drawTree model = do
 
   svg <- addElement root $ Append $ SVG "svg"
   let
-    _ = foldAttributes svg
-      [ ViewBox 0 0 650 650
-      , Classed "tree"
+    _ = foldAttributes svg $
+      config.viewbox <> [ -- TODO put all these attributes into config.viewbox
+        Classed "tree"
       , Width 650.0
       , Height 650.0
       ]
@@ -159,6 +162,7 @@ drawTree model = do
         , StrokeColor "orange"
         , StrokeOpacity 0.4
         , Fill "none"
+        , Path_ $ unsafeCoerce config.linkPath -- TODO hide coerce in the DSL
         ]
     }
   pure unit
@@ -181,7 +185,7 @@ getTreeAndDrawIt = launchAff_ do
   pure unit
 
 -- | ------------------------ Configure function from TaglessII ------------------------
--- | all the configuration for different tree types and layouts
+-- | a generic configuration function that works for vertical, horizontal and radial trees
 -- | ------------------------ Configure function from TaglessII ------------------------
 
 generateConfig :: forall t132 t195 t235 t253.
@@ -199,11 +203,11 @@ generateConfig :: forall t132 t195 t235 t253.
                             , y :: Number
                             )
         , layout :: TreeLayout
-        , linkPath :: Attribute
-                        { x :: Number
-                        , y :: Number
-                        | t235
-                        }
+        , linkPath :: { x :: Number
+                      , y :: Number
+                      | t235
+                      }
+                      -> Int -> String
         , nodeTransform :: Array
                              (Attribute
                                 { x :: Number

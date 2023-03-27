@@ -11,7 +11,7 @@ import Data.Function.Uncurried (Fn2, mkFn2)
 import Data.Maybe (Maybe)
 import Data.Nullable (Nullable, toMaybe)
 import Effect.Aff (Aff)
-import Nud3.Attributes (Attribute(..))
+import Nud3.Attributes (Attribute(..), AttributeSetter_, AttributeSetter)
 import Nud3.Tree.JSON (TreeJson_, TreeLayout, TreeLayoutFn_, TreeModel, TreeType(..))
 import Prelude (Unit, bind, pure, unit, ($), (/))
 
@@ -47,27 +47,25 @@ radialSeparation = mkFn2
       else 2.0 / (hNodeDepth_ a)
   )
 
-horizontalLink :: forall d. Attribute d
-horizontalLink = Path "TODO" -- AttrT $ AttributeSetter "d" $ toAttr linkHorizontal_
+horizontalLink :: forall d. AttributeSetter d String
+horizontalLink d _ =  linkHorizontal_ d
 
 -- version for when the x and y point are already swapped
 -- should be default someday
-horizontalLink' :: forall d. Attribute d
-horizontalLink' = Path "TODO" -- AttrT $ AttributeSetter "d" $ toAttr linkHorizontal2_
+horizontalLink' :: forall d. AttributeSetter d String
+horizontalLink' d _ = linkHorizontal2_ d
 
-verticalLink :: forall d. Attribute d
-verticalLink = Path "TODO" -- AttrT $ AttributeSetter "d" $ toAttr linkVertical_
+verticalLink :: forall d. AttributeSetter d String
+verticalLink d _ = linkVertical_ d
 
-horizontalClusterLink :: forall d. Number -> Attribute d
-horizontalClusterLink yOffset = Path "TODO" -- AttrT $ AttributeSetter "d" $ toAttr (linkClusterHorizontal_ yOffset)
+horizontalClusterLink :: forall d. Number -> AttributeSetter d String
+horizontalClusterLink yOffset = \d _ -> (linkClusterHorizontal_ yOffset d) 
 
-verticalClusterLink :: forall d. Number -> Attribute d
-verticalClusterLink xOffset = Path "TODO" -- AttrT $ AttributeSetter "d" $ toAttr (linkClusterVertical_ xOffset)
+verticalClusterLink :: forall d. Number -> AttributeSetter d String
+verticalClusterLink xOffset = \d _ -> (linkClusterVertical_ xOffset d)
 
-radialLink :: forall d. (d -> Number) -> (d -> Number) -> Attribute d
-radialLink angleFn radius_Fn = do
-  let radialFn = linkRadial_ angleFn radius_Fn
-  Path "TODO" -- AttrT $ AttributeSetter "d" $ toAttr radialFn
+radialLink :: forall d. (d -> Number) -> (d -> Number) -> AttributeSetter d String
+radialLink angleFn radius_Fn = \d _ -> linkRadial_ angleFn radius_Fn d
 
 -- | stuff taken from D3.Tagless FFI
 -- the full API for hierarchical nodes:
