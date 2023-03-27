@@ -1,6 +1,6 @@
 module Nud3.Layouts.Hierarchical where
 
-import Nud3.Node
+import Nud3.Graph.Node
 
 import Affjax.ResponseFormat as ResponseFormat
 import Affjax.Web (Error, URL)
@@ -12,7 +12,7 @@ import Data.Maybe (Maybe)
 import Data.Nullable (Nullable, toMaybe)
 import Effect.Aff (Aff)
 import Nud3.Attributes (Attribute(..), AttributeSetter_, AttributeSetter)
-import Nud3.Tree.JSON (TreeJson_, TreeLayout, TreeLayoutFn_, TreeModel, TreeType(..))
+import Nud3.Hierarchical.Tree.JSON (TreeJson_, TreeLayout, TreeLayoutFn_, TreeModel, TreeType(..))
 import Prelude (Unit, bind, pure, unit, ($), (/))
 
 find :: forall d r. D3_TreeNode r -> (d -> Boolean) -> Maybe (D3_TreeNode r)

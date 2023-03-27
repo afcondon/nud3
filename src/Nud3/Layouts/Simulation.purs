@@ -1,4 +1,4 @@
-module Simulation where
+module Nud3.Layouts.Simulation where
 
 import Prelude
 

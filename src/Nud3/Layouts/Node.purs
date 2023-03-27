@@ -1,4 +1,4 @@
-module Nud3.Node where -- taken pretty much verbatim from D3Tagless
+module Nud3.Graph.Node where -- taken pretty much verbatim from D3Tagless
 
 import Data.Nullable (Nullable)
 import Type.Row (type (+))

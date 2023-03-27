@@ -15,7 +15,7 @@ import Effect.Console (log)
 import Effect.Random (random)
 import Examples.Anscombe2 (anscombeData, circlePlotInit, circlePlotUpdateCompound, circlePlotUpdateSimple, subset)
 import Examples.GUP (generalUpdatePatternDraw)
-import Examples.Tree (getTreeAndDrawIt)
+import Examples.Tree.Multiple (getTreeAndDrawIt)
 import Nud3.Types (Selection_)
 
 lettersUpdate :: Selection_ -> Effect Unit

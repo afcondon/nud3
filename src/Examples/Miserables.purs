@@ -6,7 +6,7 @@ import Effect (Effect)
 import Nud3.Attributes (Attribute(..), foldAttributes)
 import Nud3.Types (KeyFunction(..))
 import Prelude (Unit, bind, pure, unit, ($))
-import Simulation as Simulation
+import Nud3.Layouts.Simulation as Simulation
 
 -- | ForceLayout example
 

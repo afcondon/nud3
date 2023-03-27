@@ -1,4 +1,4 @@
-module Examples.Tree
+module Examples.Tree.Multiple
   ( FlareCookedModel
   , FlareLinkData
   , FlareLinkObj
@@ -33,10 +33,10 @@ import Effect.Aff (Aff, launchAff, launchAff_)
 import Effect.Aff.Class (liftAff)
 import Effect.Class (liftEffect)
 import Nud3.Attributes (AlignAspectRatio_X(..), AlignAspectRatio_Y(..), AspectRatioPreserve(..), AspectRatioSpec(..), Attribute(..), AttributeSetter, foldAttributes, viewBoxFromNumbers)
-import Nud3.Node (D3Link, D3TreeRow, D3_SimulationNode, D3_TreeNode, D3_VxyFxy, D3_XY, EmbeddedData, NodeID)
+import Nud3.Graph.Node (D3Link, D3TreeRow, D3_SimulationNode, D3_TreeNode, D3_VxyFxy, D3_XY, EmbeddedData, NodeID)
 import Nud3.Scales (d3SchemeCategory10N_)
-import Nud3.Tree.JSON (TreeJson_, TreeLayout(..), TreeModel, TreeType(..), getTreeViaAJAX)
-import Nud3.Tree.JSON as VizTree
+import Nud3.Hierarchical.Tree.JSON (TreeJson_, TreeLayout(..), TreeModel, TreeType(..), getTreeViaAJAX)
+import Nud3.Hierarchical.Tree.JSON as VizTree
 import Nud3.Types (KeyFunction(..))
 import Type.Row (type (+))
 import Unsafe.Coerce (unsafeCoerce)

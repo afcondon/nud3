@@ -1,4 +1,4 @@
-module Nud3.Tree.JSON
+module Nud3.Hierarchical.Tree.JSON
   ( TreeJson_
   , TreeLayout(..)
   , TreeLayoutFn_
@@ -22,7 +22,7 @@ import Data.Map as M
 import Data.Maybe (Maybe(..))
 import Data.Tree (Tree(..))
 import Effect.Aff (Aff)
-import Nud3.Node (NodeID)
+import Nud3.Graph.Node (NodeID)
 
 foreign import data TreeJson_ :: Type
 foreign import emptyTreeJson_ :: TreeJson_
