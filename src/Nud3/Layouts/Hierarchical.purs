@@ -108,3 +108,11 @@ foreign import treeSetSize_ :: TreeLayoutFn_ -> Array Number -> TreeLayoutFn_
 foreign import treeSetNodeSize_ :: TreeLayoutFn_ -> Array Number -> TreeLayoutFn_
 foreign import runLayoutFn_ :: forall r. TreeLayoutFn_ -> D3_TreeNode r -> D3_TreeNode r
 foreign import treeMinMax_ :: forall d. D3_TreeNode d -> { xMin :: Number, xMax :: Number, yMin :: Number, yMax :: Number }
+
+-- originally (ie in taglessII) this was typed as follows:
+-- foreign import hasChildren_             :: forall r. D3_TreeNode r -> Boolean
+-- but it's actually undesirable to have it's typed like this when it comes to writing simple little lambdas for attribute setters
+foreign import hasChildren_             :: forall d. d -> Boolean
+foreign import getHierarchyValue_       :: forall r. D3_TreeNode r -> Nullable Number
+foreign import getHierarchyChildren_    :: forall r. D3_TreeNode r -> Array (D3_TreeNode r)
+foreign import getHierarchyParent_      :: forall r. D3_TreeNode r -> D3_TreeNode r

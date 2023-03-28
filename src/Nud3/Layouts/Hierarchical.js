@@ -13,6 +13,12 @@ export function leaves_(tree) { return tree.leaves() }
 export function links_(tree) { return tree.links() }
 export function path_(from) { return to => tree.path(from, to) }
 export function hierarchyFromJSON_(json) { return hierarchy(json) }
+export function hasChildren_(d) { 
+  return (typeof d.children === 'undefined') ? false : true
+}
+export function getHierarchyValue_(d) { return (d.value === 'undefined') ? null : d.value } // returns a Nullable Number 
+export function getHierarchyChildren_(d) { return !d.children ? [] : d.children }
+export function getHierarchyParent_(d) { return !d.parent ? [] : d.parent } // don't think this can ever be null in valid hierarchy node but this gives us confidence that PureScript type is right 
 
 export const linkHorizontal_ = linkHorizontal()
   .x(d => d.y)

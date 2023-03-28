@@ -34,9 +34,9 @@ import Effect.Aff.Class (liftAff)
 import Effect.Class (liftEffect)
 import Nud3.Attributes (AlignAspectRatio_X(..), AlignAspectRatio_Y(..), AspectRatioPreserve(..), AspectRatioSpec(..), Attribute(..), AttributeSetter, foldAttributes, viewBoxFromNumbers)
 import Nud3.Graph.Node (D3Link, D3TreeRow, D3_SimulationNode, D3_TreeNode, D3_VxyFxy, D3_XY, EmbeddedData, NodeID)
-import Nud3.Scales (d3SchemeCategory10N_)
 import Nud3.Hierarchical.Tree.JSON (TreeJson_, TreeLayout(..), TreeModel, TreeType(..), getTreeViaAJAX)
 import Nud3.Hierarchical.Tree.JSON as VizTree
+import Nud3.Scales (d3SchemeCategory10N_)
 import Nud3.Types (KeyFunction(..))
 import Type.Row (type (+))
 import Unsafe.Coerce (unsafeCoerce)
@@ -70,21 +70,36 @@ computeX :: VizTree.TreeLayout -> Boolean -> Number -> Number
 computeX layoutStyle hasChildren x =
   case layoutStyle of
     VizTree.Radial ->
-      if hasChildren == (x < pi) then 6.0
-      else (-6.0)
-    _ ->
-      if hasChildren then 6.0
-      else (-6.0)
+      -- .attr("x", d => d.x < Math.PI === !d.children ? 6 : -6)
+      case (x < pi), (not hasChildren) of
+        true, true -> 6.0
+        false, false -> 6.0
+        _, _ -> -6.0
+    VizTree.Horizontal ->
+      -- .attr("x", d => d.children ? -6 : 6)
+      if hasChildren then (-6.0)
+      else 6.0
+    VizTree.Vertical ->
+      if hasChildren then (-6.0)
+      else 6.0
 
 computeTextAnchor :: VizTree.TreeLayout -> Boolean -> Number -> String
 computeTextAnchor layoutStyle hasChildren x =
   case layoutStyle of
     VizTree.Radial ->
-      if hasChildren == (x < pi) then "start"
+      -- .attr("text-anchor", d => d.x < Math.PI === !d.children ? "start" : "end")
+      if (x < pi) == (not hasChildren)
+      then "start"
       else "end"
-    _ ->
-      if hasChildren then "start"
-      else "end"
+    VizTree.Horizontal ->
+      -- .attr("text-anchor", d => d.children ? "end" : "start")
+      if hasChildren 
+      then "end"
+      else "start"
+    VizTree.Vertical ->
+      if hasChildren 
+      then "end"
+      else "start"
 
 type TreeAttributes d =
   { layout :: TreeLayout
@@ -130,7 +145,7 @@ drawTree model = do
   circles <- addElement node $ Append $ SVG "circle"
   let
     _ = foldAttributes circles
-      [ Fill_ \d _ -> if d."data".hasChildren then "#999" else "#555"
+      [ Fill_ \d _ -> if hasChildren_ d then "#999" else "#555"
       , Radius 2.5
       , StrokeColor "white"
       ]
@@ -139,10 +154,10 @@ drawTree model = do
   let
     _ = foldAttributes labels
       [ DY 0.31
-      , X_ \d _ -> computeX VizTree.Vertical d."data".hasChildren d."data".x
-      , Fill_ \d _ -> if d."data".hasChildren then "#999" else "#555"
+      , X_ \d _ -> computeX model.treeLayout (hasChildren_ d) d.x
+      , Fill_ \d _ -> if hasChildren_ d then "#999" else "#555"
       , Text_ \d _ -> d."data".name
-      , TextAnchor_ \d _ -> computeTextAnchor VizTree.Vertical d."data".hasChildren d.x
+      , TextAnchor_ \d _ -> computeTextAnchor model.treeLayout (hasChildren_ d) d.x
       ]
 
   individualLink <- visualize
@@ -209,15 +224,18 @@ treeConfigurator svg model =
       TidyTree, Vertical -> { interChild: 10.0, interLevel: svg.height / numberOfLevels }
       TidyTree, Radial -> { interChild: 0.0, interLevel: 0.0 } -- not sure this is used in radial case
 
+  -- | identify the layout function to use
   layout =
     if model.treeLayout == Radial then ((getLayout model.treeType) `treeSetSize_` [ 2.0 * pi, (svg.width / 2.0) - 100.0 ])
       `treeSetSeparation_` radialSeparation
     else
       (getLayout model.treeType) `treeSetNodeSize_` [ spacing.interChild, spacing.interLevel ]
 
+  -- | layout the tree using the chose algorithm
   laidOutRoot_ :: FlareTreeNode
   laidOutRoot_ = layout `runLayoutFn_` root
 
+  -- | compute the viewbox
   { xMin, xMax, yMin, yMax } = treeMinMax_ laidOutRoot_
   xExtent = abs $ xMax - xMin -- ie if tree spans from -50 to 200, it's extent is 250
   yExtent = abs $ yMax - yMin -- ie if tree spans from -50 to 200, it's extent is 250
@@ -249,6 +267,7 @@ treeConfigurator svg model =
         , Height svg.height
         ]
 
+  -- | choose the algorithm to use for the link paths
   linkPath =
     case model.treeType, model.treeLayout of
       Dendrogram, Horizontal -> horizontalClusterLink spacing.interLevel
@@ -259,6 +278,7 @@ treeConfigurator svg model =
       TidyTree, Vertical -> verticalLink
       TidyTree, Radial -> radialLink _.x _.y
 
+  -- | choose the algorithm to use for the node transforms
   nodeTransform =
     case model.treeType, model.treeLayout of
       Dendrogram, Horizontal -> Transform_ [ positionXYreflected ]
@@ -277,6 +297,7 @@ treeConfigurator svg model =
         , rotateRadialLabels
         ]
 
+  -- | distinguish each type of tree by color
   color = d3SchemeCategory10N_ $
     case model.treeType, model.treeLayout of
       Dendrogram, Horizontal -> 1.0
@@ -298,7 +319,6 @@ radialTranslate d _ = "translate(" <> show d.y <> ",0)"
 
 rotateRadialLabels :: forall r. { x :: Number | r } -> Int -> String
 rotateRadialLabels d _ = -- TODO replace with nodeIsOnRHS 
-
   "rotate("
     <>
       ( if (onRHS Radial d) then "180"
@@ -307,7 +327,7 @@ rotateRadialLabels d _ = -- TODO replace with nodeIsOnRHS
     <> ")"
 
 onRHS :: forall r. TreeLayout -> { x :: Number | r } -> Boolean
-onRHS l d = l == Radial && (d.x >= pi)
+onRHS l d = (l == Radial) && (d.x >= pi)
 
 positionXYreflected :: forall r. { x :: Number, y :: Number | r } -> Int -> String
 positionXYreflected d _ = "translate(" <> show d.y <> "," <> show d.x <> ")"
