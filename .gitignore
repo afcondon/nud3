@@ -17,3 +17,4 @@
 /output
 /dist/bundle.js
 .DS_Store
+/.vscode

@@ -3,8 +3,12 @@ module Main  where
 
 import Prelude
 
+import Affjax.ResponseFormat as ResponseFormat
+import Affjax.Web (printError)
+import Affjax.Web as AJAX
 import Control.Monad.Rec.Class (forever)
 import Data.Array (catMaybes)
+import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Data.String.CodeUnits (fromCharArray, toCharArray)
 import Data.Traversable (sequence)
@@ -15,6 +19,8 @@ import Effect.Console (log)
 import Effect.Random (random)
 import Examples.Anscombe2 (anscombeData, circlePlotInit, circlePlotUpdateCompound, circlePlotUpdateSimple, subset)
 import Examples.GUP (generalUpdatePatternDraw)
+import Examples.Miserables (drawForceLayout)
+import Examples.Simulations.File (readGraphFromFileContents)
 import Examples.Tree.Multiple (getTreeAndDrawIt)
 import Nud3.Types (Selection_)
 
@@ -47,6 +53,13 @@ anscombeUpdate selection = launchAff_ $ forever do
   delay (Milliseconds 2000.0)
   liftEffect $ circlePlotUpdateCompound selection (subset "IV" anscombeData)
   delay (Milliseconds 2000.0)
+
+runForceLayoutExample :: Effect Unit
+runForceLayoutExample = launchAff_ do
+  response <- AJAX.get ResponseFormat.string "./data/miserables.json"
+  case readGraphFromFileContents response of
+    Left err -> liftEffect $ log $ "Error: " <> printError err
+    Right graph -> liftEffect $ drawForceLayout 1000.0 1000.0 graph
   
 
 main :: Effect Unit
@@ -56,8 +69,8 @@ main = do
   -- circlePlot
   -- circles <- circlePlotInit
   -- anscombeUpdate circles
-  _ <- getTreeAndDrawIt 
-  -- drawForceLayout
+  -- _ <- getTreeAndDrawIt 
+  runForceLayoutExample
   
   -- get the initial selection for GUP example
   -- letters <- generalUpdatePatternSetup

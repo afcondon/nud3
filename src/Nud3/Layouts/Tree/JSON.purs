@@ -1,4 +1,4 @@
-module Nud3.Hierarchical.Tree.JSON
+module Nud3.Hierarchical.Tree.JSON -- TODO separate the Tree defs from the JSON reading?
   ( TreeJson_
   , TreeLayout(..)
   , TreeLayoutFn_

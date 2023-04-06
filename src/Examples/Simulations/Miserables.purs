@@ -3,10 +3,12 @@ module Examples.Miserables where
 import Nud3
 
 import Effect (Effect)
+import Examples.Simulations.Model (LesMisRawModel)
 import Nud3.Attributes (Attribute(..), foldAttributes)
+import Nud3.Layouts.Simulation (Model)
+import Nud3.Layouts.Simulation as Simulation
 import Nud3.Types (KeyFunction(..))
 import Prelude (Unit, bind, pure, unit, ($))
-import Nud3.Layouts.Simulation as Simulation
 
 -- | ForceLayout example
 
@@ -25,7 +27,7 @@ colorByGroup group =
     9 -> "#17becf"
     _ -> "#000000"
 
-drawForceLayout :: Number -> Number -> Simulation.Model -> Effect Unit
+drawForceLayout :: forall r. Number -> Number -> Model r -> Effect Unit
 drawForceLayout width height model = do
   let root = select (SelectorString "div#miserables")
   svg <- addElement root $ Append $ SVG "svg"
@@ -38,10 +40,11 @@ drawForceLayout width height model = do
       ]
   linksGroup <- addElement svg $ Append (SVG "g")
   let _ = foldAttributes linksGroup [ Classed "link", StrokeColor "#999", StrokeOpacity 0.6 ]
+  
   nodesGroup <- addElement svg $ Append (SVG "g")
   let _ = foldAttributes nodesGroup [ Classed "node", StrokeColor "#fff", StrokeOpacity 1.5 ]
 
-  simulator <- Simulation.newEngine -- these params are just the defaults in D3 anyway, for now
+  simulator <- Simulation.newEngine -- these params are just the defaults in D3 anyway, as an example
     { alpha: 0.1
     , alphaMin: 0.001
     , alphaDecay: 0.0228
@@ -60,7 +63,7 @@ drawForceLayout width height model = do
 
   simLinks <- Simulation.addLinks
     { simulator
-    , nodes: model.nodes
+    , nodes: simNodes
     , links: model.links
     , key: \d -> d.id
     }
