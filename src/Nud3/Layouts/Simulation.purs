@@ -20,6 +20,8 @@ type Model r = { nodes :: Array (Node r), links :: Array ReferenceLink }
 foreign import data Engine_ :: Type
 foreign import createEngine_ :: Params -> Engine_
 foreign import addNodes_ :: forall r. Engine_ -> Array (Node r) -> (Node r -> Int) -> Array (Node r)
+-- | add the links to the linkForce which was created at the same time as the simulation engine
+foreign import setLinks_ :: forall r. Engine_ -> Array (Node r) -> Array ReferenceLink -> (ReferenceLink -> String) -> Array (SwizzledLink r)
 data Engine = 
     Engine String Engine_
   | NamedEngine String
@@ -52,8 +54,10 @@ addNodes config = do
 
 addLinks :: forall r. LinksConfig r -> Effect (Array (SwizzledLink r)) -- NB reference link isn't parametrized with the type of the node
 addLinks config = do
-  log $ "TODO: addLinks not yet implemented" <> show config.simulator
-  pure [] 
+  case config.simulator of
+    Engine name engine -> do
+      pure $ setLinks_ engine config.nodes config.links config.key
+    _ -> pure [] -- TODO simulator has not yet been initialised
 
 newEngine :: Params -> Effect Engine
 newEngine params = pure $ Engine "Foo" $ createEngine_ params
