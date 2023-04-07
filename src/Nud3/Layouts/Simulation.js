@@ -1,5 +1,5 @@
 // import simulation from d3-force
-import { forceSimulation, forceLink } from 'd3-force';
+import { forceSimulation, forceLink, forceManyBody, forceCenter } from 'd3-force';
 
 // implement and export the FFI createEngine_ function
 export function createEngine_ (params) {
@@ -13,6 +13,21 @@ export function createEngine_ (params) {
   return engine;
 }
 
+export function addForce_ (engine) {
+  return (forceName) => (force) => {
+    engine.force(forceName, force);
+    return engine;
+  }
+}
+
+export function makeForceManyBody_ (params) {
+  return forceManyBody().strength(params.strength);
+}
+
+export function makeForceCenter_ (params) {
+  return forceCenter(params.x, params.y).strength(params.strength);
+}
+
 export function addNodes_ (engine) {
   return (nodes) => (keyFn) => {
     console.log(`FFI: setting nodes in simulation, there are ${nodes.length} nodes`);
@@ -21,21 +36,18 @@ export function addNodes_ (engine) {
   }
 }
 
-// creates a forceLink and adds it to the engine, NB we actually don't want to do this, instead create the links at the same time as the engine and just update here
-// TODO create linksforce on simulation intialization instead of here
+// add the links to the linkForce in the simulation, swizzling the links to use object references instead of ids first
 export function setLinks_ (engine) {
   return (nodes) => (links) => (keyFn) => {
     console.log(`FFI: setting links in simulation, there are ${links.length} links`);
-    let swizzledLinks = swizzleLinks_(links)(nodes)(keyFn);
+    let swizzledLinks = swizzleLinks_(links, nodes, keyFn);
     engine.force("links").links(swizzledLinks);
     return swizzledLinks; // previously was: engine.force("links").links();
   }
 }
 
 // returns array of links with ids replaced by object references, invalid links are discarded
-// TODO this code came from TaglessII - if it isn't needed from the PureScript side then it can be uncurried
-export function swizzleLinks_(links) {
-  return simNodes => keyFn => {
+function swizzleLinks_(links, simNodes, keyFn) {
     console.log(`FFI: swizzling links in simulation, there are ${links.length} links`);
     const nodeById = new Map(simNodes.map(d => [keyFn(d), d])); // creates a map from our chosen id to the old obj reference
     // we could use the copy approach from d3PreserveSimulationPositions here so that links animate
@@ -63,4 +75,3 @@ export function swizzleLinks_(links) {
     })
     return swizzledLinks
   }
-}

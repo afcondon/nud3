@@ -8,7 +8,7 @@ import Nud3.Attributes (Attribute(..), foldAttributes)
 import Nud3.Layouts.Simulation (Model)
 import Nud3.Layouts.Simulation as Simulation
 import Nud3.Types (KeyFunction(..))
-import Prelude (Unit, bind, pure, unit, ($))
+import Prelude (Unit, bind, pure, unit, discard, ($))
 
 -- | ForceLayout example
 
@@ -27,8 +27,20 @@ colorByGroup group =
     9 -> "#17becf"
     _ -> "#000000"
 
-drawForceLayout :: forall r. Number -> Number -> Model r -> Effect Unit
-drawForceLayout width height model = do
+setUpSimulation :: Unit -> Effect (Simulation.Engine)
+setUpSimulation _ = do
+  simulator <- Simulation.newEngine Simulation.defaultParams
+  
+  charge <- Simulation.makeForceManyBody Simulation.forceManyBodyParams
+  center <- Simulation.makeForceCenter Simulation.forceCenterParams  
+
+  Simulation.addForce simulator charge
+  Simulation.addForce simulator center
+  pure simulator
+
+
+drawForceLayout :: forall r. Simulation.Engine -> Number -> Number -> Model r -> Effect Unit
+drawForceLayout simulator width height model = do
   let root = select (SelectorString "div#miserables")
   svg <- addElement root $ Append $ SVG "svg"
   let
@@ -44,13 +56,6 @@ drawForceLayout width height model = do
   nodesGroup <- addElement svg $ Append (SVG "g")
   let _ = foldAttributes nodesGroup [ Classed "node", StrokeColor "#fff", StrokeOpacity 1.5 ]
 
-  simulator <- Simulation.newEngine -- these params are just the defaults in D3 anyway, as an example
-    { alpha: 0.1
-    , alphaMin: 0.001
-    , alphaDecay: 0.0228
-    , alphaTarget: 0.0
-    , velocityDecay: 0.4
-    }
   -- side-effects ahoy, the data in these selections will change as the simulator runs
   simNodes <- Simulation.addNodes
     { simulator

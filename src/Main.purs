@@ -19,9 +19,10 @@ import Effect.Console (log)
 import Effect.Random (random)
 import Examples.Anscombe2 (anscombeData, circlePlotInit, circlePlotUpdateCompound, circlePlotUpdateSimple, subset)
 import Examples.GUP (generalUpdatePatternDraw)
-import Examples.Miserables (drawForceLayout)
+import Examples.Miserables (drawForceLayout, setUpSimulation)
 import Examples.Simulations.File (readGraphFromFileContents)
 import Examples.Tree.Multiple (getTreeAndDrawIt)
+import Nud3.Layouts.Simulation as Simulation
 import Nud3.Types (Selection_)
 
 lettersUpdate :: Selection_ -> Effect Unit
@@ -57,9 +58,13 @@ anscombeUpdate selection = launchAff_ $ forever do
 runForceLayoutExample :: Effect Unit
 runForceLayoutExample = launchAff_ do
   response <- AJAX.get ResponseFormat.string "./data/miserables.json"
+  simulator <- liftEffect $ setUpSimulation unit
+
   case readGraphFromFileContents response of
     Left err -> liftEffect $ log $ "Error: " <> printError err
-    Right graph -> liftEffect $ drawForceLayout 1000.0 1000.0 graph
+    Right graph -> liftEffect $ drawForceLayout simulator 1000.0 1000.0 graph
+
+  delay (Milliseconds 10000.0)
   
 
 main :: Effect Unit
