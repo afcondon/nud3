@@ -16,11 +16,13 @@ type ReferenceLink = { id :: String, source :: Int, target :: Int, value :: Numb
 type SwizzledLink r = { id :: String, source :: Node r, target :: Node r, value :: Number }
 
 type Model r = { nodes :: Array (Node r), links :: Array ReferenceLink }
-data Engine = Engine
-derive instance genericEngine :: Generic Engine _
+
+foreign import data Engine_ :: Type
+foreign import createEngine_ :: Params -> Engine_
+data Engine = Engine String Engine_
 
 instance showEngine :: Show Engine where
-  show = genericShow
+  show (Engine name _) = "Simulation engine: " <> name
 
 data DragBehavior = DefaultDragBehavior | CustomDragBehavior | NoDrag 
 
@@ -48,9 +50,7 @@ addLinks config = do
   pure [] 
 
 newEngine :: Params -> Effect Engine
-newEngine params = do
-  log $ "TODO: newEngine not yet implemented" <> show params.alpha
-  pure $ Engine 
+newEngine params = pure $ Engine "Foo" $ createEngine_ params
 
 type Params = { 
     alpha :: Number
