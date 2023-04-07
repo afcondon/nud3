@@ -19,10 +19,14 @@ type Model r = { nodes :: Array (Node r), links :: Array ReferenceLink }
 
 foreign import data Engine_ :: Type
 foreign import createEngine_ :: Params -> Engine_
-data Engine = Engine String Engine_
+foreign import addNodes_ :: forall r. Engine_ -> Array (Node r) -> (Node r -> Int) -> Array (Node r)
+data Engine = 
+    Engine String Engine_
+  | NamedEngine String
 
 instance showEngine :: Show Engine where
   show (Engine name _) = "Simulation engine: " <> name
+  show (NamedEngine name) = "Uninitialised Simulation engine: " <> name
 
 data DragBehavior = DefaultDragBehavior | CustomDragBehavior | NoDrag 
 
@@ -41,8 +45,10 @@ type LinksConfig r = {
 
 addNodes :: forall r. NodesConfig r -> Effect (Array (Node r))
 addNodes config = do
-  log $ "TODO: addNodes not yet implemented " <> show config.simulator
-  pure []
+  case config.simulator of
+    Engine name engine -> do
+      pure $ addNodes_ engine config.nodes config.key
+    _ -> pure [] -- TODO simulator has not yet been initialised
 
 addLinks :: forall r. LinksConfig r -> Effect (Array (SwizzledLink r)) -- NB reference link isn't parametrized with the type of the node
 addLinks config = do

@@ -11,3 +11,9 @@ export function createEngine_ (params) {
         .velocityDecay(params.velocityDecay);
   return engine;
 }
+
+export function addNodes_ (engine) {
+  return (nodes) => (keyFn) => {
+    return engine.nodes(nodes, keyFn);
+  }
+}
