@@ -64,9 +64,6 @@ runForceLayoutExample = launchAff_ do
     Left err -> liftEffect $ log $ "Error: " <> printError err
     Right graph -> liftEffect $ drawForceLayout simulator 1000.0 1000.0 graph
 
-  delay (Milliseconds 10000.0)
-  
-
 main :: Effect Unit
 main = do
   -- matrix2table

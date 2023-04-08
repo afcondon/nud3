@@ -4,7 +4,7 @@ import Nud3
 
 import Effect (Effect)
 import Examples.Simulations.Model (LesMisRawModel)
-import Nud3.Attributes (Attribute(..), foldAttributes)
+import Nud3.Attributes (Attribute(..), centerOriginViewBox, foldAttributes)
 import Nud3.Layouts.Simulation (Model)
 import Nud3.Layouts.Simulation as Simulation
 import Nud3.Types (KeyFunction(..))
@@ -43,9 +43,10 @@ drawForceLayout :: forall r. Simulation.Engine -> Number -> Number -> Model r ->
 drawForceLayout simulator width height model = do
   let root = select (SelectorString "div#miserables")
   svg <- addElement root $ Append $ SVG "svg"
+
   let
     _ = foldAttributes svg
-      [ ViewBox 0 0 650 650
+      [ centerOriginViewBox width height
       , Classed "force-layout"
       , Width width
       , Height height

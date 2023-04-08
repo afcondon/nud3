@@ -95,6 +95,9 @@ viewBoxFromNumbers x y w h = ViewBox xi yi wi hi
     wi = floor w
     hi = floor h
 
+centerOriginViewBox :: forall d. Number -> Number -> Attribute d
+centerOriginViewBox w h = viewBoxFromNumbers (-w / 2.0) (-h / 2.0) w h
+
 -- | TODO there are actually two types of transition attributes when it comes down to it
 -- | static transition attributes do not require there to be an underlying selection yet
 -- | dynamic transition attributes will blow up if there is no underlying selection
