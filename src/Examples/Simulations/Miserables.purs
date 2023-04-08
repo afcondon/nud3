@@ -63,8 +63,6 @@ drawForceLayout simulator width height model = do
     , key: \d -> d.id
     }
 
-  _ <- Simulation.onTickNode simulator simNodes [ CX_ \d _ -> d.x, CY_ \d _ -> d.y ]
-  _ <- Simulation.onDrag simulator simNodes Simulation.DefaultDragBehavior
 
   simLinks <- Simulation.addLinks
     { simulator
@@ -73,13 +71,6 @@ drawForceLayout simulator width height model = do
     , key: \d -> d.id
     }
 
-  _ <- Simulation.onTickLink simulator simLinks
-    [ X1_ \l _ -> l.source.x
-    , Y1_ \l _ -> l.source.y
-    , X2_ \l _ -> l.target.x
-    , Y2_ \l _ -> l.target.y
-    ]
-
   nodes <- visualize
     { what: Append (SVG "circle")
     , "data": NewData simNodes
@@ -87,6 +78,9 @@ drawForceLayout simulator width height model = do
     , key: IdentityKey
     , instructions: Simple [ Radius 5.0, Fill_ \d _ -> colorByGroup d.group ]
     }
+
+  _ <- Simulation.on simulator $ Simulation.Tick "nodes" nodes [ CX_ \d _ -> d.x, CY_ \d _ -> d.y ]
+  _ <- Simulation.on simulator $ Simulation.Drag "nodes" nodes Simulation.DefaultDragBehavior
 
   links <- visualize
     { what: Append (SVG "line")
@@ -100,5 +94,12 @@ drawForceLayout simulator width height model = do
         , Fill "none"
         ]
     }
+
+  _ <- Simulation.on simulator $ Simulation.Tick "links" links
+    [ X1_ \l _ -> l.source.x
+    , Y1_ \l _ -> l.source.y
+    , X2_ \l _ -> l.target.x
+    , Y2_ \l _ -> l.target.y
+    ]
 
   pure unit

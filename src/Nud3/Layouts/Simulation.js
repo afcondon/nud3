@@ -13,6 +13,16 @@ export function createEngine_ (params) {
   return engine;
 }
 
+// sets the callback for the given identifier
+// it is the responsability of the caller to ensure that format of the identifier is correct
+// "tick-nodes", "tick-links", "end" etc. 
+// TODO this should be done with an ADT on the PureScript side
+export function setSimulationCallback_ (engine) {
+  return (identifier) => (callback) => {
+    engine.on(identifier, callback);
+  }
+}
+
 export function addForce_ (engine) {
   return (forceName) => (force) => {
     engine.force(forceName, force);

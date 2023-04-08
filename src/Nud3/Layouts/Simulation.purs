@@ -3,9 +3,12 @@ module Nud3.Layouts.Simulation
 
 import Prelude
 
+import Debug (trace)
 import Effect (Effect)
 import Effect.Console (log)
-import Nud3.Attributes (Attribute)
+import Effect.Unsafe (unsafePerformEffect)
+import Nud3.Attributes (Attribute, foldAttributes)
+import Nud3.Types (Selection_)
 
 -- | this probably need to be an opaque type hidden behind FFI
 type Node r = { id :: Int, x :: Number, y :: Number, vx :: Number, vy :: Number, group :: Int | r } 
@@ -25,6 +28,8 @@ foreign import makeForceCenter_ :: ForceCenterParams -> Force_
 foreign import addNodes_ :: forall r. Engine_ -> Array (Node r) -> (Node r -> Int) -> Array (Node r)
 -- | add the links to the linkForce which was created at the same time as the simulation engine
 foreign import setLinks_ :: forall r. Engine_ -> Array (Node r) -> Array ReferenceLink -> (ReferenceLink -> String) -> Array (SwizzledLink r)
+foreign import setSimulationCallback_ :: Engine_ -> String -> (Unit -> Unit) -> Unit
+
 data Engine = 
     Engine String Engine_
   | NamedEngine String
@@ -123,17 +128,22 @@ forceCenterParams = {
     , name: "center"
     }
 
-onTickNode :: forall d r. Engine -> Array (Node r) -> Array (Attribute d) -> Effect Unit
-onTickNode engine nodes attrs = do
-  log "TODO: onTickNode not yet implemented"
-  pure unit
+data Callback d = 
+    Tick String Selection_ (Array (Attribute d))
+  | Drag String Selection_ DragBehavior
+  | End String Selection_
 
-onTickLink :: forall d r. Engine -> Array (SwizzledLink r) -> Array (Attribute d) -> Effect Unit
-onTickLink engine links attrs = do
-  log "TODO: onTickLink not yet implemented"
-  pure unit
-
-onDrag :: forall r. Engine -> Array (Node r) -> DragBehavior -> Effect Unit
-onDrag engine nodes dragBehavior = do
-  log "TODO: onDrag not yet implemented"
-  pure unit
+on :: forall d. Engine -> Callback d -> Effect Unit
+on (Engine _ engine_) (Tick name selection_ attrs) = pure $ setSimulationCallback_ engine_ ("tick." <> name) (\_ -> do
+  let _ = foldAttributes selection_ attrs
+  unit
+  )
+on (Engine _ engine_) (Drag name selection_ behavior) = pure $ setSimulationCallback_ engine_ ("drag." <> name) (\_ -> do
+-- TODO implement drag behavior
+  unit
+  )
+on (Engine _ engine_) (End name selection_) = pure $ setSimulationCallback_ engine_ ("end." <> name) (\_ -> do
+-- TODO end callback probably doesn't take any arguments? just some kind of side-effecting unit -> unit function
+  unit
+  )
+on _ _ = pure unit
