@@ -8,7 +8,7 @@ import Nud3.Attributes (Attribute(..), centerOriginViewBox, foldAttributes)
 import Nud3.Layouts.Simulation (Model)
 import Nud3.Layouts.Simulation as Simulation
 import Nud3.Types (KeyFunction(..))
-import Prelude (Unit, bind, pure, unit, discard, ($))
+import Prelude (Unit, bind, discard, pure, show, unit, ($), (<>))
 
 -- | ForceLayout example
 
@@ -64,7 +64,6 @@ drawForceLayout simulator width height model = do
     , key: \d -> d.id
     }
 
-
   simLinks <- Simulation.addLinks
     { simulator
     , nodes: simNodes
@@ -72,7 +71,7 @@ drawForceLayout simulator width height model = do
     , key: \d -> d.id
     }
 
-  nodes <- visualize
+  domNodes <- visualize
     { what: Append (SVG "circle")
     , "data": NewData simNodes
     , parent: nodesGroup
@@ -80,10 +79,14 @@ drawForceLayout simulator width height model = do
     , instructions: Simple [ Radius 5.0, Fill_ \d _ -> colorByGroup d.group ]
     }
 
-  _ <- Simulation.on simulator $ Simulation.Tick "nodes" nodes [ CX_ \d _ -> d.x, CY_ \d _ -> d.y ]
-  _ <- Simulation.on simulator $ Simulation.Drag "nodes" nodes Simulation.DefaultDragBehavior
+  -- now that we have a selection in the DOM we can give the simulator a tick handler to update it
+  _ <- Simulation.on simulator $ Simulation.Tick "nodes" domNodes [ CX_ \d _ -> d.x, CY_ \d _ -> d.y ]
+  
+  -- TODO drag handler would / could go here but it's not applied to the simulator actually, so this needs to be rethought
+  -- drag behavior in a simulation will usually involve "reheating" the simulation so that the nodes update to reflect the effect of the drag
+  -- _ <- Simulation.on simulator $ Simulation.Drag "nodes" domNodes Simulation.DefaultDragBehavior
 
-  links <- visualize
+  domLinks <- visualize
     { what: Append (SVG "line")
     , "data": NewData simLinks
     , parent: linksGroup
@@ -93,10 +96,11 @@ drawForceLayout simulator width height model = do
         , StrokeColor "#555"
         , StrokeOpacity 0.4
         , Fill "none"
+        , Path_ \l _ -> "M" <> show l.source.x <> "," <> show l.source.y <> "L" <> show l.target.x <> "," <> show l.target.y
         ]
     }
 
-  _ <- Simulation.on simulator $ Simulation.Tick "links" links
+  _ <- Simulation.on simulator $ Simulation.Tick "links" domLinks
     [ X1_ \l _ -> l.source.x
     , Y1_ \l _ -> l.source.y
     , X2_ \l _ -> l.target.x

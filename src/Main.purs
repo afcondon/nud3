@@ -63,7 +63,7 @@ runForceLayoutExample = launchAff_ do
   case readGraphFromFileContents response of
     Left err -> liftEffect $ log $ "Error: " <> printError err
     Right graph -> liftEffect $ drawForceLayout simulator 1000.0 1000.0 graph
-
+  
 main :: Effect Unit
 main = do
   -- matrix2table
